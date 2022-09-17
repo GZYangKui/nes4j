@@ -1,55 +1,98 @@
 package cn.navclub.nes4j.bin.enums;
 
-import cn.navclub.nes4j.bin.config.AddressModel;
 import cn.navclub.nes4j.bin.model.Instruction6502;
+import cn.navclub.nes4j.bin.util.ByteUtil;
+import lombok.extern.slf4j.Slf4j;
+
+import static cn.navclub.nes4j.bin.config.AddressModel.*;
 
 
 /**
  * 6502 指令集
  */
+@Slf4j
 public enum CPUInstruction {
-    ADC(new Instruction6502[]{
-            Instruction6502.create((byte) 0x69, cn.navclub.nes4j.bin.config.AddressModel.Immediate),
-            Instruction6502.create((byte) 0x65, cn.navclub.nes4j.bin.config.AddressModel.ZeroPage),
-            Instruction6502.create((byte) 0x75, cn.navclub.nes4j.bin.config.AddressModel.ZeroPage_X),
-            Instruction6502.create((byte) 0x6D, cn.navclub.nes4j.bin.config.AddressModel.Absolute),
-            Instruction6502.create((byte) 0x7D, cn.navclub.nes4j.bin.config.AddressModel.Absolute_X),
-            Instruction6502.create((byte) 0x79, cn.navclub.nes4j.bin.config.AddressModel.Absolute_Y),
-            Instruction6502.create((byte) 0x61, cn.navclub.nes4j.bin.config.AddressModel.Indirect_X),
-            Instruction6502.create((byte) 0x71, cn.navclub.nes4j.bin.config.AddressModel.Indirect_Y),
-    }),
-    /*
+    /**
      *
-     * 加载一字节数据进入累加器并视情况而定是否需要设置零或者负数flags.
-     *
-     * {@link https://www.nesdev.org/obelisk-6502-guide/reference.html#LDA}
+     * More detail please visit:<a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#ADC">ADC Document</a>
      *
      */
+    ADC(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x69), Immediate),
+            Instruction6502.create(ByteUtil.overflow(0x65), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x75), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x6D), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x7D), Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0x79), Absolute_Y),
+            Instruction6502.create(ByteUtil.overflow(0x61), Indirect_X),
+            Instruction6502.create(ByteUtil.overflow(0x71), Indirect_Y),
+    }),
+    /**
+     * 加载一字节数据进入累加器并视情况而定是否需要设置零或者负数flags.
+     *
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#LDA">相关文档</a>
+     */
     LDA(new Instruction6502[]{
-            Instruction6502.create((byte) 0xA9, cn.navclub.nes4j.bin.config.AddressModel.Immediate),
-            Instruction6502.create((byte) 0xA5, cn.navclub.nes4j.bin.config.AddressModel.ZeroPage),
-            Instruction6502.create((byte) 0xB5, cn.navclub.nes4j.bin.config.AddressModel.ZeroPage_X),
-            Instruction6502.create((byte) 0xAD, cn.navclub.nes4j.bin.config.AddressModel.Absolute),
-            Instruction6502.create((byte) 0xBD, cn.navclub.nes4j.bin.config.AddressModel.Absolute_X),
-            Instruction6502.create((byte) 0xB9, cn.navclub.nes4j.bin.config.AddressModel.Absolute_Y),
-            Instruction6502.create((byte) 0xA1, cn.navclub.nes4j.bin.config.AddressModel.Indirect_X),
-            Instruction6502.create((byte) 0xB1, AddressModel.Indirect_Y),
-    });
+            Instruction6502.create(ByteUtil.overflow(0xA9), Immediate),
+            Instruction6502.create(ByteUtil.overflow(0xA5), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0xB5), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0xAD), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0xBD), Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0xB9), Absolute_Y),
+            Instruction6502.create(ByteUtil.overflow(0xA1), Indirect_X),
+            Instruction6502.create(ByteUtil.overflow(0xB1), Indirect_Y),
+    }),
+    /**
+     * 中断指令
+     */
+    BRK(ByteUtil.overflow(0x00));
+
     private final Instruction6502 instruction6502;
     private final Instruction6502[] instruction6502s;
 
     CPUInstruction(Instruction6502 instruction6502, Instruction6502[] instruction6502s) {
         this.instruction6502 = instruction6502;
         this.instruction6502s = instruction6502s;
+        if (this.instruction6502s != null) {
+            for (Instruction6502 instruction65021 : this.instruction6502s) {
+                instruction65021.setInstruction(this);
+            }
+        } else {
+            this.instruction6502.setInstruction(this);
+        }
+    }
+
+    CPUInstruction(byte openCode) {
+        this.instruction6502 = new Instruction6502(openCode, this);
+        this.instruction6502s = null;
     }
 
     CPUInstruction(Instruction6502[] instruction6502s) {
-        this.instruction6502 = null;
-        this.instruction6502s = instruction6502s;
+        this(null, instruction6502s);
     }
 
     CPUInstruction(Instruction6502 instruction6502) {
         this.instruction6502s = null;
         this.instruction6502 = instruction6502;
+    }
+
+    public static Instruction6502 getInstance(byte openCode) {
+        for (CPUInstruction value : values()) {
+            var parent = value.instruction6502;
+            if (parent != null) {
+                if (openCode == parent.getOpenCode()) {
+                    return parent;
+                }
+            } else {
+                for (Instruction6502 instruction6502 : value.instruction6502s) {
+                    if (instruction6502.getOpenCode() == openCode) {
+                        return instruction6502;
+                    }
+                }
+            }
+        }
+        log.warn("Unknown instruction:[0x{}]", Integer.toHexString(openCode));
+//        throw new NullPointerException("Unknown instruction:[0x" + Integer.toHexString(openCode) + "]");
+        return null;
     }
 }
