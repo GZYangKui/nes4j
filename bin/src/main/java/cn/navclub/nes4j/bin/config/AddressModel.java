@@ -6,6 +6,7 @@ package cn.navclub.nes4j.bin.config;
  *
  */
 public enum AddressModel {
+    Accumulator,
     Immediate,
     ZeroPage,
     ZeroPage_X,

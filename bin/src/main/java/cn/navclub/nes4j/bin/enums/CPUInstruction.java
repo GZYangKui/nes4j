@@ -41,6 +41,30 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0xB1), Indirect_Y),
     }),
     /**
+     * 将累加器中的值写入内存中
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#STA">相关文档</a>
+     */
+    STA(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x85), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x95), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x8D), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x9D), Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0x99), Absolute_Y),
+            Instruction6502.create(ByteUtil.overflow(0x81), Indirect_X),
+            Instruction6502.create(ByteUtil.overflow(0x91), Indirect_Y)
+    }
+    ),
+    /**
+     * 将寄存器Y中的值刷新到内存中
+     *
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#STY">相关文档</a>
+     */
+    STY(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x84), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x94), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0X8C), Absolute)
+    }),
+    /**
      * 与逻辑指令实现
      *
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#AND">相关文档</a>
@@ -83,6 +107,43 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x51), Indirect_Y)
     }
     ),
+    /**
+     * 将累加寄存器中的值push到堆栈上
+     *
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#PHA">相关文档</a>
+     */
+    PHA(ByteUtil.overflow(0x48)),
+    /**
+     * 将状态寄存器push到堆栈上
+     *
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#PHP">相关文档</a>
+     */
+    PHP(ByteUtil.overflow(0X08)),
+    /**
+     * 从系统栈中获取值并更新累加寄存器
+     *
+     * <a href="href="https://www.nesdev.org/obelisk-6502-guide/reference.html#PLA">相关文档</a>
+     */
+    PLA(ByteUtil.overflow(0x68)),
+    /**
+     * 从系统栈中读取值并更新状态寄存器
+     * <a href="href="https://www.nesdev.org/obelisk-6502-guide/reference.html#PLP">相关文档</a>
+     */
+    PLP(ByteUtil.overflow(0x28)),
+
+    /**
+     * 将操作数所有字节左移一位
+     *
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#ASL">相关文档</a>
+     */
+    ASL(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x0A), Accumulator),
+            Instruction6502.create(ByteUtil.overflow(0x06), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x16), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x0E), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x1E), Absolute_X)
+    }),
+
     /**
      * 中断指令
      */
@@ -132,7 +193,7 @@ public enum CPUInstruction {
                 }
             }
         }
-        log.warn("Unknown instruction:[0x{}]", Integer.toHexString(openCode));
+//        log.warn("Unknown instruction:[0x{}]", Integer.toHexString(openCode));
 //        throw new NullPointerException("Unknown instruction:[0x" + Integer.toHexString(openCode) + "]");
         return null;
     }

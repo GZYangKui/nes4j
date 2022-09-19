@@ -7,9 +7,13 @@ import cn.navclub.nes4j.bin.util.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 模拟CPU信息.
- * <b>模拟CPU可寻址范围为0-65535个内存单元,也就是说一个地址需要2个字节来存储.
- * NES CPU采用小端序寻址,这就意味着地址的8个最低有效位存储在8个最高有效位之前</b>
+ * 6502 微处理器是一个相对简单的 8 位 CPU，只有几个内部寄存器能够通过其 16 位地址总线寻址最多 64Kb 的内存。处理器是小端的，并希望地址首先存储在内存中的最低有效字节中。
+ * <p>
+ * 内存的第一个 256 字节页面 ($0000-$00FF) 被称为“零页”，是许多特殊寻址模式的焦点，这些模式会导致更短（更快）的指令或允许间接访问内存。第二页内存（$0100-$01FF）是为系统堆栈保留的，不能重定位。
+ * <p>
+ * 内存映射中唯一的其他保留位置是内存 $FFFA 到 $FFFF 的最后 6 个字节，必须使用不可屏蔽中断处理程序 ($FFFA/B)、上电复位位置 ($ FFFC/D) 和 BRK/中断请求处理程序 ($FFFE/F)。
+ * <p>
+ * 6502 对硬件设备没有任何特殊支持，因此必须将它们映射到内存区域才能与硬件锁存器交换数据。
  */
 @Slf4j
 public class VirtualCPU {
@@ -55,6 +59,7 @@ public class VirtualCPU {
     private final byte[] memory;
 
     public VirtualCPU() {
+        this.rbp = 0x01FF;
         this.memory = new byte[0xFFFF];
     }
 
@@ -112,6 +117,11 @@ public class VirtualCPU {
         var address = this.getOperandAddr(instruction6502.getAddressModel());
         var value = this.readMem(address);
         this.updateRax(value);
+    }
+
+    private void sta(Instruction6502 instruction6502) {
+        var address = this.getOperandAddr(instruction6502.getAddressModel());
+        this.writerMem(address, ByteUtil.overflow(this.rax));
     }
 
     private void updateRax(int rax) {
@@ -188,28 +198,64 @@ public class VirtualCPU {
         this.cf |= 0b0000_1000;
     }
 
-    private void and(Instruction6502 instruction6502) {
+    /**
+     * 逻辑运算 或、与、异或
+     */
+    private void logic(Instruction6502 instruction6502) {
         var address = this.getOperandAddr(instruction6502.getAddressModel());
         var a = this.rax;
         var b = this.readMem(address);
-        var c = a & b;
-
+        var instruction = instruction6502.getInstruction();
+        var c = switch (instruction) {
+            case EOR -> a ^ b;
+            case ORA -> a | b;
+            case AND -> a & b;
+            default -> a;
+        };
         this.updateRax(c);
     }
 
-    private void ora(Instruction6502 instruction6502) {
-        var address = this.getOperandAddr(instruction6502.getAddressModel());
-        var a = this.rax;
-        var b = this.readMem(address);
-        this.updateRax(a | b);
+    private void asl(Instruction6502 instruction6502) {
+        final byte b;
+        var a = instruction6502.getAddressModel() == AddressModel.Accumulator;
+        var address = -1;
+        if (a) {
+            b = (byte) this.rax;
+        } else {
+            address = this.getOperandAddr(instruction6502.getAddressModel());
+            b = this.readMem(address);
+        }
+        var c = b & 0b1000_0000;
+        //更新进位标识
+        this.cf |= c;
+        //左移1位
+        c = b << 1;
+        if (a) {
+            this.updateRax(c);
+        } else {
+            this.writerMem(address, (byte) c);
+        }
     }
 
-    private void eor(Instruction6502 instruction6502) {
-        var address = this.getOperandAddr(instruction6502.getAddressModel());
-        var a = this.rax;
-        var b = this.readMem(address);
-        this.updateRax(a ^ b);
+    private void push(Instruction6502 instruction6502) {
+        var instruction = instruction6502.getInstruction();
+        if (instruction == CPUInstruction.PHA) {
+            this.memory[this.rbp] = (byte) this.rbp;
+        } else {
+            this.memory[this.rbp] = (byte) this.cf;
+        }
+        this.rbp++;
     }
+
+    private void pull(Instruction6502 instruction6502) {
+        var instruction = instruction6502.getInstruction();
+        if (instruction == CPUInstruction.PLA) {
+            this.updateRax(this.memory[this.rbp]);
+        } else {
+            this.cf = this.memory[this.rbp];
+        }
+    }
+
 
     private void adc(AddressModel model) {
         var address = this.getOperandAddr(model);
@@ -251,14 +297,36 @@ public class VirtualCPU {
             if (instruction == CPUInstruction.BRK) {
                 this.brk();
             }
-            if (instruction == CPUInstruction.AND) {
-                this.and(instruction6502);
+
+            //或、与、异或逻辑运算
+            if (instruction == CPUInstruction.AND
+                    || instruction == CPUInstruction.ORA
+                    || instruction == CPUInstruction.EOR) {
+                this.logic(instruction6502);
             }
-            if (instruction == CPUInstruction.ORA) {
-                this.ora(instruction6502);
+
+            //push累加寄存器/状态寄存器
+            if (instruction == CPUInstruction.PHA || instruction == CPUInstruction.PHP) {
+                this.push(instruction6502);
             }
-            if (instruction == CPUInstruction.EOR) {
-                this.eor(instruction6502);
+            //pull累加寄存器/状态寄存器
+            if (instruction == CPUInstruction.PLA || instruction == CPUInstruction.PLP) {
+                this.pull(instruction6502);
+            }
+            //左移1位
+            if (instruction == CPUInstruction.ASL) {
+                this.asl(instruction6502);
+            }
+
+            //刷新累加寄存器值到内存
+            if (instruction == CPUInstruction.STA) {
+                this.sta(instruction6502);
+            }
+
+            //刷新y寄存器值到内存
+            if (instruction == CPUInstruction.STY) {
+                var address = this.getOperandAddr(instruction6502.getAddressModel());
+                this.writerMem(address, ByteUtil.overflow(this.ry));
             }
 
             this.rcx++;
