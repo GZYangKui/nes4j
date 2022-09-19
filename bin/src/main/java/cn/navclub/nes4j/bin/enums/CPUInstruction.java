@@ -13,9 +13,7 @@ import static cn.navclub.nes4j.bin.config.AddressModel.*;
 @Slf4j
 public enum CPUInstruction {
     /**
-     *
      * More detail please visit:<a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#ADC">ADC Document</a>
-     *
      */
     ADC(new Instruction6502[]{
             Instruction6502.create(ByteUtil.overflow(0x69), Immediate),
@@ -42,6 +40,49 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0xA1), Indirect_X),
             Instruction6502.create(ByteUtil.overflow(0xB1), Indirect_Y),
     }),
+    /**
+     * 与逻辑指令实现
+     *
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#AND">相关文档</a>
+     */
+    AND(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x29), Immediate),
+            Instruction6502.create(ByteUtil.overflow(0x25), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x35), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x2D), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x3D), Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0x39), Absolute_Y),
+            Instruction6502.create(ByteUtil.overflow(0x21), Indirect_X),
+            Instruction6502.create(ByteUtil.overflow(0x31), Indirect_Y),
+    }),
+    /**
+     * 或指令实现
+     */
+    ORA(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x09), Immediate),
+            Instruction6502.create(ByteUtil.overflow(0x05), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x15), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x0D), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x1D), Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0x19), Absolute_Y),
+            Instruction6502.create(ByteUtil.overflow(0x01), Indirect_X),
+            Instruction6502.create(ByteUtil.overflow(0x11), Indirect_Y)
+    }
+    ),
+    /**
+     * 异或逻辑实现
+     */
+    EOR(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x49), Immediate),
+            Instruction6502.create(ByteUtil.overflow(0x45), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x55), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x4D), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x5D), Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0x59), Absolute_Y),
+            Instruction6502.create(ByteUtil.overflow(0x41), Indirect_X),
+            Instruction6502.create(ByteUtil.overflow(0x51), Indirect_Y)
+    }
+    ),
     /**
      * 中断指令
      */

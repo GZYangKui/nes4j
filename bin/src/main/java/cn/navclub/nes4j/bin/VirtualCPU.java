@@ -4,12 +4,14 @@ import cn.navclub.nes4j.bin.config.AddressModel;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
 import cn.navclub.nes4j.bin.model.Instruction6502;
 import cn.navclub.nes4j.bin.util.ByteUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 模拟CPU信息.
  * <b>模拟CPU可寻址范围为0-65535个内存单元,也就是说一个地址需要2个字节来存储.
  * NES CPU采用小端序寻址,这就意味着地址的8个最低有效位存储在8个最高有效位之前</b>
  */
+@Slf4j
 public class VirtualCPU {
     private static final int SAFE_POINT = 0xFFFC;
 
@@ -113,6 +115,12 @@ public class VirtualCPU {
     }
 
     private void updateRax(int rax) {
+        if (rax == 0) {
+            this.cf |= 0b0000_00010;
+        }
+        if ((rax & 0b0100_0000) != 0) {
+            this.cf |= 0b0100_0000;
+        }
         //Set rax
         this.rax = rax;
         //Update Zero and negative flag
@@ -180,6 +188,29 @@ public class VirtualCPU {
         this.cf |= 0b0000_1000;
     }
 
+    private void and(Instruction6502 instruction6502) {
+        var address = this.getOperandAddr(instruction6502.getAddressModel());
+        var a = this.rax;
+        var b = this.readMem(address);
+        var c = a & b;
+
+        this.updateRax(c);
+    }
+
+    private void ora(Instruction6502 instruction6502) {
+        var address = this.getOperandAddr(instruction6502.getAddressModel());
+        var a = this.rax;
+        var b = this.readMem(address);
+        this.updateRax(a | b);
+    }
+
+    private void eor(Instruction6502 instruction6502) {
+        var address = this.getOperandAddr(instruction6502.getAddressModel());
+        var a = this.rax;
+        var b = this.readMem(address);
+        this.updateRax(a ^ b);
+    }
+
     private void adc(AddressModel model) {
         var address = this.getOperandAddr(model);
         var m = this.readMem(address);
@@ -209,6 +240,7 @@ public class VirtualCPU {
             if (instruction6502 == null) {
                 continue;
             }
+            log.debug("Prepare execute instruction [0x{}] alias [{}].", Integer.toHexString(instruction6502.getOpenCode()), instruction6502.getInstruction());
             var instruction = instruction6502.getInstruction();
             if (instruction == CPUInstruction.LDA) {
                 this.lda(instruction6502);
@@ -219,6 +251,17 @@ public class VirtualCPU {
             if (instruction == CPUInstruction.BRK) {
                 this.brk();
             }
+            if (instruction == CPUInstruction.AND) {
+                this.and(instruction6502);
+            }
+            if (instruction == CPUInstruction.ORA) {
+                this.ora(instruction6502);
+            }
+            if (instruction == CPUInstruction.EOR) {
+                this.eor(instruction6502);
+            }
+
+            this.rcx++;
         }
     }
 }

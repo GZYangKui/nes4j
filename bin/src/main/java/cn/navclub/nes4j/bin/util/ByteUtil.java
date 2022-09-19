@@ -15,4 +15,13 @@ public class ByteUtil {
         return b;
     }
 
+
+    public static byte[] toByteArray(int[] arr) {
+        var temp = new byte[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            temp[i] = overflow(arr[i]);
+        }
+        return temp;
+    }
+
 }
