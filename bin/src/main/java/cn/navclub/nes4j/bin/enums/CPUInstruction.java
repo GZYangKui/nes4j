@@ -143,6 +143,86 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x0E), Absolute),
             Instruction6502.create(ByteUtil.overflow(0x1E), Absolute_X)
     }),
+    /**
+     * 累加寄存器与指定内存值比较
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CMP">相关文档</a>
+     */
+    CMP(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0xC9), Immediate),
+            Instruction6502.create(ByteUtil.overflow(0xC5), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0xD5), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0xCD), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0xDD), Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0xD9), Absolute_Y),
+            Instruction6502.create(ByteUtil.overflow(0xC1), Indirect_X),
+            Instruction6502.create(ByteUtil.overflow(0xD1), Indirect_Y)
+    }),
+    /**
+     * 比较X寄存器与指定内存的值
+     *
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CMX">相关文档</a>
+     */
+    CPX(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0xE0), Immediate),
+            Instruction6502.create(ByteUtil.overflow(0xE4), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0xEC), Absolute),
+    }),
+    /**
+     * 比较y寄存器与内存中的值
+     *
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CMY">相关文档</a>
+     */
+    CPY(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0xE0), Immediate),
+            Instruction6502.create(ByteUtil.overflow(0xE4), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0xEC), Absolute),
+    }
+    ),
+    /**
+     * 自增指令
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INC">相关文档</a>
+     */
+    INC(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0xF6), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0xFE), Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0xE6), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0xEE), Absolute),
+    }
+    ),
+    /**
+     * 清除进位标识
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CLC">相关文档</a>
+     */
+    CLC(ByteUtil.overflow(0x18)),
+    /**
+     * 清除数字标识
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CLD">相关文档</a>
+     */
+    CLD(ByteUtil.overflow(0xD8)),
+    /**
+     * 清除中断标识
+     *
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CLI">相关文档</a>
+     */
+    CLI(ByteUtil.overflow(0x58)),
+    /**
+     * 清除溢出标识
+     *
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CLV">相关文档</a>
+     */
+    CLV(ByteUtil.overflow(0xB8)),
+
+    /**
+     * 自增X寄存器
+     *
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INX">相关文档</a>
+     */
+    INX(ByteUtil.overflow(0XE8)),
+    /**
+     * 自增Y寄存器
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INY">相关文档</a>
+     */
+    INY(ByteUtil.overflow(0xC8)),
 
     /**
      * 中断指令

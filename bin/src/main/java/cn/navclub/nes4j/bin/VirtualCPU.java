@@ -256,6 +256,67 @@ public class VirtualCPU {
         }
     }
 
+    /**
+     * {@link CPUInstruction#CMP}、{@link  CPUInstruction#CPX}和{@link CPUInstruction#CPY} 具体实现
+     */
+    private void cmp(Instruction6502 instruction6502) {
+        var address = this.getOperandAddr(instruction6502.getAddressModel());
+        final int a;
+        final CPUInstruction instruction = instruction6502.getInstruction();
+        if (instruction == CPUInstruction.CMP) {
+            a = this.rax;
+        } else if (instruction == CPUInstruction.CPX) {
+            a = this.rx;
+        } else if (instruction == CPUInstruction.CPY) {
+            a = this.ry;
+        } else {
+            log.warn("Not support compare instruction:[0x{}] alis:[{}]",
+                    Integer.toHexString(instruction6502.getOpenCode()),
+                    instruction6502.getInstruction()
+            );
+            return;
+        }
+        var b = this.readMem(address);
+        //设置Carry Flag
+        if (a >= b) {
+            this.cf |= 0b0000_0001;
+        }
+        //设置Zero Flag
+        if (a == b) {
+            this.cf |= 0b0000_0010;
+        }
+    }
+
+    private void inc(Instruction6502 instruction6502) {
+        final CPUInstruction instruction = instruction6502.getInstruction();
+        final int result;
+        if (instruction == CPUInstruction.INC) {
+            var address = this.getOperandAddr(instruction6502.getAddressModel());
+            var a = this.readMem(address);
+            result = a + 1;
+            this.writerMem(address, ByteUtil.overflow(result));
+        } else if (instruction == CPUInstruction.INX) {
+            var x = this.rx;
+            result = x + 1;
+            this.rx = result;
+        } else if (instruction == CPUInstruction.INY) {
+            var y = this.ry;
+            result = y + 1;
+            this.ry = result;
+        } else {
+            log.warn("Unknown inc instruction:0x[{}] alia:[{}].", instruction6502.getOpenCode(), instruction);
+            return;
+        }
+        //设置Zero Flag
+        if (result == 0) {
+            this.cf |= 0b0000_0010;
+        }
+        //设置Negative Flag
+        if ((result & 0b0100_0000) != 0) {
+            this.cf |= 0b0100_0000;
+        }
+    }
+
 
     private void adc(AddressModel model) {
         var address = this.getOperandAddr(model);
@@ -329,6 +390,36 @@ public class VirtualCPU {
                 this.writerMem(address, ByteUtil.overflow(this.ry));
             }
 
+            //清除进位标识
+            if (instruction == CPUInstruction.CLC) {
+                this.cf &= 0b0111_1110;
+            }
+
+            //清除Decimal model
+            if (instruction == CPUInstruction.CLD) {
+                this.cf &= 0b0111_0111;
+            }
+
+            //清除中断标识
+            if (instruction == CPUInstruction.CLI) {
+                this.cf &= 0b0111_1011;
+            }
+
+            if (instruction == CPUInstruction.CLV) {
+                this.cf &= 0b0110_1111;
+            }
+
+            if (instruction == CPUInstruction.CMP
+                    || instruction == CPUInstruction.CPX
+                    || instruction == CPUInstruction.CPY) {
+                this.cmp(instruction6502);
+            }
+
+            if (instruction == CPUInstruction.INC
+                    || instruction == CPUInstruction.INX
+                    || instruction == CPUInstruction.INY) {
+                this.inc(instruction6502);
+            }
             this.rcx++;
         }
     }
