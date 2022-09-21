@@ -4,7 +4,7 @@ import cn.navclub.nes4j.bin.model.Instruction6502;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
 
-import static cn.navclub.nes4j.bin.config.AddressModel.*;
+import static cn.navclub.nes4j.bin.enums.AddressModel.*;
 
 
 /**

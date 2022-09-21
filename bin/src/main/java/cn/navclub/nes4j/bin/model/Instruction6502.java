@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.model;
 
-import cn.navclub.nes4j.bin.config.AddressModel;
+import cn.navclub.nes4j.bin.enums.AddressModel;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
 import lombok.Getter;
 import lombok.Setter;

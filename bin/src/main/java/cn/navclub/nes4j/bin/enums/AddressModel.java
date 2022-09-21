@@ -1,4 +1,4 @@
-package cn.navclub.nes4j.bin.config;
+package cn.navclub.nes4j.bin.enums;
 
 /**
  *
