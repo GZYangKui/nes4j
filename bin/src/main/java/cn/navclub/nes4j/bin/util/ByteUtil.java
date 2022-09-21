@@ -24,4 +24,13 @@ public class ByteUtil {
         return temp;
     }
 
+    /**
+     * 将字节数组转换为整形
+     */
+    public static int toInt(byte[] arr) {
+        if (arr.length < 4) {
+            throw new RuntimeException("Byte array required four length.");
+        }
+        return arr[0] | arr[1] << 8 | arr[2] << 16 | arr[3] << 24;
+    }
 }

@@ -1,4 +1,4 @@
-package cn.navclub.nes4j.bin;
+package cn.navclub.nes4j.bin.config;
 
 import cn.navclub.nes4j.bin.config.AddressModel;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
