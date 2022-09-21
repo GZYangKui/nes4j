@@ -190,6 +190,12 @@ public enum CPUInstruction {
     }
     ),
     /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#JSR">相关文档</a>
+     */
+    JSR(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x20), Absolute)
+    }),
+    /**
      * 清除进位标识
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CLC">相关文档</a>
      */

@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin;
 
 import cn.navclub.nes4j.bin.config.NESFile;
+import cn.navclub.nes4j.bin.config.VirtualCPU;
 import cn.navclub.nes4j.bin.model.NESHeader;
 import cn.navclub.nes4j.bin.util.IOUtil;
 
@@ -16,6 +17,11 @@ public class NES {
                 () -> IOUtil.readFileAllByte(builder.file)
         );
         this.nesFile = new NESFile(new NESHeader(buffer), buffer);
+    }
+
+    public void execute() {
+        var cpu = new VirtualCPU();
+        cpu.loadRun(this.nesFile.getRgb());
     }
 
 
