@@ -26,15 +26,6 @@
         </encoder>
     </appender>
 
-    <!-- 自定义logger -->
-    <logger name="com.dispart" level="debug" additivity="false">
-        <appender-ref ref="console"/>
-    </logger>
-    <!--sql语句执行输出-->
-    <logger name="org.apache.ibatis" level="debug" additivity="false">
-        <appender-ref ref="console"/>
-    </logger>
-
     <root level="debug" additivity="false">
         <appender-ref ref="console"/>
     </root>

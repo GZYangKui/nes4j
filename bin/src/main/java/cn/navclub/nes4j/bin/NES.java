@@ -1,7 +1,7 @@
 package cn.navclub.nes4j.bin;
 
-import cn.navclub.nes4j.bin.config.NESFile;
-import cn.navclub.nes4j.bin.config.VirtualCPU;
+import cn.navclub.nes4j.bin.core.NESFile;
+import cn.navclub.nes4j.bin.core.VirtualCPU;
 import cn.navclub.nes4j.bin.model.NESHeader;
 import cn.navclub.nes4j.bin.util.IOUtil;
 

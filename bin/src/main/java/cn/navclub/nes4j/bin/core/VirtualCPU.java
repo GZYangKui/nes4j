@@ -1,5 +1,6 @@
-package cn.navclub.nes4j.bin.config;
+package cn.navclub.nes4j.bin.core;
 
+import cn.navclub.nes4j.bin.config.CPUStatus;
 import cn.navclub.nes4j.bin.enums.AddressModel;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
 import cn.navclub.nes4j.bin.model.Instruction6502;
@@ -55,13 +56,14 @@ public class VirtualCPU {
      *     </tr>
      * </table>
      */
-    private int status;
+    private final CPUStatus status;
 
     //内存区间64kb
     private final byte[] memory;
 
     public VirtualCPU() {
         this.sp = STACK_RESET;
+        this.status = new CPUStatus();
         this.memory = new byte[0xFFFF];
     }
 
@@ -81,7 +83,7 @@ public class VirtualCPU {
         this.rx = 0;
         this.ry = 0;
         this.ra = 0;
-        this.status = 0;
+        this.status.reset();
         this.sp = STACK_RESET;
         this.pc = this.readLMem(SAFE_POINT);
     }
@@ -146,7 +148,7 @@ public class VirtualCPU {
     private void lda(Instruction6502 instruction6502) {
         var address = this.getOperandAddr(instruction6502.getAddressModel());
         var value = this.readMem(address);
-        this.updatera(value);
+        this.raUpdate(value);
     }
 
     private void sta(Instruction6502 instruction6502) {
@@ -154,13 +156,9 @@ public class VirtualCPU {
         this.writerMem(address, ByteUtil.overflow(this.ra));
     }
 
-    private void updatera(int ra) {
-        if (ra == 0) {
-            this.status |= 0b0000_00010;
-        }
-        if ((ra & 0b0100_0000) != 0) {
-            this.status |= 0b0100_0000;
-        }
+    private void raUpdate(int ra) {
+        this.status.update(CPUStatus.BIFlag.ZERO_FLAG, ra == 0);
+        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (ra & 0b0100_0000) != 0);
         //Set ra
         this.ra = ra;
         //Update Zero and negative flag
@@ -171,20 +169,8 @@ public class VirtualCPU {
      * 更新负标识和零标识
      */
     private void updateNegZeroFlag(int result) {
-        //Upate ZeroFlag
-        if (result == 0) {
-            this.status |= 0b0000_0010;
-        } else {
-            this.status &= 0b1111_1101;
-        }
-
-        //Update Negative Flag
-        if ((result & 0b0100_0000) != 0) {
-            this.status |= 0b0100_0000;
-        } else {
-            this.status &= 0b0011_1111;
-        }
-
+        this.status.update(CPUStatus.BIFlag.ZERO_FLAG, result == 0);
+        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (result & 0b0100_0000) != 0);
     }
 
     private void writerMem(int pos, byte b) {
@@ -225,7 +211,7 @@ public class VirtualCPU {
 
     private void brk() {
         //设置中断状态为1
-        this.status |= 0b0000_1000;
+        this.status.setFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
     }
 
     /**
@@ -242,7 +228,7 @@ public class VirtualCPU {
             case AND -> a & b;
             default -> a;
         };
-        this.updatera(c);
+        this.raUpdate(c);
     }
 
     private void asl(Instruction6502 instruction6502) {
@@ -257,11 +243,11 @@ public class VirtualCPU {
         }
         var c = b & 0b1000_0000;
         //更新进位标识
-        this.status |= c;
+        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, c != 0);
         //左移1位
         c = b << 1;
         if (a) {
-            this.updatera(c);
+            this.raUpdate(c);
         } else {
             this.writerMem(address, (byte) c);
         }
@@ -272,7 +258,7 @@ public class VirtualCPU {
         if (instruction == CPUInstruction.PHA) {
             this.memory[this.sp] = (byte) this.sp;
         } else {
-            this.memory[this.sp] = (byte) this.status;
+            this.memory[this.sp] = this.status.getValue();
         }
         this.sp++;
     }
@@ -280,9 +266,9 @@ public class VirtualCPU {
     private void pull(Instruction6502 instruction6502) {
         var instruction = instruction6502.getInstruction();
         if (instruction == CPUInstruction.PLA) {
-            this.updatera(this.memory[this.sp]);
+            this.raUpdate(this.memory[this.sp]);
         } else {
-            this.status = this.memory[this.sp];
+            this.status.setValue(this.memory[this.sp]);
         }
     }
 
@@ -308,13 +294,9 @@ public class VirtualCPU {
         }
         var b = this.readMem(address);
         //设置Carry Flag
-        if (a >= b) {
-            this.status |= 0b0000_0001;
-        }
+        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, a >= b);
         //设置Zero Flag
-        if (a == b) {
-            this.status |= 0b0000_0010;
-        }
+        this.status.update(CPUStatus.BIFlag.ZERO_FLAG, a == b);
     }
 
     private void inc(Instruction6502 instruction6502) {
@@ -337,34 +319,20 @@ public class VirtualCPU {
             log.warn("Unknown inc instruction:0x[{}] alia:[{}].", instruction6502.getOpenCode(), instruction);
             return;
         }
-        //设置Zero Flag
-        if (result == 0) {
-            this.status |= 0b0000_0010;
-        }
-        //设置Negative Flag
-        if ((result & 0b0100_0000) != 0) {
-            this.status |= 0b0100_0000;
-        }
+        this.status.update(CPUStatus.BIFlag.ZERO_FLAG, result == 0);
+        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (result & 0b0100_0000) != 0);
     }
 
 
     private void adc(AddressModel model) {
         var address = this.getOperandAddr(model);
         var m = this.readMem(address);
-        var c = (this.status & 0b0000_0001) > 0 ? 1 : 0;
+        var c = (this.status.getValue() & 0b0000_0001) > 0 ? 1 : 0;
         var sum = this.ra + m + c;
         //If result overflow set carry-bit else remove carry bit.
-        if (sum > 0xff) {
-            this.status |= 0b0000_0001;
-        } else {
-            this.status &= 0b1111_1110;
-        }
+        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, sum > 0xff);
         //Set if sign-bit incorrect
-        if ((m ^ sum & (sum ^ this.ra)) != 0) {
-            this.status |= 0b0001_0000;
-        } else {
-            this.status &= 0b1110_1111;
-        }
+        this.status.update(CPUStatus.BIFlag.OVERFLOW_FLAG, ((m ^ sum) & (sum ^ this.ra)) != 0);
         this.ra = sum;
     }
 
@@ -376,25 +344,21 @@ public class VirtualCPU {
         } else {
             this.ry = data;
         }
-        if (data == 0) {
-            this.status |= 0b0000_0001;
-        }
-        if ((data & 0b0100_0000) > 0) {
-            this.status |= 0b0100_0000;
-        }
+        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, data == 0);
+        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (data & 0b0100_0000) > 0);
     }
 
     private void branch(Instruction6502 instruction6502) {
         var instruction = instruction6502.getInstruction();
         //不成立
-        if ((instruction == CPUInstruction.BCC && (this.status & 0b0000_0001) != 0)
-                || (instruction == CPUInstruction.BCS && (this.status & 0b0000_0001) == 0)
-                || (instruction == CPUInstruction.BEQ && (this.status & 0b0000_0010) == 0)
-                || (instruction == CPUInstruction.BMI && (this.status & 0b0100_0000) != 0)
-                || (instruction == CPUInstruction.BNE && (this.status & 0b0000_0010) != 0)
-                || (instruction == CPUInstruction.BPL && (this.status & 0b0100_0000) != 0)
-                || (instruction == CPUInstruction.BVC && (status & 0b0001_0000) != 0)
-                || instruction == CPUInstruction.BVS && (status & 0b0001_000) == 0) {
+        if ((instruction == CPUInstruction.BCC && this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG))
+                || (instruction == CPUInstruction.BCS && !this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG))
+                || (instruction == CPUInstruction.BEQ && !this.status.hasFlag(CPUStatus.BIFlag.ZERO_FLAG))
+                || (instruction == CPUInstruction.BMI && this.status.hasFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE))
+                || (instruction == CPUInstruction.BNE && this.status.hasFlag(CPUStatus.BIFlag.ZERO_FLAG))
+                || (instruction == CPUInstruction.BPL && this.status.hasFlag(CPUStatus.BIFlag.NEGATIVE_FLAG))
+                || (instruction == CPUInstruction.BVC && this.status.hasFlag(CPUStatus.BIFlag.OVERFLOW_FLAG)
+                || instruction == CPUInstruction.BVS && !this.status.hasFlag(CPUStatus.BIFlag.OVERFLOW_FLAG))) {
             return;
         }
         var jump = this.readMem(this.pc);
@@ -405,19 +369,9 @@ public class VirtualCPU {
         var address = this.getOperandAddr(instruction6502.getAddressModel());
         var value = this.readMem(address);
 
-        if (value < 0) {
-            this.status |= 0b0100_0000;
-        }
-
-        if ((value & 0b0010_0000) != 0) {
-            this.status |= 0b0010_0000;
-        }
-        var and = value & this.ra;
-        if (and == 0) {
-            this.status |= 0b0000_0010;
-        } else {
-            this.status &= 0b0111_1101;
-        }
+        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, value < 0);
+        this.status.update(CPUStatus.BIFlag.OVERFLOW_FLAG, (value & 0b0010_0000) != 0);
+        this.status.update(CPUStatus.BIFlag.ZERO_FLAG, (value & this.ra) == 0);
     }
 
     private void dec(Instruction6502 instruction6502) {
@@ -439,12 +393,9 @@ public class VirtualCPU {
                 yield this.ry;
             }
         };
-        if (value == 0) {
-            this.status |= 0b0000_00010;
-        }
-        if (value < 0) {
-            this.status |= 0b0100_0000;
-        }
+
+        this.status.update(CPUStatus.BIFlag.ZERO_FLAG, value == 0);
+        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, value < 0);
     }
 
     private void jump(Instruction6502 instruction6502) {
@@ -515,21 +466,21 @@ public class VirtualCPU {
 
             //清除进位标识
             if (instruction == CPUInstruction.CLC) {
-                this.status &= 0b0111_1110;
+                this.status.clearFlag(CPUStatus.BIFlag.CARRY_FLAG);
             }
 
             //清除Decimal model
             if (instruction == CPUInstruction.CLD) {
-                this.status &= 0b0111_0111;
+                this.status.clearFlag(CPUStatus.BIFlag.DECIMAL_MODE);
             }
 
             //清除中断标识
             if (instruction == CPUInstruction.CLI) {
-                this.status &= 0b0111_1011;
+                this.status.clearFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
             }
 
             if (instruction == CPUInstruction.CLV) {
-                this.status &= 0b0110_1111;
+                this.status.clearFlag(CPUStatus.BIFlag.OVERFLOW_FLAG);
             }
 
             if (instruction == CPUInstruction.CMP
@@ -545,7 +496,7 @@ public class VirtualCPU {
             }
 
             if (instruction == CPUInstruction.JSR) {
-                this.stackLPush(this.pc + 2 - 1);
+                this.stackLPush(this.pc + 1);
                 this.pc = this.readLMem(this.pc);
             }
 
@@ -582,22 +533,22 @@ public class VirtualCPU {
             }
 
             if (instruction == CPUInstruction.RTI) {
-                this.status = this.stackPop();
+                this.status.setValue(this.stackPop());
                 //取消中断标识
-                this.status &= 0b01110_1111;
+                this.status.clearFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
                 this.pc = this.stackPop();
             }
 
             if (instruction == CPUInstruction.SEC) {
-                this.status |= 0b0000_0001;
+                this.status.setFlag(CPUStatus.BIFlag.CARRY_FLAG);
             }
 
             if (instruction == CPUInstruction.SED) {
-                this.status |= 0b0000_1000;
+                this.status.setFlag(CPUStatus.BIFlag.DECIMAL_MODE);
             }
 
             if (instruction == CPUInstruction.SEI) {
-                this.status |= 0b0000_0100;
+                this.status.setFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
             }
 
             if (instruction == CPUInstruction.TAX
