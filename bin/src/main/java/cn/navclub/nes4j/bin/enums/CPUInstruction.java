@@ -144,6 +144,16 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x1E), Absolute_X)
     }),
     /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#LSR">相关文档</a>
+     */
+    LSR(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x4A), Accumulator),
+            Instruction6502.create(ByteUtil.overflow(0x46), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x56), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x4E), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x5E), Absolute_X)
+    }),
+    /**
      * 累加寄存器与指定内存值比较
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CMP">相关文档</a>
      */
@@ -234,6 +244,13 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0xDE), Absolute_X)
     }),
     /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#JMP">相关文档</a>
+     */
+    JMP(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x4C), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x6C), Indirect)
+    }),
+    /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#DCX">相关文档</a>
      */
     DEX(ByteUtil.overflow(0xCA)),
@@ -319,6 +336,53 @@ public enum CPUInstruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BVS">相关文档</a>
      */
     BVS(ByteUtil.overflow(0x70)),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#RTI">相关文档</a>
+     */
+    RTI(ByteUtil.overflow(0x40)),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#SEC">相关文档</a>
+     */
+    SEC(ByteUtil.overflow(0x38)),
+
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#SED">相关文档</a>
+     */
+    SED(ByteUtil.overflow(0x38)),
+
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#SEI">相关文档</a>
+     */
+    SEI(ByteUtil.overflow(0x38)),
+
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TAX">相关文档</a>
+     */
+    TAX(ByteUtil.overflow(0xAA)),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TAY">相关文档</a>
+     */
+    TAY(ByteUtil.overflow(0xA8)),
+
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TSX">相关文档</a>
+     */
+    TSX(ByteUtil.overflow(0xA8)),
+
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TXA">相关文档</a>
+     */
+    TXA(ByteUtil.overflow(0x8A)),
+
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TXS">相关文档</a>
+     */
+    TXS(ByteUtil.overflow(0x9A)),
+
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TYA">相关文档</a>
+     */
+    TYA(ByteUtil.overflow(0x98)),
 
     /**
      * 中断指令

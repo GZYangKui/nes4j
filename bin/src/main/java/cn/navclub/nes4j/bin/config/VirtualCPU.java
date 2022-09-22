@@ -66,10 +66,10 @@ public class VirtualCPU {
     }
 
     public void loadRun(byte[] arr) {
-        var index = 0x8000;
+        var index = 0x0600;
         System.arraycopy(arr, 0, this.memory, index, arr.length);
-        this.writerMemLE(SAFE_POINT, 0x0080);
         this.reset();
+        this.pc = index;
         this.run();
     }
 
@@ -447,6 +447,18 @@ public class VirtualCPU {
         }
     }
 
+    private void jump(Instruction6502 instruction6502) {
+        final int address;
+        if (instruction6502.getAddressModel() == AddressModel.Absolute) {
+            address = this.getOperandAddr(AddressModel.Absolute);
+        } else {
+            var lsb = this.readMem(this.pc);
+            var msb = this.readMem(this.pc + 1);
+            address = ByteUtil.toInt(new byte[]{lsb, msb});
+        }
+        this.pc = address;
+    }
+
 
     private void run() {
         while (true) {
@@ -563,6 +575,52 @@ public class VirtualCPU {
                     || instruction == CPUInstruction.DEX
                     || instruction == CPUInstruction.DEY) {
                 this.dec(instruction6502);
+            }
+
+            if (instruction == CPUInstruction.JMP) {
+                this.jump(instruction6502);
+            }
+
+            if (instruction == CPUInstruction.RTI) {
+                this.status = this.stackPop();
+                //取消中断标识
+                this.status &= 0b01110_1111;
+                this.pc = this.stackPop();
+            }
+
+            if (instruction == CPUInstruction.SEC) {
+                this.status |= 0b0000_0001;
+            }
+
+            if (instruction == CPUInstruction.SED) {
+                this.status |= 0b0000_1000;
+            }
+
+            if (instruction == CPUInstruction.SEI) {
+                this.status |= 0b0000_0100;
+            }
+
+            if (instruction == CPUInstruction.TAX
+                    || instruction == CPUInstruction.TAY
+                    || instruction == CPUInstruction.TSX
+                    || instruction == CPUInstruction.TXA
+                    || instruction == CPUInstruction.TXS
+                    || instruction == CPUInstruction.TYA) {
+                final int r;
+                if (instruction == CPUInstruction.TAX)
+                    r = this.rx = this.ra;
+                else if (instruction == CPUInstruction.TAY)
+                    r = this.ry = this.ra;
+                else if (instruction == CPUInstruction.TSX)
+                    r = this.rx = this.sp;
+                else if (instruction == CPUInstruction.TXA)
+                    r = this.ra = this.rx;
+                else if (instruction == CPUInstruction.TXS)
+                    r = this.sp = this.rx;
+                else
+                    r = this.rx = this.ry;
+
+                this.updateNegZeroFlag(r);
             }
         }
     }
