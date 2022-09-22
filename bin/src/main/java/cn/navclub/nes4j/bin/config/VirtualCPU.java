@@ -28,9 +28,9 @@ public class VirtualCPU {
     //Y寄存器
     private int ry;
     //程序计数器
-    private int programCounter;
+    private int pc;
     //栈指针寄存器,始终指向栈顶
-    private int stackPointer;
+    private int sp;
     /**
      * 状态寄存器.<p/>
      * 以下表格描述各位分标代表那些状态：
@@ -61,7 +61,7 @@ public class VirtualCPU {
     private final byte[] memory;
 
     public VirtualCPU() {
-        this.stackPointer = STACK_RESET;
+        this.sp = STACK_RESET;
         this.memory = new byte[0xFFFF];
     }
 
@@ -82,8 +82,8 @@ public class VirtualCPU {
         this.ry = 0;
         this.ra = 0;
         this.status = 0;
-        this.stackPointer = STACK_RESET;
-        this.programCounter = this.readMemLE(SAFE_POINT);
+        this.sp = STACK_RESET;
+        this.pc = this.readMemLE(SAFE_POINT);
     }
 
     /**
@@ -114,8 +114,8 @@ public class VirtualCPU {
     }
 
     public void stackPush(byte data) {
-        this.writerMem(STACK + this.stackPointer, data);
-        this.stackPointer++;
+        this.writerMem(STACK + this.sp, data);
+        this.sp++;
     }
 
     public void stackPushLE(int data) {
@@ -126,8 +126,8 @@ public class VirtualCPU {
     }
 
     public byte stackPop() {
-        this.stackPointer--;
-        return this.readMem(STACK + this.stackPointer);
+        this.sp--;
+        return this.readMem(STACK + this.sp);
     }
 
     public int stackPopLE() {
@@ -193,22 +193,22 @@ public class VirtualCPU {
      */
     private int getOperandAddr(AddressModel model) {
         return switch (model) {
-            case Immediate -> this.programCounter;
-            case ZeroPage -> this.readMem(this.programCounter);
-            case Absolute -> this.readMemLE(this.programCounter);
-            case ZeroPage_X -> this.readMem(this.programCounter) + this.rx;
-            case ZeroPage_Y -> this.readMem(this.programCounter) + this.ry;
-            case Absolute_X -> this.readMemLE(this.programCounter) + this.rx;
-            case Absolute_Y -> this.readMemLE(this.programCounter) + this.ry;
+            case Immediate -> this.pc;
+            case ZeroPage -> this.readMem(this.pc);
+            case Absolute -> this.readMemLE(this.pc);
+            case ZeroPage_X -> this.readMem(this.pc) + this.rx;
+            case ZeroPage_Y -> this.readMem(this.pc) + this.ry;
+            case Absolute_X -> this.readMemLE(this.pc) + this.rx;
+            case Absolute_Y -> this.readMemLE(this.pc) + this.ry;
             case Indirect_X -> {
-                var base = this.readMem(this.programCounter);
+                var base = this.readMem(this.pc);
                 var ptr = base + this.ra;
                 var l = this.readMem(ptr);
                 var h = this.readMem(ptr + 1);
                 yield h << 8 | l;
             }
             case Indirect_Y -> {
-                var base = this.readMem(this.programCounter);
+                var base = this.readMem(this.pc);
 
                 var l = this.readMem(base);
                 var h = this.readMem((base)) + 1;
@@ -266,19 +266,19 @@ public class VirtualCPU {
     private void push(Instruction6502 instruction6502) {
         var instruction = instruction6502.getInstruction();
         if (instruction == CPUInstruction.PHA) {
-            this.memory[this.stackPointer] = (byte) this.stackPointer;
+            this.memory[this.sp] = (byte) this.sp;
         } else {
-            this.memory[this.stackPointer] = (byte) this.status;
+            this.memory[this.sp] = (byte) this.status;
         }
-        this.stackPointer++;
+        this.sp++;
     }
 
     private void pull(Instruction6502 instruction6502) {
         var instruction = instruction6502.getInstruction();
         if (instruction == CPUInstruction.PLA) {
-            this.updatera(this.memory[this.stackPointer]);
+            this.updatera(this.memory[this.sp]);
         } else {
-            this.status = this.memory[this.stackPointer];
+            this.status = this.memory[this.sp];
         }
     }
 
@@ -367,8 +367,8 @@ public class VirtualCPU {
 
     private void run() {
         while (true) {
-            var openCode = this.readMem(this.programCounter);
-            this.programCounter += 1;
+            var openCode = this.readMem(this.pc);
+            this.pc += 1;
             var instruction6502 = CPUInstruction.getInstance(openCode);
             if (instruction6502 == null) {
                 continue;
@@ -448,8 +448,8 @@ public class VirtualCPU {
             }
 
             if (instruction == CPUInstruction.JSR) {
-                this.stackPushLE(this.programCounter - 1);
-                this.programCounter = this.readMemLE(this.programCounter);
+                this.stackPushLE(this.pc - 1);
+                this.pc = this.readMemLE(this.pc);
             }
         }
     }
