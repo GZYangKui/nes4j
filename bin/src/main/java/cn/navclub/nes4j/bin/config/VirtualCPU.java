@@ -83,7 +83,7 @@ public class VirtualCPU {
         this.ra = 0;
         this.status = 0;
         this.sp = STACK_RESET;
-        this.pc = this.readMemLE(SAFE_POINT);
+        this.pc = this.readLMem(SAFE_POINT);
     }
 
     /**
@@ -93,10 +93,14 @@ public class VirtualCPU {
         return this.memory[addr];
     }
 
+    private int readUMem(int addr) {
+        return Byte.toUnsignedInt(this.readMem(addr));
+    }
+
     /**
      * 以小端序读取地址
      */
-    private int readMemLE(int addr) {
+    private int readLMem(int addr) {
         var l = Byte.toUnsignedInt(this.readMem(addr));
         var h = Byte.toUnsignedInt(this.readMem((addr + 1)));
         return (h << 8 | l);
@@ -118,7 +122,7 @@ public class VirtualCPU {
         this.sp++;
     }
 
-    public void stackPushLE(int data) {
+    public void stackLPush(int data) {
         var lsb = data & 0xFF;
         var msb = (data >> 8) & 0xFF;
         this.stackPush(ByteUtil.overflow(lsb));
@@ -130,7 +134,7 @@ public class VirtualCPU {
         return this.readMem(STACK + this.sp);
     }
 
-    public int stackPopLE() {
+    public int stackLPop() {
         var msb = this.stackPop();
         var lsb = this.stackPop();
         return lsb | msb << 8;
@@ -194,12 +198,12 @@ public class VirtualCPU {
     private int getOperandAddr(AddressModel model) {
         return switch (model) {
             case Immediate -> this.pc;
-            case ZeroPage -> this.readMem(this.pc);
-            case Absolute -> this.readMemLE(this.pc);
-            case ZeroPage_X -> this.readMem(this.pc) + this.rx;
-            case ZeroPage_Y -> this.readMem(this.pc) + this.ry;
-            case Absolute_X -> this.readMemLE(this.pc) + this.rx;
-            case Absolute_Y -> this.readMemLE(this.pc) + this.ry;
+            case ZeroPage -> this.readUMem(this.pc);
+            case Absolute -> this.readLMem(this.pc);
+            case ZeroPage_X -> this.readUMem(this.pc) + this.rx;
+            case ZeroPage_Y -> this.readUMem(this.pc) + this.ry;
+            case Absolute_X -> this.readLMem(this.pc) + this.rx;
+            case Absolute_Y -> this.readLMem(this.pc) + this.ry;
             case Indirect_X -> {
                 var base = this.readMem(this.pc);
                 var ptr = base + this.ra;
@@ -364,17 +368,98 @@ public class VirtualCPU {
         this.ra = sum;
     }
 
+    private void loadXY(Instruction6502 instruction6502) {
+        var address = this.getOperandAddr(instruction6502.getAddressModel());
+        var data = this.readMem(address);
+        if (instruction6502.getInstruction() == CPUInstruction.LDX) {
+            this.rx = data;
+        } else {
+            this.ry = data;
+        }
+        if (data == 0) {
+            this.status |= 0b0000_0001;
+        }
+        if ((data & 0b0100_0000) > 0) {
+            this.status |= 0b0100_0000;
+        }
+    }
+
+    private void branch(Instruction6502 instruction6502) {
+        var instruction = instruction6502.getInstruction();
+        //不成立
+        if ((instruction == CPUInstruction.BCC && (this.status & 0b0000_0001) != 0)
+                || (instruction == CPUInstruction.BCS && (this.status & 0b0000_0001) == 0)
+                || (instruction == CPUInstruction.BEQ && (this.status & 0b0000_0010) == 0)
+                || (instruction == CPUInstruction.BMI && (this.status & 0b0100_0000) != 0)
+                || (instruction == CPUInstruction.BNE && (this.status & 0b0000_0010) != 0)
+                || (instruction == CPUInstruction.BPL && (this.status & 0b0100_0000) != 0)
+                || (instruction == CPUInstruction.BVC && (status & 0b0001_0000) != 0)
+                || instruction == CPUInstruction.BVS && (status & 0b0001_000) == 0) {
+            return;
+        }
+        var jump = this.readMem(this.pc);
+        this.pc = this.pc + 1 + jump;
+    }
+
+    private void bit(Instruction6502 instruction6502) {
+        var address = this.getOperandAddr(instruction6502.getAddressModel());
+        var value = this.readMem(address);
+
+        if (value < 0) {
+            this.status |= 0b0100_0000;
+        }
+
+        if ((value & 0b0010_0000) != 0) {
+            this.status |= 0b0010_0000;
+        }
+        var and = value & this.ra;
+        if (and == 0) {
+            this.status |= 0b0000_0010;
+        } else {
+            this.status &= 0b0111_1101;
+        }
+    }
+
+    private void dec(Instruction6502 instruction6502) {
+        var instruction = instruction6502.getInstruction();
+        var value = switch (instruction) {
+            case DEC -> {
+                var address = getOperandAddr(instruction6502.getAddressModel());
+                var b = this.readMem(address);
+                b--;
+                this.writerMem(address, b);
+                yield b;
+            }
+            case DEX -> {
+                this.rx -= 1;
+                yield this.rx;
+            }
+            default -> {
+                this.ry -= 1;
+                yield this.ry;
+            }
+        };
+        if (value == 0) {
+            this.status |= 0b0000_00010;
+        }
+        if (value < 0) {
+            this.status |= 0b0100_0000;
+        }
+    }
+
 
     private void run() {
         while (true) {
             var openCode = this.readMem(this.pc);
             this.pc += 1;
+//            log.debug("Current pc:{}.", this.pc);
             var instruction6502 = CPUInstruction.getInstance(openCode);
             if (instruction6502 == null) {
                 continue;
             }
             var instruction = instruction6502.getInstruction();
-            log.debug("Prepare execute instruction [0x{}] alias [{}].", Integer.toHexString(instruction6502.getOpenCode()), instruction);
+            if (instruction != CPUInstruction.BRK)
+                log.debug("Prepare execute instruction [0x{}] alias [{}].", Integer.toHexString(instruction6502.getOpenCode()), instruction);
             if (instruction == CPUInstruction.LDA) {
                 this.lda(instruction6502);
             }
@@ -448,8 +533,36 @@ public class VirtualCPU {
             }
 
             if (instruction == CPUInstruction.JSR) {
-                this.stackPushLE(this.pc - 1);
-                this.pc = this.readMemLE(this.pc);
+                this.stackLPush(this.pc + 2 - 1);
+                this.pc = this.readLMem(this.pc);
+            }
+
+            if (instruction == CPUInstruction.RTS) {
+                this.pc = this.stackLPop() + 1;
+            }
+            if (instruction == CPUInstruction.LDX || instruction == CPUInstruction.LDY) {
+                this.loadXY(instruction6502);
+            }
+
+            if (instruction == CPUInstruction.BIT) {
+                this.bit(instruction6502);
+            }
+
+            if (instruction == CPUInstruction.BCC
+                    || instruction == CPUInstruction.BCS
+                    || instruction == CPUInstruction.BEQ
+                    || instruction == CPUInstruction.BMI
+                    || instruction == CPUInstruction.BPL
+                    || instruction == CPUInstruction.BNE
+                    || instruction == CPUInstruction.BVC
+                    || instruction == CPUInstruction.BVS) {
+                this.branch(instruction6502);
+            }
+
+            if (instruction == CPUInstruction.DEC
+                    || instruction == CPUInstruction.DEX
+                    || instruction == CPUInstruction.DEY) {
+                this.dec(instruction6502);
             }
         }
     }

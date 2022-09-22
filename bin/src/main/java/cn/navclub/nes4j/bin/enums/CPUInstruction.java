@@ -179,6 +179,28 @@ public enum CPUInstruction {
     }
     ),
     /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#LDX">相关文档</a>
+     */
+    LDX(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0xA2), Immediate),
+            Instruction6502.create(ByteUtil.overflow(0xA6), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0xB6), ZeroPage_Y),
+            Instruction6502.create(ByteUtil.overflow(0xAE), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0xBE), Absolute_Y)
+    }
+    ),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#LDY">相关文档</a>
+     */
+    LDY(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0xA0), Immediate),
+            Instruction6502.create(ByteUtil.overflow(0xA4), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0xB4), ZeroPage_Y),
+            Instruction6502.create(ByteUtil.overflow(0xAC), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0xBC), Absolute_Y)
+    }
+    ),
+    /**
      * 自增指令
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INC">相关文档</a>
      */
@@ -195,6 +217,34 @@ public enum CPUInstruction {
     JSR(new Instruction6502[]{
             Instruction6502.create(ByteUtil.overflow(0x20), Absolute)
     }),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BIT">相关文档</a>
+     */
+    BIT(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x24), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0X2C), Absolute)
+    }),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#DCE">相关文档</a>
+     */
+    DEC(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0xC6), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0xD6), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0xCE), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0xDE), Absolute_X)
+    }),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#DCX">相关文档</a>
+     */
+    DEX(ByteUtil.overflow(0xCA)),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#DCY">相关文档</a>
+     */
+    DEY(ByteUtil.overflow(0x88)),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#RTS">相关文档</a>
+     */
+    RTS(ByteUtil.overflow(0X60)),
     /**
      * 清除进位标识
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CLC">相关文档</a>
@@ -229,6 +279,46 @@ public enum CPUInstruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INY">相关文档</a>
      */
     INY(ByteUtil.overflow(0xC8)),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#NOP">相关文档</a>
+     */
+    NOP(ByteUtil.overflow(0xEA)),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BCC">相关文档</a>
+     */
+    BCC(ByteUtil.overflow(0x90)),
+
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BCS">相关文档</a>
+     */
+    BCS(ByteUtil.overflow(0x90)),
+
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BEQ">相关文档</a>
+     */
+    BEQ(ByteUtil.overflow(0xF0)),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BNE">相关文档</a>
+     */
+    BNE(ByteUtil.overflow(0XD0)),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BPL">相关文档</a>
+     */
+    BPL(ByteUtil.overflow(0XD0)),
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BMI">相关文档</a>
+     */
+    BMI(ByteUtil.overflow(0x30)),
+
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BVC">相关文档</a>
+     */
+    BVC(ByteUtil.overflow(0x30)),
+
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BVS">相关文档</a>
+     */
+    BVS(ByteUtil.overflow(0x70)),
 
     /**
      * 中断指令
