@@ -76,8 +76,8 @@ public class CPU6502 {
         this.ry = 0;
         this.ra = 0;
         this.status.reset();
+        this.pc = SAFE_POINT;
         this.sp = STACK_RESET;
-        this.pc = this.bus.readInt(SAFE_POINT);
     }
 
 
@@ -119,13 +119,13 @@ public class CPU6502 {
         //Set ra
         this.ra = ra;
         //Update Zero and negative flag
-        this.updateNegZeroFlag(ra);
+        this.NZUpdate(ra);
     }
 
     /**
      * 更新负标识和零标识
      */
-    private void updateNegZeroFlag(int result) {
+    private void NZUpdate(int result) {
         this.status.update(CPUStatus.BIFlag.ZERO_FLAG, result == 0);
         this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (result & 0b0100_0000) != 0);
     }
@@ -351,7 +351,12 @@ public class CPU6502 {
         this.pc = address;
     }
 
-    private void interrupt(CPUInterrupt interrupt) {
+    public void interrupt(CPUInterrupt interrupt) {
+        if (interrupt != CPUInterrupt.NMI
+                && this.status.hasFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE)) {
+            log.debug("Current interrupt disable status.");
+            return;
+        }
         if (interrupt == CPUInterrupt.RESET) {
             this.pc = this.bus.readByte(SAFE_POINT);
         } else {
@@ -371,7 +376,8 @@ public class CPU6502 {
 
     public void execute() {
         while (true) {
-            var openCode = this.bus.readByte(this.pc++);
+            var openCode = this.bus.readByte(this.pc);
+            this.pc++;
             var instruction6502 = CPUInstruction.getInstance(openCode);
             if (instruction6502 == null) {
                 continue;
@@ -526,7 +532,7 @@ public class CPU6502 {
                 else
                     r = this.rx = this.ry;
 
-                this.updateNegZeroFlag(r);
+                this.NZUpdate(r);
             }
         }
     }
