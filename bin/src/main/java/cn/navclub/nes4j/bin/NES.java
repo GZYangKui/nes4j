@@ -1,7 +1,7 @@
 package cn.navclub.nes4j.bin;
 
 import cn.navclub.nes4j.bin.core.Bus;
-import cn.navclub.nes4j.bin.core.CPU6502;
+import cn.navclub.nes4j.bin.core.CPU;
 import cn.navclub.nes4j.bin.core.MemoryMap;
 import cn.navclub.nes4j.bin.core.NESFile;
 import cn.navclub.nes4j.bin.model.NESHeader;
@@ -16,7 +16,7 @@ public class NES {
     private final MemoryMap map;
     @Getter
     private final NESFile nesFile;
-    private final CPU6502 cpu;
+    private final CPU cpu;
 
     private NES(NESBuilder builder) {
         var buffer = Objects.requireNonNullElseGet(
@@ -26,7 +26,7 @@ public class NES {
         this.nesFile = new NESFile(new NESHeader(buffer), buffer);
         this.map = new MemoryMap(this.nesFile);
         this.bus = new Bus(this.map);
-        this.cpu = new CPU6502(this.bus);
+        this.cpu = new CPU(this.bus);
     }
 
     public void execute() {

@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
  * 6502 对硬件设备没有任何特殊支持，因此必须将它们映射到内存区域才能与硬件锁存器交换数据。
  */
 @Slf4j
-public class CPU6502 {
+public class CPU {
     //0x0100-0x01FF
     private static final int STACK = 0x0100;
     private static final int SAFE_POINT = 0xFFFC;
@@ -61,7 +61,7 @@ public class CPU6502 {
 
     private final Bus bus;
 
-    public CPU6502(final Bus bus) {
+    public CPU(final Bus bus) {
         this.bus = bus;
         this.sp = STACK_RESET;
         this.status = new CPUStatus();
@@ -93,14 +93,18 @@ public class CPU6502 {
         this.stackPush(ByteUtil.overflow(msb));
     }
 
-    public byte stackPop() {
+    public byte popByte() {
         this.sp--;
         return this.bus.readByte(STACK + this.sp);
     }
 
-    public int stackLPop() {
-        var msb = Byte.toUnsignedInt(this.stackPop());
-        var lsb = Byte.toUnsignedInt(this.stackPop());
+    private int popUSByte() {
+        return Byte.toUnsignedInt(popByte());
+    }
+
+    public int popInt() {
+        var msb = Byte.toUnsignedInt(this.popByte());
+        var lsb = Byte.toUnsignedInt(this.popByte());
         return lsb | msb << 8;
     }
 
@@ -114,10 +118,11 @@ public class CPU6502 {
     }
 
     private void raUpdate(int ra) {
-        this.status.update(CPUStatus.BIFlag.ZERO_FLAG, ra == 0);
-        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (ra & 0b0100_0000) != 0);
         //Set ra
         this.ra = ra;
+        if (this.ra < 0) {
+            System.out.println("aaa");
+        }
         //Update Zero and negative flag
         this.NZUpdate(ra);
     }
@@ -259,7 +264,7 @@ public class CPU6502 {
             result = y + 1;
             this.ry = result;
         } else {
-            log.warn("Unknown inc instruction:0x[{}] alia:[{}].", instruction6502.getOpenCode(), instruction);
+            log.warn("Unknown inc instruction:[0x{}] alia:[{}].", instruction6502.getOpenCode(), instruction);
             return;
         }
         this.status.update(CPUStatus.BIFlag.ZERO_FLAG, result == 0);
@@ -276,7 +281,7 @@ public class CPU6502 {
         this.status.update(CPUStatus.BIFlag.CARRY_FLAG, sum > 0xff);
         //Set if sign-bit incorrect
         this.status.update(CPUStatus.BIFlag.OVERFLOW_FLAG, ((m ^ sum) & (sum ^ this.ra)) != 0);
-        this.ra = sum;
+        this.raUpdate(sum);
     }
 
     private void loadXY(Instruction6502 instruction6502) {
@@ -354,7 +359,7 @@ public class CPU6502 {
     public void interrupt(CPUInterrupt interrupt) {
         if (interrupt != CPUInterrupt.NMI
                 && this.status.hasFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE)) {
-            log.debug("Current interrupt disable status.");
+//            log.debug("Current interrupt disable status.");
             return;
         }
         if (interrupt == CPUInterrupt.RESET) {
@@ -364,7 +369,7 @@ public class CPU6502 {
             this.stackPush(ByteUtil.overflow(this.status.getValue()));
             //禁用中断
             this.status.setFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
-            this.pc = this.bus.readByte(interrupt == CPUInterrupt.NMI ? 0xFFFA : 0xFFFE);
+            this.pc = this.bus.readInt(interrupt == CPUInterrupt.NMI ? 0xFFFA : 0xFFFE);
             if (interrupt == CPUInterrupt.BRK) {
                 this.status.setFlag(CPUStatus.BIFlag.BREAK_COMMAND);
             } else {
@@ -383,8 +388,8 @@ public class CPU6502 {
                 continue;
             }
             var instruction = instruction6502.getInstruction();
-            if (instruction != CPUInstruction.BRK)
-                log.debug("Prepare execute instruction [0x{}] alias [{}].", Integer.toHexString(instruction6502.getOpenCode()), instruction);
+//            if (instruction != CPUInstruction.BRK)
+//                log.debug("Prepare execute instruction [0x{}] alias [{}].", Integer.toHexString(instruction6502.getOpenCode()), instruction);
             if (instruction == CPUInstruction.LDA) {
                 this.lda(instruction6502);
             }
@@ -458,11 +463,11 @@ public class CPU6502 {
 
             if (instruction == CPUInstruction.JSR) {
                 this.stackLPush(this.pc + 1);
-                this.pc = this.bus.readByte(this.pc);
+                this.pc = this.bus.readUSByte(this.pc);
             }
 
             if (instruction == CPUInstruction.RTS) {
-                this.pc = this.stackLPop() + 1;
+                this.pc = this.popInt() + 1;
             }
             if (instruction == CPUInstruction.LDX || instruction == CPUInstruction.LDY) {
                 this.loadXY(instruction6502);
@@ -494,10 +499,10 @@ public class CPU6502 {
             }
 
             if (instruction == CPUInstruction.RTI) {
-                this.status.setValue(this.stackPop());
+                this.status.setValue(this.popByte());
                 //取消中断标识
                 this.status.clearFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
-                this.pc = this.stackPop();
+                this.pc = this.popUSByte();
             }
 
             if (instruction == CPUInstruction.SEC) {
@@ -526,7 +531,7 @@ public class CPU6502 {
                 else if (instruction == CPUInstruction.TSX)
                     r = this.rx = this.sp;
                 else if (instruction == CPUInstruction.TXA)
-                    r = this.ra = this.rx;
+                    r = this.rx;
                 else if (instruction == CPUInstruction.TXS)
                     r = this.sp = this.rx;
                 else
