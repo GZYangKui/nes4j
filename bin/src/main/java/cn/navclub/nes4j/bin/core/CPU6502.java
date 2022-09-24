@@ -3,6 +3,7 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.config.CPUStatus;
 import cn.navclub.nes4j.bin.enums.AddressModel;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
+import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.model.Instruction6502;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
  * 6502 对硬件设备没有任何特殊支持，因此必须将它们映射到内存区域才能与硬件锁存器交换数据。
  */
 @Slf4j
-public class VirtualCPU {
+public class CPU6502 {
     //0x0100-0x01FF
     private static final int STACK = 0x0100;
     private static final int SAFE_POINT = 0xFFFC;
@@ -58,21 +59,12 @@ public class VirtualCPU {
      */
     private final CPUStatus status;
 
-    //内存区间64kb
-    private final byte[] memory;
+    private final Bus bus;
 
-    public VirtualCPU() {
+    public CPU6502(final Bus bus) {
+        this.bus = bus;
         this.sp = STACK_RESET;
         this.status = new CPUStatus();
-        this.memory = new byte[0xFFFF];
-    }
-
-    public void loadRun(byte[] arr) {
-        var index = 0x0600;
-        System.arraycopy(arr, 0, this.memory, index, arr.length);
-        this.reset();
-        this.pc = index;
-        this.run();
     }
 
 
@@ -85,42 +77,12 @@ public class VirtualCPU {
         this.ra = 0;
         this.status.reset();
         this.sp = STACK_RESET;
-        this.pc = this.readLMem(SAFE_POINT);
+        this.pc = this.bus.readInt(SAFE_POINT);
     }
 
-    /**
-     * 从内存中读取单个字节数据
-     */
-    private byte readMem(int addr) {
-        return this.memory[addr];
-    }
-
-    private int readUMem(int addr) {
-        return Byte.toUnsignedInt(this.readMem(addr));
-    }
-
-    /**
-     * 以小端序读取地址
-     */
-    private int readLMem(int addr) {
-        var l = Byte.toUnsignedInt(this.readMem(addr));
-        var h = Byte.toUnsignedInt(this.readMem((addr + 1)));
-        return (h << 8 | l);
-    }
-
-    /**
-     * 以小端序写入数据
-     */
-    private void writerMemLE(int pos, int data) {
-        var lsb = data & 0xFF;
-        var msb = (data >> 8) & 0xFF;
-
-        this.writerMem(pos, ByteUtil.overflow(lsb));
-        this.writerMem(pos + 1, ByteUtil.overflow(msb));
-    }
 
     public void stackPush(byte data) {
-        this.writerMem(STACK + this.sp, data);
+        this.bus.writeByte(STACK + this.sp, data);
         this.sp++;
     }
 
@@ -133,12 +95,12 @@ public class VirtualCPU {
 
     public byte stackPop() {
         this.sp--;
-        return this.readMem(STACK + this.sp);
+        return this.bus.readByte(STACK + this.sp);
     }
 
     public int stackLPop() {
-        var msb = this.stackPop();
-        var lsb = this.stackPop();
+        var msb = Byte.toUnsignedInt(this.stackPop());
+        var lsb = Byte.toUnsignedInt(this.stackPop());
         return lsb | msb << 8;
     }
 
@@ -147,13 +109,8 @@ public class VirtualCPU {
      */
     private void lda(Instruction6502 instruction6502) {
         var address = this.getOperandAddr(instruction6502.getAddressModel());
-        var value = this.readMem(address);
+        var value = this.bus.readByte(address);
         this.raUpdate(value);
-    }
-
-    private void sta(Instruction6502 instruction6502) {
-        var address = this.getOperandAddr(instruction6502.getAddressModel());
-        this.writerMem(address, ByteUtil.overflow(this.ra));
     }
 
     private void raUpdate(int ra) {
@@ -173,10 +130,6 @@ public class VirtualCPU {
         this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (result & 0b0100_0000) != 0);
     }
 
-    private void writerMem(int pos, byte b) {
-        this.memory[pos] = b;
-    }
-
     /**
      * 根据指定寻址模式获取操作数地址,
      * <a href="https://www.nesdev.org/obelisk-6502-guide/addressing.html#IMM">相关开发文档.</a></p>
@@ -184,34 +137,23 @@ public class VirtualCPU {
     private int getOperandAddr(AddressModel model) {
         return switch (model) {
             case Immediate -> this.pc;
-            case ZeroPage -> this.readUMem(this.pc);
-            case Absolute -> this.readLMem(this.pc);
-            case ZeroPage_X -> this.readUMem(this.pc) + this.rx;
-            case ZeroPage_Y -> this.readUMem(this.pc) + this.ry;
-            case Absolute_X -> this.readLMem(this.pc) + this.rx;
-            case Absolute_Y -> this.readLMem(this.pc) + this.ry;
+            case ZeroPage -> this.bus.readUSByte(this.pc);
+            case Absolute -> this.bus.readInt(this.pc);
+            case ZeroPage_X -> this.bus.readUSByte(this.pc) + this.rx;
+            case ZeroPage_Y -> this.bus.readUSByte(this.pc) + this.ry;
+            case Absolute_X -> this.bus.readInt(this.pc) + this.rx;
+            case Absolute_Y -> this.bus.readInt(this.pc) + this.ry;
             case Indirect_X -> {
-                var base = this.readMem(this.pc);
+                var base = this.bus.readUSByte(this.pc);
                 var ptr = base + this.ra;
-                var l = this.readMem(ptr);
-                var h = this.readMem(ptr + 1);
-                yield h << 8 | l;
+                yield this.bus.readInt(ptr);
             }
             case Indirect_Y -> {
-                var base = this.readMem(this.pc);
-
-                var l = this.readMem(base);
-                var h = this.readMem((base)) + 1;
-                var temp = (h) << 8 | l;
-                yield temp + this.ry;
+                var base = this.bus.readUSByte(this.pc);
+                yield this.bus.readInt(base) + this.ry;
             }
             default -> -1;
         };
-    }
-
-    private void brk() {
-        //设置中断状态为1
-        this.status.setFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
     }
 
     /**
@@ -220,7 +162,7 @@ public class VirtualCPU {
     private void logic(Instruction6502 instruction6502) {
         var address = this.getOperandAddr(instruction6502.getAddressModel());
         var a = this.ra;
-        var b = this.readMem(address);
+        var b = this.bus.readByte(address);
         var instruction = instruction6502.getInstruction();
         var c = switch (instruction) {
             case EOR -> a ^ b;
@@ -239,7 +181,7 @@ public class VirtualCPU {
             b = (byte) this.ra;
         } else {
             address = this.getOperandAddr(instruction6502.getAddressModel());
-            b = this.readMem(address);
+            b = this.bus.readByte(address);
         }
         var c = b & 0b1000_0000;
         //更新进位标识
@@ -249,26 +191,27 @@ public class VirtualCPU {
         if (a) {
             this.raUpdate(c);
         } else {
-            this.writerMem(address, (byte) c);
+            this.bus.writeByte(address, (byte) c);
         }
     }
 
     private void push(Instruction6502 instruction6502) {
         var instruction = instruction6502.getInstruction();
         if (instruction == CPUInstruction.PHA) {
-            this.memory[this.sp] = (byte) this.sp;
+            this.bus.writeInt(this.sp, this.ra);
         } else {
-            this.memory[this.sp] = this.status.getValue();
+            this.bus.writeByte(this.sp, this.status.getValue());
         }
         this.sp++;
     }
 
     private void pull(Instruction6502 instruction6502) {
         var instruction = instruction6502.getInstruction();
+        var value = this.bus.readByte(this.sp);
         if (instruction == CPUInstruction.PLA) {
-            this.raUpdate(this.memory[this.sp]);
+            this.raUpdate(value);
         } else {
-            this.status.setValue(this.memory[this.sp]);
+            this.status.setValue(value);
         }
     }
 
@@ -292,7 +235,7 @@ public class VirtualCPU {
             );
             return;
         }
-        var b = this.readMem(address);
+        var b = this.bus.readByte(address);
         //设置Carry Flag
         this.status.update(CPUStatus.BIFlag.CARRY_FLAG, a >= b);
         //设置Zero Flag
@@ -304,9 +247,9 @@ public class VirtualCPU {
         final int result;
         if (instruction == CPUInstruction.INC) {
             var address = this.getOperandAddr(instruction6502.getAddressModel());
-            var a = this.readMem(address);
+            var a = this.bus.readByte(address);
             result = a + 1;
-            this.writerMem(address, ByteUtil.overflow(result));
+            this.bus.writeInt(address, result);
         } else if (instruction == CPUInstruction.INX) {
             var x = this.rx;
             result = x + 1;
@@ -326,7 +269,7 @@ public class VirtualCPU {
 
     private void adc(AddressModel model) {
         var address = this.getOperandAddr(model);
-        var m = this.readMem(address);
+        var m = this.bus.readByte(address);
         var c = (this.status.getValue() & 0b0000_0001) > 0 ? 1 : 0;
         var sum = this.ra + m + c;
         //If result overflow set carry-bit else remove carry bit.
@@ -338,7 +281,7 @@ public class VirtualCPU {
 
     private void loadXY(Instruction6502 instruction6502) {
         var address = this.getOperandAddr(instruction6502.getAddressModel());
-        var data = this.readMem(address);
+        var data = this.bus.readByte(address);
         if (instruction6502.getInstruction() == CPUInstruction.LDX) {
             this.rx = data;
         } else {
@@ -361,13 +304,13 @@ public class VirtualCPU {
                 || instruction == CPUInstruction.BVS && !this.status.hasFlag(CPUStatus.BIFlag.OVERFLOW_FLAG))) {
             return;
         }
-        var jump = this.readMem(this.pc);
+        var jump = this.bus.readByte(this.pc);
         this.pc = this.pc + 1 + jump;
     }
 
     private void bit(Instruction6502 instruction6502) {
         var address = this.getOperandAddr(instruction6502.getAddressModel());
-        var value = this.readMem(address);
+        var value = this.bus.readByte(address);
 
         this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, value < 0);
         this.status.update(CPUStatus.BIFlag.OVERFLOW_FLAG, (value & 0b0010_0000) != 0);
@@ -379,9 +322,9 @@ public class VirtualCPU {
         var value = switch (instruction) {
             case DEC -> {
                 var address = getOperandAddr(instruction6502.getAddressModel());
-                var b = this.readMem(address);
+                var b = this.bus.readByte(address);
                 b--;
-                this.writerMem(address, b);
+                this.bus.writeByte(address, b);
                 yield b;
             }
             case DEX -> {
@@ -403,19 +346,32 @@ public class VirtualCPU {
         if (instruction6502.getAddressModel() == AddressModel.Absolute) {
             address = this.getOperandAddr(AddressModel.Absolute);
         } else {
-            var lsb = this.readMem(this.pc);
-            var msb = this.readMem(this.pc + 1);
-            address = ByteUtil.toInt(new byte[]{lsb, msb});
+            address = this.bus.readInt(this.pc);
         }
         this.pc = address;
     }
 
+    private void interrupt(CPUInterrupt interrupt) {
+        if (interrupt == CPUInterrupt.RESET) {
+            this.pc = this.bus.readByte(SAFE_POINT);
+        } else {
+            this.stackLPush(this.pc);
+            this.stackPush(ByteUtil.overflow(this.status.getValue()));
+            //禁用中断
+            this.status.setFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
+            this.pc = this.bus.readByte(interrupt == CPUInterrupt.NMI ? 0xFFFA : 0xFFFE);
+            if (interrupt == CPUInterrupt.BRK) {
+                this.status.setFlag(CPUStatus.BIFlag.BREAK_COMMAND);
+            } else {
+                this.status.clearFlag(CPUStatus.BIFlag.BREAK_COMMAND);
+            }
+        }
+    }
 
-    private void run() {
+
+    public void execute() {
         while (true) {
-            var openCode = this.readMem(this.pc);
-            this.pc += 1;
-//            log.debug("Current pc:{}.", this.pc);
+            var openCode = this.bus.readByte(this.pc++);
             var instruction6502 = CPUInstruction.getInstance(openCode);
             if (instruction6502 == null) {
                 continue;
@@ -430,7 +386,7 @@ public class VirtualCPU {
                 this.adc(instruction6502.getAddressModel());
             }
             if (instruction == CPUInstruction.BRK) {
-                this.brk();
+                this.interrupt(CPUInterrupt.BRK);
             }
 
             //或、与、异或逻辑运算
@@ -455,13 +411,12 @@ public class VirtualCPU {
 
             //刷新累加寄存器值到内存
             if (instruction == CPUInstruction.STA) {
-                this.sta(instruction6502);
+                this.bus.writeInt(this.getOperandAddr(instruction6502.getAddressModel()), this.ra);
             }
 
             //刷新y寄存器值到内存
             if (instruction == CPUInstruction.STY) {
-                var address = this.getOperandAddr(instruction6502.getAddressModel());
-                this.writerMem(address, ByteUtil.overflow(this.ry));
+                this.bus.writeInt(this.getOperandAddr(instruction6502.getAddressModel()), this.ry);
             }
 
             //清除进位标识
@@ -497,7 +452,7 @@ public class VirtualCPU {
 
             if (instruction == CPUInstruction.JSR) {
                 this.stackLPush(this.pc + 1);
-                this.pc = this.readLMem(this.pc);
+                this.pc = this.bus.readByte(this.pc);
             }
 
             if (instruction == CPUInstruction.RTS) {
