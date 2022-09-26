@@ -11,10 +11,10 @@ public class MemoryMap {
     private final byte[] buffer;
 
 
-    public MemoryMap(final NESFile nesFile) {
+    public MemoryMap(byte[] rpg) {
         this.buffer = new byte[0x10000];
         //复制rpg-rom到内存映射中
-        System.arraycopy(nesFile.getRgb(), 0, this.buffer, 0x800, nesFile.getHeader().getRgbSize());
+        System.arraycopy(rpg, 0, this.buffer, 0x800, rpg.length);
     }
 
     /**

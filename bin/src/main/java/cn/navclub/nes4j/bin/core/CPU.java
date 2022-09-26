@@ -176,6 +176,28 @@ public class CPU {
         this.raUpdate(c);
     }
 
+    private void rol(Instruction6502 instruction6502) {
+        var mode = instruction6502.getAddressModel();
+        var cBit = this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG) ? 0b1111_1111 : 0b1111_1110;
+
+        int result, oBit;
+        if (mode == AddressModel.Accumulator) {
+            oBit = (this.ra & 0b1000_0000);
+            result = this.ra << 1;
+            result &= cBit;
+            this.raUpdate(result);
+        } else {
+            var address = this.getOperandAddr(mode);
+            var value = this.bus.readByte(address);
+            oBit = value & 0b1000_0000;
+            result = value << 1;
+            result &= cBit;
+            this.NZUpdate(result);
+        }
+
+        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, oBit != 0);
+    }
+
     private void ror(Instruction6502 instruction6502) {
         var mode = instruction6502.getAddressModel();
         var cBit = 0;
@@ -291,17 +313,36 @@ public class CPU {
         this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (result & 0b0100_0000) != 0);
     }
 
-
+    /**
+     * 加法实现
+     */
     private void adc(AddressModel model) {
         var address = this.getOperandAddr(model);
         var m = this.bus.readByte(address);
-        var c = this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG) ? 1 : 0;
-        var sum = this.ra + m + c;
+        var sum = this.ra + m + this.status.getFlagBit(CPUStatus.BIFlag.CARRY_FLAG);
         //If result overflow set carry-bit else remove carry bit.
         this.status.update(CPUStatus.BIFlag.CARRY_FLAG, sum > 0xff);
         //Set if sign-bit incorrect
         this.status.update(CPUStatus.BIFlag.OVERFLOW_FLAG, ((m ^ sum) & (sum ^ this.ra)) != 0);
         this.raUpdate(sum);
+    }
+
+    /**
+     * 减法实现
+     */
+    private void sbc(Instruction6502 instruction6502) {
+        var mode = instruction6502.getAddressModel();
+        var address = this.getOperandAddr(mode);
+        var m = this.bus.readByte(address);
+        var sbc = this.ra - m - (1 - this.status.getFlagBit(CPUStatus.BIFlag.CARRY_FLAG));
+
+        //If result overflow set carry-bit else remove carry bit.
+        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, sbc > 0xff);
+        //Set if sign-bit incorrect
+        this.status.update(CPUStatus.BIFlag.OVERFLOW_FLAG, ((m ^ sbc) & (sbc ^ this.ra)) != 0);
+        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (sbc & 0b1000_0000) > 0);
+
+        this.raUpdate(sbc);
     }
 
     private void loadXY(Instruction6502 instruction6502) {
@@ -408,8 +449,8 @@ public class CPU {
                 continue;
             }
             var instruction = instruction6502.getInstruction();
-//            if (instruction != CPUInstruction.BRK)
-//                log.debug("Prepare execute instruction [0x{}] alias [{}].", Integer.toHexString(instruction6502.getOpenCode()), instruction);
+            if (instruction != CPUInstruction.BRK)
+                log.debug("Prepare execute instruction [0x{}] alias [{}].", Integer.toHexString(instruction6502.getOpenCode()), instruction);
             if (instruction == CPUInstruction.LDA) {
                 this.lda(instruction6502);
             }
@@ -440,6 +481,10 @@ public class CPU {
                 this.asl(instruction6502);
             }
 
+            if (instruction == CPUInstruction.ROL) {
+                this.rol(instruction6502);
+            }
+
             //右移一位
             if (instruction == CPUInstruction.ROR) {
                 this.ror(instruction6502);
@@ -447,12 +492,16 @@ public class CPU {
 
             //刷新累加寄存器值到内存
             if (instruction == CPUInstruction.STA) {
-                this.bus.writeInt(this.getOperandAddr(instruction6502.getAddressModel()), this.ra);
+                this.bus.writeUSByte(this.getOperandAddr(instruction6502.getAddressModel()), this.ra);
             }
 
             //刷新y寄存器值到内存
             if (instruction == CPUInstruction.STY) {
-                this.bus.writeInt(this.getOperandAddr(instruction6502.getAddressModel()), this.ry);
+                this.bus.writeUSByte(this.getOperandAddr(instruction6502.getAddressModel()), this.ry);
+            }
+            //刷新x寄存器值到内存中
+            if (instruction == CPUInstruction.STX) {
+                this.bus.writeUSByte(this.getOperandAddr(instruction6502.getAddressModel()), this.rx);
             }
 
             //清除进位标识
@@ -540,6 +589,10 @@ public class CPU {
 
             if (instruction == CPUInstruction.SEI) {
                 this.status.setFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
+            }
+
+            if (instruction == CPUInstruction.SBC) {
+                this.sbc(instruction6502);
             }
 
             if (instruction == CPUInstruction.TAX

@@ -55,6 +55,15 @@ public enum CPUInstruction {
     }
     ),
     /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#STX">相关文档</a>
+     */
+    STX(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x86), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x96), ZeroPage_Y),
+            Instruction6502.create(ByteUtil.overflow(0x8E), Absolute),
+    }),
+
+    /**
      * 将寄存器Y中的值刷新到内存中
      *
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#STY">相关文档</a>
@@ -64,6 +73,7 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x94), ZeroPage_X),
             Instruction6502.create(ByteUtil.overflow(0X8C), Absolute)
     }),
+
     /**
      * 与逻辑指令实现
      *
@@ -79,6 +89,7 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x21), Indirect_X),
             Instruction6502.create(ByteUtil.overflow(0x31), Indirect_Y),
     }),
+
     /**
      * 或指令实现
      */
@@ -93,6 +104,7 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x11), Indirect_Y)
     }
     ),
+
     /**
      * 异或逻辑实现
      */
@@ -107,24 +119,28 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x51), Indirect_Y)
     }
     ),
+
     /**
      * 将累加寄存器中的值push到堆栈上
      *
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#PHA">相关文档</a>
      */
     PHA(ByteUtil.overflow(0x48)),
+
     /**
      * 将状态寄存器push到堆栈上
      *
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#PHP">相关文档</a>
      */
     PHP(ByteUtil.overflow(0X08)),
+
     /**
      * 从系统栈中获取值并更新累加寄存器
      *
      * <a href="href="https://www.nesdev.org/obelisk-6502-guide/reference.html#PLA">相关文档</a>
      */
     PLA(ByteUtil.overflow(0x68)),
+
     /**
      * 从系统栈中读取值并更新状态寄存器
      * <a href="href="https://www.nesdev.org/obelisk-6502-guide/reference.html#PLP">相关文档</a>
@@ -143,6 +159,7 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x0E), Absolute),
             Instruction6502.create(ByteUtil.overflow(0x1E), Absolute_X)
     }),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#LSR">相关文档</a>
      */
@@ -153,6 +170,7 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x4E), Absolute),
             Instruction6502.create(ByteUtil.overflow(0x5E), Absolute_X)
     }),
+
     /**
      * 累加寄存器与指定内存值比较
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CMP">相关文档</a>
@@ -167,6 +185,7 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0xC1), Indirect_X),
             Instruction6502.create(ByteUtil.overflow(0xD1), Indirect_Y)
     }),
+
     /**
      * 比较X寄存器与指定内存的值
      *
@@ -177,6 +196,7 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0xE4), ZeroPage),
             Instruction6502.create(ByteUtil.overflow(0xEC), Absolute),
     }),
+
     /**
      * 比较y寄存器与内存中的值
      *
@@ -188,6 +208,7 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0xEC), Absolute),
     }
     ),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#LDX">相关文档</a>
      */
@@ -199,6 +220,7 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0xBE), Absolute_Y)
     }
     ),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#LDY">相关文档</a>
      */
@@ -210,6 +232,7 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0xBC), Absolute_Y)
     }
     ),
+
     /**
      * 自增指令
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INC">相关文档</a>
@@ -221,12 +244,14 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0xEE), Absolute),
     }
     ),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#JSR">相关文档</a>
      */
     JSR(new Instruction6502[]{
             Instruction6502.create(ByteUtil.overflow(0x20), Absolute)
     }),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BIT">相关文档</a>
      */
@@ -234,6 +259,7 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x24), ZeroPage),
             Instruction6502.create(ByteUtil.overflow(0X2C), Absolute)
     }),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#DCE">相关文档</a>
      */
@@ -243,6 +269,7 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0xCE), Absolute),
             Instruction6502.create(ByteUtil.overflow(0xDE), Absolute_X)
     }),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#JMP">相关文档</a>
      */
@@ -250,44 +277,78 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x4C), Absolute),
             Instruction6502.create(ByteUtil.overflow(0x6C), Indirect)
     }),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#ROR">相关文档</a>
      */
     ROR(new Instruction6502[]{
-            Instruction6502.create(ByteUtil.overflow(0x6A),Accumulator),
-            Instruction6502.create(ByteUtil.overflow(0x66),ZeroPage),
-            Instruction6502.create(ByteUtil.overflow(0x76),ZeroPage_X),
-            Instruction6502.create(ByteUtil.overflow(0x6E),Absolute),
-            Instruction6502.create(ByteUtil.overflow(0x7E),Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0x6A), Accumulator),
+            Instruction6502.create(ByteUtil.overflow(0x66), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x76), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x6E), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x7E), Absolute_X),
     }),
+
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#ROL">相关文档</a>
+     */
+    ROL(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x2A), Accumulator),
+            Instruction6502.create(ByteUtil.overflow(0x26), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x36), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x2E), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x3E), Absolute_X),
+    }),
+
+    /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#ADC">相关文档</a>
+     */
+    SBC(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0xE9), Immediate),
+            Instruction6502.create(ByteUtil.overflow(0x65), ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0xF5), ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0xED), Absolute),
+            Instruction6502.create(ByteUtil.overflow(0xFD), Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0xF9), Absolute_Y),
+            Instruction6502.create(ByteUtil.overflow(0xE1), Indirect_X),
+            Instruction6502.create(ByteUtil.overflow(0xF1), Indirect_Y),
+
+    }),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#DCX">相关文档</a>
      */
     DEX(ByteUtil.overflow(0xCA)),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#DCY">相关文档</a>
      */
     DEY(ByteUtil.overflow(0x88)),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#RTS">相关文档</a>
      */
     RTS(ByteUtil.overflow(0X60)),
+
     /**
      * 清除进位标识
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CLC">相关文档</a>
      */
     CLC(ByteUtil.overflow(0x18)),
+
     /**
      * 清除数字标识
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CLD">相关文档</a>
      */
     CLD(ByteUtil.overflow(0xD8)),
+
     /**
      * 清除中断标识
      *
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CLI">相关文档</a>
      */
     CLI(ByteUtil.overflow(0x58)),
+
     /**
      * 清除溢出标识
      *
@@ -301,15 +362,18 @@ public enum CPUInstruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INX">相关文档</a>
      */
     INX(ByteUtil.overflow(0XE8)),
+
     /**
      * 自增Y寄存器
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INY">相关文档</a>
      */
     INY(ByteUtil.overflow(0xC8)),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#NOP">相关文档</a>
      */
     NOP(ByteUtil.overflow(0xEA)),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BCC">相关文档</a>
      */
@@ -324,14 +388,17 @@ public enum CPUInstruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BEQ">相关文档</a>
      */
     BEQ(ByteUtil.overflow(0xF0)),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BNE">相关文档</a>
      */
     BNE(ByteUtil.overflow(0XD0)),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BPL">相关文档</a>
      */
     BPL(ByteUtil.overflow(0XD0)),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BMI">相关文档</a>
      */
@@ -346,10 +413,12 @@ public enum CPUInstruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BVS">相关文档</a>
      */
     BVS(ByteUtil.overflow(0x70)),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#RTI">相关文档</a>
      */
     RTI(ByteUtil.overflow(0x40)),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#SEC">相关文档</a>
      */
@@ -369,6 +438,7 @@ public enum CPUInstruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TAX">相关文档</a>
      */
     TAX(ByteUtil.overflow(0xAA)),
+
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TAY">相关文档</a>
      */

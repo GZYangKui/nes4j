@@ -47,6 +47,10 @@ public class CPUStatus {
         return ((1 << flag.ordinal()) & value) > 0;
     }
 
+    public int getFlagBit(BIFlag flag) {
+        return this.hasFlag(flag) ? 1 : 0;
+    }
+
     public void reset() {
         this.value = 0;
     }

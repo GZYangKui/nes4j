@@ -24,7 +24,7 @@ public class NES {
                 () -> IOUtil.readFileAllByte(builder.file)
         );
         this.nesFile = new NESFile(new NESHeader(buffer), buffer);
-        this.map = new MemoryMap(this.nesFile);
+        this.map = new MemoryMap(this.nesFile.getRgb());
         this.bus = new Bus(this.map);
         this.cpu = new CPU(this.bus);
     }

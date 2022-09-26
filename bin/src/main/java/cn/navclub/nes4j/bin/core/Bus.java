@@ -31,6 +31,15 @@ public class Bus {
         this.memoryMap.write(address, b);
     }
 
+    /**
+     *
+     * 写入无符号字节
+     *
+     */
+    public void writeUSByte(int address, int data) {
+        this.memoryMap.write(address, ByteUtil.overflow(data));
+    }
+
 
     /**
      * 以小端序形式读取数据
@@ -42,9 +51,7 @@ public class Bus {
     }
 
     /**
-     *
      * 向指定地址写入整形数据
-     *
      */
     public void writeInt(int address, int value) {
         this.writeByte(address, ByteUtil.overflow(value));
