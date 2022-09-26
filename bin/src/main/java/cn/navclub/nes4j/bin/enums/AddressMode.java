@@ -3,7 +3,7 @@ package cn.navclub.nes4j.bin.enums;
 /**
  * CPU寻址模式
  */
-public enum AddressModel {
+public enum AddressMode {
     Accumulator,
     Immediate,
     ZeroPage,

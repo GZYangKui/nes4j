@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.model;
 
-import cn.navclub.nes4j.bin.enums.AddressModel;
+import cn.navclub.nes4j.bin.enums.AddressMode;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,13 +8,13 @@ import lombok.Setter;
 @Getter
 public class Instruction6502 {
     private final byte openCode;
-    private AddressModel addressModel;
+    private AddressMode addressMode;
     @Setter
     private CPUInstruction instruction;
 
-    public Instruction6502(byte openCode, AddressModel addressModel) {
+    public Instruction6502(byte openCode, AddressMode addressMode) {
         this.openCode = openCode;
-        this.addressModel = addressModel;
+        this.addressMode = addressMode;
     }
 
     public Instruction6502(byte openCode, CPUInstruction instruction) {
@@ -27,7 +27,7 @@ public class Instruction6502 {
         this.openCode = openCode;
     }
 
-    public static Instruction6502 create(byte openCode, AddressModel addressModel) {
-        return new Instruction6502(openCode, addressModel);
+    public static Instruction6502 create(byte openCode, AddressMode addressMode) {
+        return new Instruction6502(openCode, addressMode);
     }
 }
