@@ -251,6 +251,16 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x6C), Indirect)
     }),
     /**
+     * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#ROR">相关文档</a>
+     */
+    ROR(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x6A),Accumulator),
+            Instruction6502.create(ByteUtil.overflow(0x66),ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x76),ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x6E),Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x7E),Absolute_X),
+    }),
+    /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#DCX">相关文档</a>
      */
     DEX(ByteUtil.overflow(0xCA)),

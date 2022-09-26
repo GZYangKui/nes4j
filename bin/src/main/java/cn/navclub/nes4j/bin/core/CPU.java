@@ -120,9 +120,6 @@ public class CPU {
     private void raUpdate(int ra) {
         //Set ra
         this.ra = ra;
-        if (this.ra < 0) {
-            System.out.println("aaa");
-        }
         //Update Zero and negative flag
         this.NZUpdate(ra);
     }
@@ -149,13 +146,14 @@ public class CPU {
             case Absolute_X -> this.bus.readInt(this.pc) + this.rx;
             case Absolute_Y -> this.bus.readInt(this.pc) + this.ry;
             case Indirect_X -> {
-                var base = this.bus.readUSByte(this.pc);
+                var base = this.bus.readInt(this.pc);
                 var ptr = base + this.ra;
                 yield this.bus.readInt(ptr);
             }
             case Indirect_Y -> {
-                var base = this.bus.readUSByte(this.pc);
-                yield this.bus.readInt(base) + this.ry;
+                var base = this.bus.readInt(this.pc);
+                var ptr = base + this.ry;
+                yield this.bus.readInt(ptr);
             }
             default -> -1;
         };
@@ -176,6 +174,28 @@ public class CPU {
             default -> a;
         };
         this.raUpdate(c);
+    }
+
+    private void ror(Instruction6502 instruction6502) {
+        var mode = instruction6502.getAddressModel();
+        var cBit = 0;
+        var result = 0;
+        var oldCBit = this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG) ? 0b1111_1111 : 0b0111_1111;
+        if (mode == AddressModel.Accumulator) {
+            cBit = this.ra & 0b0000_0001;
+            result = this.ra >>= 1;
+            result &= oldCBit;
+            this.raUpdate(result);
+        } else {
+            var address = this.getOperandAddr(mode);
+            var value = this.bus.readByte(address);
+            cBit = value & 0b0000_0001;
+            result = value >> 1;
+            result &= oldCBit;
+            this.bus.writeByte(address, ByteUtil.overflow(result));
+            this.NZUpdate(result);
+        }
+        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, cBit > 0);
     }
 
     private void asl(Instruction6502 instruction6502) {
@@ -275,7 +295,7 @@ public class CPU {
     private void adc(AddressModel model) {
         var address = this.getOperandAddr(model);
         var m = this.bus.readByte(address);
-        var c = (this.status.getValue() & 0b0000_0001) > 0 ? 1 : 0;
+        var c = this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG) ? 1 : 0;
         var sum = this.ra + m + c;
         //If result overflow set carry-bit else remove carry bit.
         this.status.update(CPUStatus.BIFlag.CARRY_FLAG, sum > 0xff);
@@ -418,6 +438,11 @@ public class CPU {
             //左移1位
             if (instruction == CPUInstruction.ASL) {
                 this.asl(instruction6502);
+            }
+
+            //右移一位
+            if (instruction == CPUInstruction.ROR) {
+                this.ror(instruction6502);
             }
 
             //刷新累加寄存器值到内存
