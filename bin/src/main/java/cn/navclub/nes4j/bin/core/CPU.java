@@ -408,11 +408,7 @@ public class CPU {
             //禁用中断
             this.status.setFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
             this.pc = this.bus.readInt(interrupt == CPUInterrupt.NMI ? 0xFFFA : 0xFFFE);
-            if (interrupt == CPUInterrupt.BRK) {
-                this.status.setFlag(CPUStatus.BIFlag.BREAK_COMMAND);
-            } else {
-                this.status.clearFlag(CPUStatus.BIFlag.BREAK_COMMAND);
-            }
+            this.status.update(CPUStatus.BIFlag.BREAK_COMMAND,interrupt == CPUInterrupt.BRK);
         }
     }
 
