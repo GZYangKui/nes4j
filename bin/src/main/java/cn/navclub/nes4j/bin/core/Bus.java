@@ -5,6 +5,8 @@ import cn.navclub.nes4j.bin.util.ByteUtil;
 public class Bus {
     private final MemoryMap memoryMap;
 
+    private int cycle;
+
     public Bus(MemoryMap memoryMap) {
         this.memoryMap = memoryMap;
     }
@@ -32,9 +34,7 @@ public class Bus {
     }
 
     /**
-     *
      * 写入无符号字节
-     *
      */
     public void writeUSByte(int address, int data) {
         this.memoryMap.write(address, ByteUtil.overflow(data));
@@ -55,5 +55,14 @@ public class Bus {
      */
     public void writeInt(int address, int value) {
         this.writeByte(address, ByteUtil.overflow(value));
+    }
+
+    /**
+     * 一个指令执行完毕触发当前函数
+     */
+    public void tick(int cycle) {
+        this.cycle += cycle;
+        //触发PPU模块
+        
     }
 }

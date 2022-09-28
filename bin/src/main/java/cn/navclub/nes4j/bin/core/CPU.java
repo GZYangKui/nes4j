@@ -19,13 +19,15 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class CPU {
-    //0x0100-0x01FF
+    //栈开始位置
     private static final int STACK = 0x0100;
-    private static final int SAFE_POINT = 0xFFFC;
+    //程序计数器重置地址
+    private static final int PC_RESET = 0xFFFC;
+    //程序栈重置地址
     private static final int STACK_RESET = 0xFD;
     //累加寄存器
     private int ra;
-    //X寄存器 用作特定内存寻址模式中的偏移量。可用于辅助存储需求（保存温度值、用作计数器等）
+    //X寄存器
     private int rx;
     //Y寄存器
     private int ry;
@@ -40,7 +42,6 @@ public class CPU {
 
     public CPU(final Bus bus) {
         this.bus = bus;
-        this.sp = STACK_RESET;
         this.status = new CPUStatus();
     }
 
@@ -53,25 +54,25 @@ public class CPU {
         this.ry = 0;
         this.ra = 0;
         this.status.reset();
-        this.pc = SAFE_POINT;
         this.sp = STACK_RESET;
+        this.pc = this.bus.readInt(PC_RESET);
     }
 
 
-    public void stackPush(byte data) {
+    public void pushByte(byte data) {
         this.bus.writeByte(STACK + this.sp, data);
-        this.sp++;
+        this.sp--;
     }
 
-    public void stackLPush(int data) {
+    public void pushInt(int data) {
         var lsb = data & 0xFF;
         var msb = (data >> 8) & 0xFF;
-        this.stackPush(ByteUtil.overflow(lsb));
-        this.stackPush(ByteUtil.overflow(msb));
+        this.pushByte(ByteUtil.overflow(lsb));
+        this.pushByte(ByteUtil.overflow(msb));
     }
 
     public byte popByte() {
-        this.sp--;
+        this.sp++;
         return this.bus.readByte(STACK + this.sp);
     }
 
@@ -117,7 +118,7 @@ public class CPU {
         return switch (mode) {
             case Immediate -> this.pc;
             case ZeroPage -> this.bus.readUSByte(this.pc);
-            case Absolute -> this.bus.readInt(this.pc);
+            case Absolute, Indirect -> this.bus.readInt(this.pc);
             case ZeroPage_X -> this.bus.readUSByte(this.pc) + this.rx;
             case ZeroPage_Y -> this.bus.readUSByte(this.pc) + this.ry;
             case Absolute_X -> this.bus.readInt(this.pc) + this.rx;
@@ -222,9 +223,9 @@ public class CPU {
     private void push(Instruction6502 instruction6502) {
         var instruction = instruction6502.getInstruction();
         if (instruction == CPUInstruction.PHA) {
-            this.bus.writeInt(this.sp, this.ra);
+            this.pushByte(ByteUtil.overflow(this.ra));
         } else {
-            this.bus.writeByte(this.sp, this.status.getValue());
+            this.pushByte(this.status.getValue());
         }
         this.sp++;
     }
@@ -253,10 +254,6 @@ public class CPU {
         } else if (instruction == CPUInstruction.CPY) {
             a = this.ry;
         } else {
-            log.warn("Not support compare instruction:[0x{}] alis:[{}]",
-                    Integer.toHexString(instruction6502.getOpenCode()),
-                    instruction6502.getInstruction()
-            );
             return;
         }
         var b = this.bus.readByte(address);
@@ -290,19 +287,31 @@ public class CPU {
         this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (result & 0b0100_0000) != 0);
     }
 
+    private void add2Ra(byte data) {
+        var result = this.ra + data + this.status.getFlagBit(CPUStatus.BIFlag.CARRY_FLAG);
+        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, result < -128 || result > 127);
+        if (((data ^ result) & (result ^ this.ra) & 0x80) != 0) {
+            this.status.setFlag(CPUStatus.BIFlag.OVERFLOW_FLAG);
+        } else {
+            this.status.clearFlag(CPUStatus.BIFlag.OVERFLOW_FLAG);
+        }
+        this.raUpdate(result);
+    }
+
     /**
      * 加法实现
      */
-    private void adc(AddressMode mode) {
-        var address = this.getOperandAddr(mode);
-        var m = this.bus.readByte(address);
-        var sum = this.ra + m + this.status.getFlagBit(CPUStatus.BIFlag.CARRY_FLAG);
-        //If result overflow set carry-bit else remove carry bit.
-        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, sum > 0xff);
-        //Set if sign-bit incorrect
-        this.status.update(CPUStatus.BIFlag.OVERFLOW_FLAG, ((m ^ sum) & (sum ^ this.ra)) != 0);
-        this.raUpdate(sum);
-    }
+//    private void adc(AddressMode mode) {
+//        var address = this.getOperandAddr(mode);
+//        var m = this.bus.readByte(address);
+//        var sum = this.ra + m + this.status.getFlagBit(CPUStatus.BIFlag.CARRY_FLAG);
+//        //If result overflow set carry-bit else remove carry bit.
+//        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, sum > 127 || sum < -128);
+//        //Set if sign-bit incorrect
+//        this.status.update(CPUStatus.BIFlag.OVERFLOW_FLAG, ((m ^ sum) & (sum ^ this.ra)) != 0);
+//        sum &= 0b1111_1111;
+//        this.raUpdate(sum);
+//    }
 
     /**
      * 减法实现
@@ -314,11 +323,11 @@ public class CPU {
         var sbc = this.ra - m - (1 - this.status.getFlagBit(CPUStatus.BIFlag.CARRY_FLAG));
 
         //If result overflow set carry-bit else remove carry bit.
-        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, sbc > 0xff);
+        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, sbc > 127 || sbc < -128);
         //Set if sign-bit incorrect
         this.status.update(CPUStatus.BIFlag.OVERFLOW_FLAG, ((m ^ sbc) & (sbc ^ this.ra)) != 0);
         this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (sbc & 0b1000_0000) > 0);
-
+        sbc &= 0b1111_1111;
         this.raUpdate(sbc);
     }
 
@@ -334,21 +343,9 @@ public class CPU {
         this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (data & 0b0100_0000) > 0);
     }
 
-    private void branch(Instruction6502 instruction6502) {
-        var instruction = instruction6502.getInstruction();
-        //不成立
-        if ((instruction == CPUInstruction.BCC && this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG))
-                || (instruction == CPUInstruction.BCS && !this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG))
-                || (instruction == CPUInstruction.BEQ && !this.status.hasFlag(CPUStatus.BIFlag.ZERO_FLAG))
-                || (instruction == CPUInstruction.BMI && this.status.hasFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE))
-                || (instruction == CPUInstruction.BNE && this.status.hasFlag(CPUStatus.BIFlag.ZERO_FLAG))
-                || (instruction == CPUInstruction.BPL && this.status.hasFlag(CPUStatus.BIFlag.NEGATIVE_FLAG))
-                || (instruction == CPUInstruction.BVC && this.status.hasFlag(CPUStatus.BIFlag.OVERFLOW_FLAG)
-                || instruction == CPUInstruction.BVS && !this.status.hasFlag(CPUStatus.BIFlag.OVERFLOW_FLAG))) {
-            return;
-        }
+    private void branch(boolean condition) {
         var jump = this.bus.readByte(this.pc);
-        this.pc = this.pc + 1 + jump;
+        this.pc += (1 + jump);
     }
 
     private void bit(Instruction6502 instruction6502) {
@@ -384,212 +381,241 @@ public class CPU {
         this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, value < 0);
     }
 
-    private void jump(Instruction6502 instruction6502) {
-        final int address;
-        if (instruction6502.getAddressMode() == AddressMode.Absolute) {
-            address = this.getOperandAddr(AddressMode.Absolute);
-        } else {
-            address = this.bus.readInt(this.pc);
-        }
-        this.pc = address;
-    }
-
     public void interrupt(CPUInterrupt interrupt) {
-        if (interrupt != CPUInterrupt.NMI
-                && this.status.hasFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE)) {
-//            log.debug("Current interrupt disable status.");
+        //中断状态不可用
+        if (interrupt != CPUInterrupt.NMI && this.status.hasFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE)) {
             return;
         }
         if (interrupt == CPUInterrupt.RESET) {
-            this.pc = this.bus.readByte(SAFE_POINT);
+            this.reset();
         } else {
-            this.stackLPush(this.pc);
-            this.stackPush(ByteUtil.overflow(this.status.getValue()));
+            this.pushInt(this.pc);
+            this.pushByte(ByteUtil.overflow(this.status.getValue()));
             //禁用中断
             this.status.setFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
             this.pc = this.bus.readInt(interrupt == CPUInterrupt.NMI ? 0xFFFA : 0xFFFE);
-            this.status.update(CPUStatus.BIFlag.BREAK_COMMAND,interrupt == CPUInterrupt.BRK);
+            this.status.update(CPUStatus.BIFlag.BREAK_COMMAND, interrupt == CPUInterrupt.BRK);
         }
     }
 
 
     public void execute() {
-        while (true) {
-            var openCode = this.bus.readByte(this.pc);
-            this.pc++;
-            var instruction6502 = CPUInstruction.getInstance(openCode);
-            if (instruction6502 == null) {
-                continue;
-            }
-            var instruction = instruction6502.getInstruction();
-            if (instruction != CPUInstruction.BRK)
-                log.debug("Prepare execute instruction [0x{}] alias [{}].", Integer.toHexString(instruction6502.getOpenCode()), instruction);
-            if (instruction == CPUInstruction.LDA) {
-                this.lda(instruction6502);
-            }
-            if (instruction == CPUInstruction.ADC) {
-                this.adc(instruction6502.getAddressMode());
-            }
-            if (instruction == CPUInstruction.BRK) {
-                this.interrupt(CPUInterrupt.BRK);
-            }
+        var openCode = this.bus.readByte(this.pc);
+        var pc0 = (++this.pc);
+        var instruction6502 = CPUInstruction.getInstance(openCode);
+        if (instruction6502 == null) {
+            return;
+        }
+        var instruction = instruction6502.getInstruction();
+        log.info("Current program counter in position [0x{}/{}] prepare execute instruction [0x{}] alias [{}] size:[0x{}].",
+                Integer.toHexString(this.pc - 1),
+                this.pc - 1,
+                Integer.toHexString(openCode & 0xff),
+                instruction,
+                Integer.toHexString(instruction6502.getBytes())
+        );
 
-            //或、与、异或逻辑运算
-            if (instruction == CPUInstruction.AND
-                    || instruction == CPUInstruction.ORA
-                    || instruction == CPUInstruction.EOR) {
-                this.logic(instruction6502);
-            }
+        if (instruction == CPUInstruction.JMP) {
+            this.pc = this.bus.readInt(this.getOperandAddr(instruction6502.getAddressMode()));
+        }
 
-            //push累加寄存器/状态寄存器
-            if (instruction == CPUInstruction.PHA || instruction == CPUInstruction.PHP) {
-                this.push(instruction6502);
-            }
-            //pull累加寄存器/状态寄存器
-            if (instruction == CPUInstruction.PLA || instruction == CPUInstruction.PLP) {
-                this.pull(instruction6502);
-            }
-            //左移1位
-            if (instruction == CPUInstruction.ASL) {
-                this.asl(instruction6502);
-            }
+        if (instruction == CPUInstruction.RTI) {
+            this.status.setValue(this.popByte());
+            //取消中断标识
+            this.status.clearFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
+            this.pc = this.popUSByte();
+        }
+        if (instruction == CPUInstruction.JSR) {
+            this.pushInt(this.pc + 1);
+            this.pc = this.bus.readInt(this.pc);
+        }
 
-            if (instruction == CPUInstruction.ROL) {
-                this.rol(instruction6502);
-            }
+        if (instruction == CPUInstruction.RTS) {
+            this.pc = this.popInt() + 1;
+        }
+        if (instruction == CPUInstruction.BRK) {
+            this.interrupt(CPUInterrupt.BRK);
+        }
 
-            //右移一位
-            if (instruction == CPUInstruction.ROR) {
-                this.ror(instruction6502);
-            }
+        if (instruction == CPUInstruction.LDA) {
+            this.lda(instruction6502);
+        }
+        if (instruction == CPUInstruction.ADC) {
+            var mode = instruction6502.getAddressMode();
+            var data = this.bus.readByte(this.getOperandAddr(mode));
+            this.add2Ra(data);
+        }
 
-            //刷新累加寄存器值到内存
-            if (instruction == CPUInstruction.STA) {
-                this.bus.writeUSByte(this.getOperandAddr(instruction6502.getAddressMode()), this.ra);
-            }
+        //或、与、异或逻辑运算
+        if (instruction == CPUInstruction.AND
+                || instruction == CPUInstruction.ORA
+                || instruction == CPUInstruction.EOR) {
+            this.logic(instruction6502);
+        }
 
-            //刷新y寄存器值到内存
-            if (instruction == CPUInstruction.STY) {
-                this.bus.writeUSByte(this.getOperandAddr(instruction6502.getAddressMode()), this.ry);
-            }
-            //刷新x寄存器值到内存中
-            if (instruction == CPUInstruction.STX) {
-                this.bus.writeUSByte(this.getOperandAddr(instruction6502.getAddressMode()), this.rx);
-            }
+        //push累加寄存器/状态寄存器
+        if (instruction == CPUInstruction.PHA || instruction == CPUInstruction.PHP) {
+            this.push(instruction6502);
+        }
+        //pull累加寄存器/状态寄存器
+        if (instruction == CPUInstruction.PLA || instruction == CPUInstruction.PLP) {
+            this.pull(instruction6502);
+        }
+        //左移1位
+        if (instruction == CPUInstruction.ASL) {
+            this.asl(instruction6502);
+        }
 
-            //清除进位标识
-            if (instruction == CPUInstruction.CLC) {
-                this.status.clearFlag(CPUStatus.BIFlag.CARRY_FLAG);
-            }
+        if (instruction == CPUInstruction.ROL) {
+            this.rol(instruction6502);
+        }
 
-            //清除Decimal model
-            if (instruction == CPUInstruction.CLD) {
-                this.status.clearFlag(CPUStatus.BIFlag.DECIMAL_MODE);
-            }
+        //右移一位
+        if (instruction == CPUInstruction.ROR) {
+            this.ror(instruction6502);
+        }
 
-            //清除中断标识
-            if (instruction == CPUInstruction.CLI) {
-                this.status.clearFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
-            }
+        //刷新累加寄存器值到内存
+        if (instruction == CPUInstruction.STA) {
+            this.bus.writeUSByte(this.getOperandAddr(instruction6502.getAddressMode()), this.ra);
+        }
 
-            if (instruction == CPUInstruction.CLV) {
-                this.status.clearFlag(CPUStatus.BIFlag.OVERFLOW_FLAG);
-            }
+        //刷新y寄存器值到内存
+        if (instruction == CPUInstruction.STY) {
+            this.bus.writeUSByte(this.getOperandAddr(instruction6502.getAddressMode()), this.ry);
+        }
+        //刷新x寄存器值到内存中
+        if (instruction == CPUInstruction.STX) {
+            this.bus.writeUSByte(this.getOperandAddr(instruction6502.getAddressMode()), this.rx);
+        }
 
-            if (instruction == CPUInstruction.CMP
-                    || instruction == CPUInstruction.CPX
-                    || instruction == CPUInstruction.CPY) {
-                this.cmp(instruction6502);
-            }
+        //清除进位标识
+        if (instruction == CPUInstruction.CLC) {
+            this.status.clearFlag(CPUStatus.BIFlag.CARRY_FLAG);
+        }
 
-            if (instruction == CPUInstruction.INC
-                    || instruction == CPUInstruction.INX
-                    || instruction == CPUInstruction.INY) {
-                this.inc(instruction6502);
-            }
+        //清除Decimal model
+        if (instruction == CPUInstruction.CLD) {
+            this.status.clearFlag(CPUStatus.BIFlag.DECIMAL_MODE);
+        }
 
-            if (instruction == CPUInstruction.JSR) {
-                this.stackLPush(this.pc + 1);
-                this.pc = this.bus.readUSByte(this.pc);
-            }
+        //清除中断标识
+        if (instruction == CPUInstruction.CLI) {
+            this.status.clearFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
+        }
 
-            if (instruction == CPUInstruction.RTS) {
-                this.pc = this.popInt() + 1;
-            }
-            if (instruction == CPUInstruction.LDX || instruction == CPUInstruction.LDY) {
-                this.loadXY(instruction6502);
-            }
+        if (instruction == CPUInstruction.CLV) {
+            this.status.clearFlag(CPUStatus.BIFlag.OVERFLOW_FLAG);
+        }
 
-            if (instruction == CPUInstruction.BIT) {
-                this.bit(instruction6502);
-            }
+        if (instruction == CPUInstruction.CMP
+                || instruction == CPUInstruction.CPX
+                || instruction == CPUInstruction.CPY) {
+            this.cmp(instruction6502);
+        }
 
-            if (instruction == CPUInstruction.BCC
-                    || instruction == CPUInstruction.BCS
-                    || instruction == CPUInstruction.BEQ
-                    || instruction == CPUInstruction.BMI
-                    || instruction == CPUInstruction.BPL
-                    || instruction == CPUInstruction.BNE
-                    || instruction == CPUInstruction.BVC
-                    || instruction == CPUInstruction.BVS) {
-                this.branch(instruction6502);
-            }
+        if (instruction == CPUInstruction.INC
+                || instruction == CPUInstruction.INX
+                || instruction == CPUInstruction.INY) {
+            this.inc(instruction6502);
+        }
 
-            if (instruction == CPUInstruction.DEC
-                    || instruction == CPUInstruction.DEX
-                    || instruction == CPUInstruction.DEY) {
-                this.dec(instruction6502);
-            }
 
-            if (instruction == CPUInstruction.JMP) {
-                this.jump(instruction6502);
-            }
+        if (instruction == CPUInstruction.LDX || instruction == CPUInstruction.LDY) {
+            this.loadXY(instruction6502);
+        }
 
-            if (instruction == CPUInstruction.RTI) {
-                this.status.setValue(this.popByte());
-                //取消中断标识
-                this.status.clearFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
-                this.pc = this.popUSByte();
-            }
+        if (instruction == CPUInstruction.BIT) {
+            this.bit(instruction6502);
+        }
 
-            if (instruction == CPUInstruction.SEC) {
-                this.status.setFlag(CPUStatus.BIFlag.CARRY_FLAG);
-            }
+        if (instruction == CPUInstruction.BCC) {
+            this.branch(!this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG));
+        }
 
-            if (instruction == CPUInstruction.SED) {
-                this.status.setFlag(CPUStatus.BIFlag.DECIMAL_MODE);
-            }
+        if (instruction == CPUInstruction.BCS) {
+            this.branch(this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG));
+        }
 
-            if (instruction == CPUInstruction.SEI) {
-                this.status.setFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
-            }
+        if (instruction == CPUInstruction.BEQ) {
+            this.branch(this.status.hasFlag(CPUStatus.BIFlag.ZERO_FLAG));
+        }
 
-            if (instruction == CPUInstruction.SBC) {
-                this.sbc(instruction6502);
-            }
+        if (instruction == CPUInstruction.BMI) {
+            this.branch(this.status.hasFlag(CPUStatus.BIFlag.NEGATIVE_FLAG));
+        }
 
-            if (instruction == CPUInstruction.TAX
-                    || instruction == CPUInstruction.TAY
-                    || instruction == CPUInstruction.TSX
-                    || instruction == CPUInstruction.TXA
-                    || instruction == CPUInstruction.TXS
-                    || instruction == CPUInstruction.TYA) {
-                final int r;
-                if (instruction == CPUInstruction.TAX)
-                    r = this.rx = this.ra;
-                else if (instruction == CPUInstruction.TAY)
-                    r = this.ry = this.ra;
-                else if (instruction == CPUInstruction.TSX)
-                    r = this.rx = this.sp;
-                else if (instruction == CPUInstruction.TXA)
-                    r = this.rx;
-                else if (instruction == CPUInstruction.TXS)
-                    r = this.sp = this.rx;
-                else
-                    r = this.rx = this.ry;
+        if (instruction == CPUInstruction.BPL) {
+            this.branch(!this.status.hasFlag(CPUStatus.BIFlag.NEGATIVE_FLAG));
+        }
 
-                this.NZUpdate(r);
-            }
+        if (instruction == CPUInstruction.BNE) {
+            this.branch(!this.status.hasFlag(CPUStatus.BIFlag.ZERO_FLAG));
+        }
+
+        if (instruction == CPUInstruction.BVC) {
+            this.branch(!this.status.hasFlag(CPUStatus.BIFlag.OVERFLOW_FLAG));
+        }
+        if (instruction == CPUInstruction.BCS) {
+            this.branch(this.status.hasFlag(CPUStatus.BIFlag.OVERFLOW_FLAG));
+        }
+
+        if (instruction == CPUInstruction.DEC
+                || instruction == CPUInstruction.DEX
+                || instruction == CPUInstruction.DEY) {
+            this.dec(instruction6502);
+        }
+
+
+        if (instruction == CPUInstruction.SEC) {
+            this.status.setFlag(CPUStatus.BIFlag.CARRY_FLAG);
+        }
+
+        if (instruction == CPUInstruction.SED) {
+            this.status.setFlag(CPUStatus.BIFlag.DECIMAL_MODE);
+        }
+
+        if (instruction == CPUInstruction.SEI) {
+            this.status.setFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
+        }
+
+        if (instruction == CPUInstruction.SBC) {
+            var mode = instruction6502.getAddressMode();
+            var b = this.bus.readByte(this.getOperandAddr(mode));
+            this.add2Ra(ByteUtil.overflow(-b - 1));
+        }
+
+        if (instruction == CPUInstruction.TAX
+                || instruction == CPUInstruction.TAY
+                || instruction == CPUInstruction.TSX
+                || instruction == CPUInstruction.TXA
+                || instruction == CPUInstruction.TXS
+                || instruction == CPUInstruction.TYA) {
+            final int r;
+            if (instruction == CPUInstruction.TAX)
+                r = this.rx = this.ra;
+            else if (instruction == CPUInstruction.TAY)
+                r = this.ry = this.ra;
+            else if (instruction == CPUInstruction.TSX)
+                r = this.rx = this.sp;
+            else if (instruction == CPUInstruction.TXA)
+                r = this.rx;
+            else if (instruction == CPUInstruction.TXS) {
+                this.sp = this.rx;
+                return;
+            } else
+                r = this.rx = this.ry;
+
+            this.NZUpdate(r);
+        }
+
+        this.bus.tick(instruction6502.getCycle());
+
+        //根据是否发生重定向来判断是否需要更改程序计数器的值
+        if (this.pc != pc0) {
+            this.pc += (instruction6502.getBytes() - 1);
+        } else {
+            log.debug("Program counter was redirect to [0x{}/{}]", Integer.toHexString(this.pc), this.pc);
         }
     }
 }

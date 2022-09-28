@@ -8,15 +8,19 @@ import cn.navclub.nes4j.bin.model.NESHeader;
 import cn.navclub.nes4j.bin.util.IOUtil;
 import lombok.Getter;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class NES {
     private final Bus bus;
+    private final CPU cpu;
     private final MemoryMap map;
     @Getter
     private final NESFile nesFile;
-    private final CPU cpu;
+
 
     private NES(NESBuilder builder) {
         var buffer = Objects.requireNonNullElseGet(
@@ -27,11 +31,19 @@ public class NES {
         this.map = new MemoryMap(this.nesFile.getRgb());
         this.bus = new Bus(this.map);
         this.cpu = new CPU(this.bus);
+
+        try (var output = new FileOutputStream("./output.txt")) {
+            output.write(this.nesFile.getRgb());
+        }catch (Exception e){
+
+        }
     }
 
     public void execute() {
         this.cpu.reset();
-        this.cpu.execute();
+        while (true) {
+            this.cpu.execute();
+        }
     }
 
 

@@ -6,13 +6,13 @@ public class ByteUtil {
         if (-128 > value || value > 255) {
             throw new IllegalArgumentException("Byte legal range in 0...255.");
         }
-        final byte b;
-        if (value > 127) {
-            b = (byte) (value - 255);
-        } else {
-            b = (byte) value;
-        }
-        return b;
+//        final byte b;
+//        if (value > 127) {
+//            b = (byte) (value - 255);
+//        } else {
+//            b = (byte) value;
+//        }
+        return (byte) value;
     }
 
 

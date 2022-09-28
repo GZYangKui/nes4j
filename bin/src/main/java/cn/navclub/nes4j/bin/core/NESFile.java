@@ -10,7 +10,7 @@ public class NESFile {
     private final byte[] rgb;
     private final byte[] ch;
     private final byte[] train;
-    private final byte[] misCellaneous;
+    private final byte[] cellaneous;
 
     public NESFile(NESHeader header, byte[] buffer) {
         this.header = header;
@@ -23,7 +23,7 @@ public class NESFile {
         ch = new byte[cSize];
         rgb = new byte[rSize];
         train = new byte[trainSize];
-        misCellaneous = new byte[left];
+        cellaneous = new byte[left];
 
         if (trainSize > 0) {
             System.arraycopy(buffer, NESHeader.HEADER_SIZE, train, 0, trainSize);
@@ -36,7 +36,7 @@ public class NESFile {
         }
         if (left > 0) {
             offset += cSize;
-            System.arraycopy(buffer, offset, this.misCellaneous, 0, left);
+            System.arraycopy(buffer, offset, this.cellaneous, 0, left);
         }
     }
 }

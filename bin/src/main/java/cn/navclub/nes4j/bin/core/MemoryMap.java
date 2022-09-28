@@ -8,25 +8,37 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MemoryMap {
 
+    private final int rpgSize;
     private final byte[] buffer;
 
-
     public MemoryMap(byte[] rpg) {
+        this.rpgSize = rpg.length;
         this.buffer = new byte[0x10000];
         //复制rpg-rom到内存映射中
-        System.arraycopy(rpg, 0, this.buffer, 0x800, rpg.length);
+        System.arraycopy(rpg, 0, this.buffer, 0x8000, rpgSize);
     }
 
     /**
      * 从映射地址中获取真实地址
      */
     private int map(int address) {
+        var address0 = address;
         if (0x800 <= address && address <= 0x1FFF) {
             address &= 0b11111111111;
         }
+
         if (0x2008 <= address && address <= 0x3FFF) {
             address &= 0b10000000000111;
         }
+
+        //映射rpg内容
+        if (address >= 0xC000 && rpgSize == 0x4000) {
+            address = 0x8000 + (address - 0xC000);
+        }
+        if (address != address0) {
+            log.debug("Memory address from {} mapper to {}.", address0, address);
+        }
+
         return address;
     }
 
@@ -35,6 +47,22 @@ public class MemoryMap {
      */
     public byte read(int address) {
         address = this.map(address);
+
+        if (address >= 0x2000 && address <= 0x2006 || address == 0x4014) {
+//            log.warn("Attempt to read from write-only PPU address:0x{}", Integer.toHexString(address));
+            return 0;
+        }
+
+        if (address >= 0x4000 && address < 0x4013) {
+//            log.warn("Attempt to read from write-only APU address 0x{}", Integer.toHexString(address));
+            return 0;
+        }
+
+//        if (address >= 0x4015) {
+//            //todo Implement apu register
+//            return 0;
+//        }
+
         return this.buffer[address];
     }
 
@@ -42,7 +70,7 @@ public class MemoryMap {
     public void write(int address, byte b) {
         address = this.map(address);
         if (address >= 0x8000) {
-            log.warn("Only memory:rpg-rom area can't modify.");
+            log.debug("Only memory:rpg-rom area can't modify.");
             return;
         }
         this.buffer[address] = b;
