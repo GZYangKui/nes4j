@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.config.CPUStatus;
+import cn.navclub.nes4j.bin.core.registers.CSRegister;
 import cn.navclub.nes4j.bin.enums.AddressMode;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
 import cn.navclub.nes4j.bin.enums.CPUInterrupt;
@@ -8,15 +8,7 @@ import cn.navclub.nes4j.bin.model.Instruction6502;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * 6502 微处理器是一个相对简单的 8 位 CPU，只有几个内部寄存器能够通过其 16 位地址总线寻址最多 64Kb 的内存。处理器是小端的，并希望地址首先存储在内存中的最低有效字节中。
- * <p>
- * 内存的第一个 256 字节页面 ($0000-$00FF) 被称为“零页”，是许多特殊寻址模式的焦点，这些模式会导致更短（更快）的指令或允许间接访问内存。第二页内存（$0100-$01FF）是为系统堆栈保留的，不能重定位。
- * <p>
- * 内存映射中唯一的其他保留位置是内存 $FFFA 到 $FFFF 的最后 6 个字节，必须使用不可屏蔽中断处理程序 ($FFFA/B)、上电复位位置 ($ FFFC/D) 和 BRK/中断请求处理程序 ($FFFE/F)。
- * <p>
- * 6502 对硬件设备没有任何特殊支持，因此必须将它们映射到内存区域才能与硬件锁存器交换数据。
- */
+
 @Slf4j
 public class CPU {
     //栈开始位置
@@ -36,13 +28,13 @@ public class CPU {
     //栈指针寄存器,始终指向栈顶
     private int sp;
     //cpu状态
-    private final CPUStatus status;
+    private final CSRegister status;
 
     private final Bus bus;
 
     public CPU(final Bus bus) {
         this.bus = bus;
-        this.status = new CPUStatus();
+        this.status = new CSRegister();
     }
 
 
@@ -106,8 +98,8 @@ public class CPU {
      * 更新负标识和零标识
      */
     private void NZUpdate(int result) {
-        this.status.update(CPUStatus.BIFlag.ZERO_FLAG, result == 0);
-        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (result & 0b0100_0000) != 0);
+        this.status.update(CSRegister.BIFlag.ZERO_FLAG, result == 0);
+        this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, (result & 0b0100_0000) != 0);
     }
 
     /**
@@ -156,7 +148,7 @@ public class CPU {
 
     private void rol(Instruction6502 instruction6502) {
         var mode = instruction6502.getAddressMode();
-        var cBit = this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG) ? 0b1111_1111 : 0b1111_1110;
+        var cBit = this.status.hasFlag(CSRegister.BIFlag.CARRY_FLAG) ? 0b1111_1111 : 0b1111_1110;
 
         int result, oBit;
         if (mode == AddressMode.Accumulator) {
@@ -173,14 +165,14 @@ public class CPU {
             this.NZUpdate(result);
         }
 
-        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, oBit != 0);
+        this.status.update(CSRegister.BIFlag.CARRY_FLAG, oBit != 0);
     }
 
     private void ror(Instruction6502 instruction6502) {
         var mode = instruction6502.getAddressMode();
         var cBit = 0;
         var result = 0;
-        var oldCBit = this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG) ? 0b1111_1111 : 0b0111_1111;
+        var oldCBit = this.status.hasFlag(CSRegister.BIFlag.CARRY_FLAG) ? 0b1111_1111 : 0b0111_1111;
         if (mode == AddressMode.Accumulator) {
             cBit = this.ra & 0b0000_0001;
             result = this.ra >>= 1;
@@ -195,7 +187,7 @@ public class CPU {
             this.bus.writeByte(address, ByteUtil.overflow(result));
             this.NZUpdate(result);
         }
-        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, cBit > 0);
+        this.status.update(CSRegister.BIFlag.CARRY_FLAG, cBit > 0);
     }
 
     private void asl(Instruction6502 instruction6502) {
@@ -210,7 +202,7 @@ public class CPU {
         }
         var c = b & 0b1000_0000;
         //更新进位标识
-        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, c != 0);
+        this.status.update(CSRegister.BIFlag.CARRY_FLAG, c != 0);
         //左移1位
         c = b << 1;
         if (a) {
@@ -258,9 +250,9 @@ public class CPU {
         }
         var b = this.bus.readByte(address);
         //设置Carry Flag
-        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, a >= b);
+        this.status.update(CSRegister.BIFlag.CARRY_FLAG, a >= b);
         //设置Zero Flag
-        this.status.update(CPUStatus.BIFlag.ZERO_FLAG, a == b);
+        this.status.update(CSRegister.BIFlag.ZERO_FLAG, a == b);
     }
 
     private void inc(Instruction6502 instruction6502) {
@@ -283,18 +275,28 @@ public class CPU {
             log.warn("Unknown inc instruction:[0x{}] alia:[{}].", instruction6502.getOpenCode(), instruction);
             return;
         }
-        this.status.update(CPUStatus.BIFlag.ZERO_FLAG, result == 0);
-        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (result & 0b0100_0000) != 0);
+        this.status.update(CSRegister.BIFlag.ZERO_FLAG, result == 0);
+        this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, (result & 0b0100_0000) != 0);
     }
 
-    private void add2Ra(byte data) {
-        var result = this.ra + data + this.status.getFlagBit(CPUStatus.BIFlag.CARRY_FLAG);
-        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, result < -128 || result > 127);
-        if (((data ^ result) & (result ^ this.ra) & 0x80) != 0) {
-            this.status.setFlag(CPUStatus.BIFlag.OVERFLOW_FLAG);
+    private void maths(AddressMode mode, boolean sbc) {
+        int result;
+        var address = this.getOperandAddr(mode);
+        var b = this.bus.readByte(address);
+        var carry = this.status.getFlagBit(CSRegister.BIFlag.CARRY_FLAG);
+        if (sbc) {
+            result = this.ra - b - carry;
         } else {
-            this.status.clearFlag(CPUStatus.BIFlag.OVERFLOW_FLAG);
+            result = this.ra + b + carry;
         }
+        this.status.update(CSRegister.BIFlag.CARRY_FLAG, result < -128 || result > 127);
+        if (((b ^ result) & (result ^ this.ra) & 0x80) != 0) {
+            result &= 0b1111_1111;
+            this.status.setFlag(CSRegister.BIFlag.OVERFLOW_FLAG);
+        } else {
+            this.status.clearFlag(CSRegister.BIFlag.OVERFLOW_FLAG);
+        }
+
         this.raUpdate(result);
     }
 
@@ -304,11 +306,11 @@ public class CPU {
 //    private void adc(AddressMode mode) {
 //        var address = this.getOperandAddr(mode);
 //        var m = this.bus.readByte(address);
-//        var sum = this.ra + m + this.status.getFlagBit(CPUStatus.BIFlag.CARRY_FLAG);
+//        var sum = this.ra + m + this.status.getFlagBit(CSRegister.BIFlag.CARRY_FLAG);
 //        //If result overflow set carry-bit else remove carry bit.
-//        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, sum > 127 || sum < -128);
+//        this.status.update(CSRegister.BIFlag.CARRY_FLAG, sum > 127 || sum < -128);
 //        //Set if sign-bit incorrect
-//        this.status.update(CPUStatus.BIFlag.OVERFLOW_FLAG, ((m ^ sum) & (sum ^ this.ra)) != 0);
+//        this.status.update(CSRegister.BIFlag.OVERFLOW_FLAG, ((m ^ sum) & (sum ^ this.ra)) != 0);
 //        sum &= 0b1111_1111;
 //        this.raUpdate(sum);
 //    }
@@ -316,21 +318,20 @@ public class CPU {
     /**
      * 减法实现
      */
-    private void sbc(Instruction6502 instruction6502) {
-        var mode = instruction6502.getAddressMode();
-        var address = this.getOperandAddr(mode);
-        var m = this.bus.readByte(address);
-        var sbc = this.ra - m - (1 - this.status.getFlagBit(CPUStatus.BIFlag.CARRY_FLAG));
-
-        //If result overflow set carry-bit else remove carry bit.
-        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, sbc > 127 || sbc < -128);
-        //Set if sign-bit incorrect
-        this.status.update(CPUStatus.BIFlag.OVERFLOW_FLAG, ((m ^ sbc) & (sbc ^ this.ra)) != 0);
-        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (sbc & 0b1000_0000) > 0);
-        sbc &= 0b1111_1111;
-        this.raUpdate(sbc);
-    }
-
+//    private void sbc(Instruction6502 instruction6502) {
+//        var mode = instruction6502.getAddressMode();
+//        var address = this.getOperandAddr(mode);
+//        var m = this.bus.readByte(address);
+//        var sbc = this.ra - m - (1 - this.status.getFlagBit(CSRegister.BIFlag.CARRY_FLAG));
+//
+//        //If result overflow set carry-bit else remove carry bit.
+//        this.status.update(CSRegister.BIFlag.CARRY_FLAG, sbc > 127 || sbc < -128);
+//        //Set if sign-bit incorrect
+//        this.status.update(CSRegister.BIFlag.OVERFLOW_FLAG, ((m ^ sbc) & (sbc ^ this.ra)) != 0);
+//        this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, (sbc & 0b1000_0000) > 0);
+//        sbc &= 0b1111_1111;
+//        this.raUpdate(sbc);
+//    }
     private void loadXY(Instruction6502 instruction6502) {
         var address = this.getOperandAddr(instruction6502.getAddressMode());
         var data = this.bus.readByte(address);
@@ -339,22 +340,26 @@ public class CPU {
         } else {
             this.ry = data;
         }
-        this.status.update(CPUStatus.BIFlag.CARRY_FLAG, data == 0);
-        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, (data & 0b0100_0000) > 0);
+        this.status.update(CSRegister.BIFlag.CARRY_FLAG, data == 0);
+        this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, (data & 0b0100_0000) > 0);
     }
 
     private void branch(boolean condition) {
+        //条件不成立不跳转分支
+        if (!condition) {
+            return;
+        }
         var jump = this.bus.readByte(this.pc);
-        this.pc += (1 + jump);
+        this.pc = this.pc + 1 + jump;
     }
 
     private void bit(Instruction6502 instruction6502) {
         var address = this.getOperandAddr(instruction6502.getAddressMode());
         var value = this.bus.readByte(address);
 
-        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, value < 0);
-        this.status.update(CPUStatus.BIFlag.OVERFLOW_FLAG, (value & 0b0010_0000) != 0);
-        this.status.update(CPUStatus.BIFlag.ZERO_FLAG, (value & this.ra) == 0);
+        this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, value < 0);
+        this.status.update(CSRegister.BIFlag.OVERFLOW_FLAG, (value & 0b0010_0000) != 0);
+        this.status.update(CSRegister.BIFlag.ZERO_FLAG, (value & this.ra) == 0);
     }
 
     private void dec(Instruction6502 instruction6502) {
@@ -377,13 +382,13 @@ public class CPU {
             }
         };
 
-        this.status.update(CPUStatus.BIFlag.ZERO_FLAG, value == 0);
-        this.status.update(CPUStatus.BIFlag.NEGATIVE_FLAG, value < 0);
+        this.status.update(CSRegister.BIFlag.ZERO_FLAG, value == 0);
+        this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, value < 0);
     }
 
     public void interrupt(CPUInterrupt interrupt) {
         //中断状态不可用
-        if (interrupt != CPUInterrupt.NMI && this.status.hasFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE)) {
+        if (interrupt != CPUInterrupt.NMI && this.status.hasFlag(CSRegister.BIFlag.INTERRUPT_DISABLE)) {
             return;
         }
         if (interrupt == CPUInterrupt.RESET) {
@@ -392,9 +397,9 @@ public class CPU {
             this.pushInt(this.pc);
             this.pushByte(ByteUtil.overflow(this.status.getValue()));
             //禁用中断
-            this.status.setFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
+            this.status.setFlag(CSRegister.BIFlag.INTERRUPT_DISABLE);
             this.pc = this.bus.readInt(interrupt == CPUInterrupt.NMI ? 0xFFFA : 0xFFFE);
-            this.status.update(CPUStatus.BIFlag.BREAK_COMMAND, interrupt == CPUInterrupt.BRK);
+            this.status.update(CSRegister.BIFlag.BREAK_COMMAND, interrupt == CPUInterrupt.BRK);
         }
     }
 
@@ -422,7 +427,7 @@ public class CPU {
         if (instruction == CPUInstruction.RTI) {
             this.status.setValue(this.popByte());
             //取消中断标识
-            this.status.clearFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
+            this.status.clearFlag(CSRegister.BIFlag.INTERRUPT_DISABLE);
             this.pc = this.popUSByte();
         }
         if (instruction == CPUInstruction.JSR) {
@@ -440,10 +445,10 @@ public class CPU {
         if (instruction == CPUInstruction.LDA) {
             this.lda(instruction6502);
         }
-        if (instruction == CPUInstruction.ADC) {
-            var mode = instruction6502.getAddressMode();
-            var data = this.bus.readByte(this.getOperandAddr(mode));
-            this.add2Ra(data);
+
+        //加减运算
+        if (instruction == CPUInstruction.ADC || instruction == CPUInstruction.SBC) {
+            this.maths(instruction6502.getAddressMode(), instruction == CPUInstruction.SBC);
         }
 
         //或、与、异或逻辑运算
@@ -491,21 +496,21 @@ public class CPU {
 
         //清除进位标识
         if (instruction == CPUInstruction.CLC) {
-            this.status.clearFlag(CPUStatus.BIFlag.CARRY_FLAG);
+            this.status.clearFlag(CSRegister.BIFlag.CARRY_FLAG);
         }
 
         //清除Decimal model
         if (instruction == CPUInstruction.CLD) {
-            this.status.clearFlag(CPUStatus.BIFlag.DECIMAL_MODE);
+            this.status.clearFlag(CSRegister.BIFlag.DECIMAL_MODE);
         }
 
         //清除中断标识
         if (instruction == CPUInstruction.CLI) {
-            this.status.clearFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
+            this.status.clearFlag(CSRegister.BIFlag.INTERRUPT_DISABLE);
         }
 
         if (instruction == CPUInstruction.CLV) {
-            this.status.clearFlag(CPUStatus.BIFlag.OVERFLOW_FLAG);
+            this.status.clearFlag(CSRegister.BIFlag.OVERFLOW_FLAG);
         }
 
         if (instruction == CPUInstruction.CMP
@@ -530,34 +535,34 @@ public class CPU {
         }
 
         if (instruction == CPUInstruction.BCC) {
-            this.branch(!this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG));
+            this.branch(!this.status.hasFlag(CSRegister.BIFlag.CARRY_FLAG));
         }
 
         if (instruction == CPUInstruction.BCS) {
-            this.branch(this.status.hasFlag(CPUStatus.BIFlag.CARRY_FLAG));
+            this.branch(this.status.hasFlag(CSRegister.BIFlag.CARRY_FLAG));
         }
 
         if (instruction == CPUInstruction.BEQ) {
-            this.branch(this.status.hasFlag(CPUStatus.BIFlag.ZERO_FLAG));
+            this.branch(this.status.hasFlag(CSRegister.BIFlag.ZERO_FLAG));
         }
 
         if (instruction == CPUInstruction.BMI) {
-            this.branch(this.status.hasFlag(CPUStatus.BIFlag.NEGATIVE_FLAG));
+            this.branch(this.status.hasFlag(CSRegister.BIFlag.NEGATIVE_FLAG));
         }
 
         if (instruction == CPUInstruction.BPL) {
-            this.branch(!this.status.hasFlag(CPUStatus.BIFlag.NEGATIVE_FLAG));
+            this.branch(!this.status.hasFlag(CSRegister.BIFlag.NEGATIVE_FLAG));
         }
 
         if (instruction == CPUInstruction.BNE) {
-            this.branch(!this.status.hasFlag(CPUStatus.BIFlag.ZERO_FLAG));
+            this.branch(!this.status.hasFlag(CSRegister.BIFlag.ZERO_FLAG));
         }
 
         if (instruction == CPUInstruction.BVC) {
-            this.branch(!this.status.hasFlag(CPUStatus.BIFlag.OVERFLOW_FLAG));
+            this.branch(!this.status.hasFlag(CSRegister.BIFlag.OVERFLOW_FLAG));
         }
         if (instruction == CPUInstruction.BCS) {
-            this.branch(this.status.hasFlag(CPUStatus.BIFlag.OVERFLOW_FLAG));
+            this.branch(this.status.hasFlag(CSRegister.BIFlag.OVERFLOW_FLAG));
         }
 
         if (instruction == CPUInstruction.DEC
@@ -568,21 +573,15 @@ public class CPU {
 
 
         if (instruction == CPUInstruction.SEC) {
-            this.status.setFlag(CPUStatus.BIFlag.CARRY_FLAG);
+            this.status.setFlag(CSRegister.BIFlag.CARRY_FLAG);
         }
 
         if (instruction == CPUInstruction.SED) {
-            this.status.setFlag(CPUStatus.BIFlag.DECIMAL_MODE);
+            this.status.setFlag(CSRegister.BIFlag.DECIMAL_MODE);
         }
 
         if (instruction == CPUInstruction.SEI) {
-            this.status.setFlag(CPUStatus.BIFlag.INTERRUPT_DISABLE);
-        }
-
-        if (instruction == CPUInstruction.SBC) {
-            var mode = instruction6502.getAddressMode();
-            var b = this.bus.readByte(this.getOperandAddr(mode));
-            this.add2Ra(ByteUtil.overflow(-b - 1));
+            this.status.setFlag(CSRegister.BIFlag.INTERRUPT_DISABLE);
         }
 
         if (instruction == CPUInstruction.TAX

@@ -1,28 +1,19 @@
-package cn.navclub.nes4j.bin.config;
+package cn.navclub.nes4j.bin.core.registers;
 
 import lombok.Data;
-import lombok.Getter;
 
 /**
  * CPU状态管理
  */
 @Data
-public class CPUStatus {
+public class CSRegister {
     private byte value;
 
     /**
      * 清除某个标识位
      */
     public void clearFlag(BIFlag flag) {
-        this.value &= switch (flag) {
-            case CARRY_FLAG -> 0b0111_1110;
-            case ZERO_FLAG -> 0b0111_1101;
-            case INTERRUPT_DISABLE -> 0b0111_1011;
-            case DECIMAL_MODE -> 0b0111_0111;
-            case BREAK_COMMAND -> 0b0110_1111;
-            case OVERFLOW_FLAG -> 0b0101_1111;
-            case NEGATIVE_FLAG -> 0b0011_1111;
-        };
+        this.value &= (0xff - (int) (Math.pow(2, flag.ordinal())));
     }
 
     /**

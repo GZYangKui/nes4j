@@ -8,10 +8,8 @@ import cn.navclub.nes4j.bin.model.NESHeader;
 import cn.navclub.nes4j.bin.util.IOUtil;
 import lombok.Getter;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.Arrays;
 import java.util.Objects;
 
 public class NES {
@@ -34,7 +32,7 @@ public class NES {
 
         try (var output = new FileOutputStream("./output.txt")) {
             output.write(this.nesFile.getRgb());
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
     }
@@ -42,7 +40,11 @@ public class NES {
     public void execute() {
         this.cpu.reset();
         while (true) {
-            this.cpu.execute();
+            try {
+                this.cpu.execute();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
