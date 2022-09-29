@@ -7,9 +7,9 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class MemoryMap {
-
     private final int rpgSize;
     private final byte[] buffer;
+
 
     public MemoryMap(byte[] rpg) {
         this.rpgSize = rpg.length;
@@ -48,7 +48,12 @@ public class MemoryMap {
     public byte read(int address) {
         address = this.map(address);
 
-        if (address >= 0x2000 && address <= 0x2006 || address == 0x4014) {
+        if (address == 0x2000
+                || address == 0x2001
+                || address == 0x2003
+                || address == 0x2005
+                || address == 0x2006
+                || address == 0x4014) {
 //            log.warn("Attempt to read from write-only PPU address:0x{}", Integer.toHexString(address));
             return 0;
         }
@@ -57,7 +62,6 @@ public class MemoryMap {
 //            log.warn("Attempt to read from write-only APU address 0x{}", Integer.toHexString(address));
             return 0;
         }
-
 //        if (address >= 0x4015) {
 //            //todo Implement apu register
 //            return 0;

@@ -9,13 +9,11 @@ import cn.navclub.nes4j.bin.util.IOUtil;
 import lombok.Getter;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.util.Objects;
 
 public class NES {
     private final Bus bus;
     private final CPU cpu;
-    private final MemoryMap map;
     @Getter
     private final NESFile nesFile;
 
@@ -26,15 +24,8 @@ public class NES {
                 () -> IOUtil.readFileAllByte(builder.file)
         );
         this.nesFile = new NESFile(new NESHeader(buffer), buffer);
-        this.map = new MemoryMap(this.nesFile.getRgb());
-        this.bus = new Bus(this.map);
+        this.bus = new Bus(this.nesFile);
         this.cpu = new CPU(this.bus);
-
-        try (var output = new FileOutputStream("./output.txt")) {
-            output.write(this.nesFile.getRgb());
-        } catch (Exception e) {
-
-        }
     }
 
     public void execute() {
