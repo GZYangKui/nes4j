@@ -467,7 +467,70 @@ public enum CPUInstruction {
     /**
      * 中断指令
      */
-    BRK(ByteUtil.overflow(0x00), 1, 7);
+    BRK(ByteUtil.overflow(0x00), 1, 7),
+
+    SHX(Instruction6502.create(ByteUtil.overflow(0x9e), 3, 5, Absolute_Y)),
+
+    ISC(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0xE7), 2, 5, ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0xF7), 2, 6, ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0xEF), 3, 6, Absolute),
+            Instruction6502.create(ByteUtil.overflow(0xFF), 3, 7, Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0xFB), 3, 7, Absolute_Y),
+            Instruction6502.create(ByteUtil.overflow(0xE3), 2, 8, Indirect_X),
+            Instruction6502.create(ByteUtil.overflow(0xF3), 2, 8, Indirect_Y)
+    }),
+
+    SLO(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x07), 2, 5, ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x17), 2, 6, ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x0f), 3, 6, Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x1f), 3, 7, Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0x1b), 3, 7, Absolute_Y),
+            Instruction6502.create(ByteUtil.overflow(0x03), 2, 8, Indirect_X),
+            Instruction6502.create(ByteUtil.overflow(0x13), 2, 8, Indirect_Y)
+
+    }),
+    SRE(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x47), 2, 5, ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x57), 2, 6, ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x4f), 3, 6, Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x5f), 3, 7, Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0x5b), 3, 7, Absolute_Y),
+            Instruction6502.create(ByteUtil.overflow(0x43), 2, 8, Indirect_X),
+            Instruction6502.create(ByteUtil.overflow(0x53), 2, 8, Indirect_Y)
+    }),
+
+
+    NOP_S(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x1A), 1, 2, NoneAddressing),
+            Instruction6502.create(ByteUtil.overflow(0x3A), 1, 2, NoneAddressing),
+            Instruction6502.create(ByteUtil.overflow(0x5A), 1, 2, NoneAddressing),
+            Instruction6502.create(ByteUtil.overflow(0x7A), 1, 2, NoneAddressing),
+            Instruction6502.create(ByteUtil.overflow(0xDA), 1, 2, NoneAddressing),
+            Instruction6502.create(ByteUtil.overflow(0xFA), 1, 2, NoneAddressing),
+            Instruction6502.create(ByteUtil.overflow(0x80), 2, 2, Immediate),
+            Instruction6502.create(ByteUtil.overflow(0x82), 2, 2, Immediate),
+            Instruction6502.create(ByteUtil.overflow(0x89), 2, 2, Immediate),
+            Instruction6502.create(ByteUtil.overflow(0xC2), 2, 2, Immediate),
+            Instruction6502.create(ByteUtil.overflow(0xE2), 2, 2, Immediate),
+            Instruction6502.create(ByteUtil.overflow(0x04), 2, 3, ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x44), 2, 3, ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x64), 2, 3, ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x14), 2, 4, ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x34), 2, 4, ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x54), 2, 4, ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x74), 2, 4, ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0xD4), 2, 4, ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0xF4), 2, 4, ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x0C), 3, 4, Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x1C), 3, 4, Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0x3C), 3, 4, Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0x5C), 3, 4, Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0x7C), 3, 4, Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0xDC), 3, 4, Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0xFC), 3, 4, Absolute_X),
+    });
 
     private final Instruction6502 instruction6502;
     private final Instruction6502[] instruction6502s;
@@ -494,8 +557,7 @@ public enum CPUInstruction {
     }
 
     CPUInstruction(Instruction6502 instruction6502) {
-        this.instruction6502s = null;
-        this.instruction6502 = instruction6502;
+        this(instruction6502, null);
     }
 
     public static Instruction6502 getInstance(byte openCode) {
@@ -513,7 +575,7 @@ public enum CPUInstruction {
                 }
             }
         }
-        log.debug("unofficial opencode:[0x{}]", Integer.toHexString(openCode&0xff));
+        log.warn("unofficial opencode:[0x{}]", Integer.toHexString(openCode & 0xff));
         return null;
     }
 }

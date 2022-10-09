@@ -19,6 +19,9 @@ public class Bus {
      * 从内存中读取一个字节数据
      */
     public byte readByte(int address) {
+        if (address<0){
+            System.out.println("数组越界");
+        }
         if (address == 0x2002) {
             return this.ppu.readStatus();
         }
@@ -29,8 +32,7 @@ public class Bus {
      * 读无符号字节
      */
     public int readUSByte(int address) {
-        var b = this.readByte(address);
-        return Byte.toUnsignedInt(b);
+        return Byte.toUnsignedInt(this.readByte(address));
     }
 
     /**
@@ -74,7 +76,7 @@ public class Bus {
     public int readInt(int address) {
         var lsb = Byte.toUnsignedInt(this.readByte(address));
         var msb = Byte.toUnsignedInt(this.readByte(address + 1));
-        return msb << 8 | lsb;
+        return lsb | (msb << 8);
     }
 
     /**

@@ -30,6 +30,9 @@ public class CPU {
     //cpu状态
     private final CSRegister status;
 
+    private int pcState;
+    private CPUInstruction instructionState;
+
     private final Bus bus;
 
     public CPU(final Bus bus) {
@@ -99,7 +102,7 @@ public class CPU {
      */
     private void NZUpdate(int result) {
         this.status.update(CSRegister.BIFlag.ZERO_FLAG, result == 0);
-        this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, (result & 0b0100_0000) != 0);
+        this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, (result & 0x80) != 0);
     }
 
     /**
@@ -132,11 +135,10 @@ public class CPU {
     /**
      * 逻辑运算 或、与、异或
      */
-    private void logic(Instruction6502 instruction6502) {
-        var address = this.getOperandAddr(instruction6502.getAddressMode());
+    private void logic(CPUInstruction instruction, AddressMode addressMode) {
+        var address = this.getOperandAddr(addressMode);
         var a = this.ra;
-        var b = this.bus.readByte(address);
-        var instruction = instruction6502.getInstruction();
+        var b = this.bus.readUSByte(address);
         var c = switch (instruction) {
             case EOR -> a ^ b;
             case ORA -> a | b;
@@ -144,6 +146,22 @@ public class CPU {
             default -> a;
         };
         this.raUpdate(c);
+    }
+
+    private void lsr(AddressMode mode) {
+        var addr = 0;
+        var operand = mode == AddressMode.Accumulator
+                ? this.ra
+                : this.bus.readUSByte(addr = this.getOperandAddr(mode));
+
+        this.status.update(CSRegister.BIFlag.CARRY_FLAG, (operand & 1) != 0);
+        operand >>= 1;
+        if (mode == AddressMode.Accumulator) {
+            this.raUpdate(operand);
+        } else {
+            this.bus.writeUSByte(addr, operand);
+            this.NZUpdate(operand);
+        }
     }
 
     private void rol(Instruction6502 instruction6502) {
@@ -191,14 +209,14 @@ public class CPU {
     }
 
     private void asl(Instruction6502 instruction6502) {
-        final byte b;
-        var a = instruction6502.getAddressMode() == AddressMode.Accumulator;
+        final int b;
+        var a = (instruction6502.getAddressMode() == AddressMode.Accumulator);
         var address = -1;
         if (a) {
-            b = (byte) this.ra;
+            b = this.ra;
         } else {
             address = this.getOperandAddr(instruction6502.getAddressMode());
-            b = this.bus.readByte(address);
+            b = this.bus.readUSByte(address);
         }
         var c = b & 0b1000_0000;
         //更新进位标识
@@ -255,24 +273,20 @@ public class CPU {
         this.status.update(CSRegister.BIFlag.ZERO_FLAG, a == b);
     }
 
-    private void inc(Instruction6502 instruction6502) {
-        final CPUInstruction instruction = instruction6502.getInstruction();
+    private void inc(CPUInstruction instruction, AddressMode mode) {
         final int result;
         if (instruction == CPUInstruction.INC) {
-            var address = this.getOperandAddr(instruction6502.getAddressMode());
+            var address = this.getOperandAddr(mode);
             var a = this.bus.readByte(address);
             result = a + 1;
             this.bus.writeInt(address, result);
         } else if (instruction == CPUInstruction.INX) {
             var x = this.rx;
-            result = x + 1;
-            this.rx = result;
+            this.rx = result = x + 1;
         } else if (instruction == CPUInstruction.INY) {
             var y = this.ry;
-            result = y + 1;
-            this.ry = result;
+            this.ry = result = y + 1;
         } else {
-            log.warn("Unknown inc instruction:[0x{}] alia:[{}].", instruction6502.getOpenCode(), instruction);
             return;
         }
         this.status.update(CSRegister.BIFlag.ZERO_FLAG, result == 0);
@@ -300,38 +314,6 @@ public class CPU {
         this.raUpdate(result);
     }
 
-    /**
-     * 加法实现
-     */
-//    private void adc(AddressMode mode) {
-//        var address = this.getOperandAddr(mode);
-//        var m = this.bus.readByte(address);
-//        var sum = this.ra + m + this.status.getFlagBit(CSRegister.BIFlag.CARRY_FLAG);
-//        //If result overflow set carry-bit else remove carry bit.
-//        this.status.update(CSRegister.BIFlag.CARRY_FLAG, sum > 127 || sum < -128);
-//        //Set if sign-bit incorrect
-//        this.status.update(CSRegister.BIFlag.OVERFLOW_FLAG, ((m ^ sum) & (sum ^ this.ra)) != 0);
-//        sum &= 0b1111_1111;
-//        this.raUpdate(sum);
-//    }
-
-    /**
-     * 减法实现
-     */
-//    private void sbc(Instruction6502 instruction6502) {
-//        var mode = instruction6502.getAddressMode();
-//        var address = this.getOperandAddr(mode);
-//        var m = this.bus.readByte(address);
-//        var sbc = this.ra - m - (1 - this.status.getFlagBit(CSRegister.BIFlag.CARRY_FLAG));
-//
-//        //If result overflow set carry-bit else remove carry bit.
-//        this.status.update(CSRegister.BIFlag.CARRY_FLAG, sbc > 127 || sbc < -128);
-//        //Set if sign-bit incorrect
-//        this.status.update(CSRegister.BIFlag.OVERFLOW_FLAG, ((m ^ sbc) & (sbc ^ this.ra)) != 0);
-//        this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, (sbc & 0b1000_0000) > 0);
-//        sbc &= 0b1111_1111;
-//        this.raUpdate(sbc);
-//    }
     private void loadXY(Instruction6502 instruction6502) {
         var address = this.getOperandAddr(instruction6502.getAddressMode());
         var data = this.bus.readByte(address);
@@ -406,19 +388,20 @@ public class CPU {
 
     public void execute() {
         var openCode = this.bus.readByte(this.pc);
-        var pc0 = (++this.pc);
+        this.pcState = (++this.pc);
         var instruction6502 = CPUInstruction.getInstance(openCode);
         if (instruction6502 == null) {
             return;
         }
         var instruction = instruction6502.getInstruction();
-        log.info("Current program counter in position [0x{}/{}] prepare execute instruction [0x{}] alias [{}] size:[0x{}].",
-                Integer.toHexString(this.pc - 1),
-                this.pc - 1,
-                Integer.toHexString(openCode & 0xff),
-                instruction,
-                Integer.toHexString(instruction6502.getBytes())
-        );
+        if (instruction != CPUInstruction.BRK)
+            log.info("Current program counter in position [0x{}/{}] prepare execute instruction [0x{}] alias [{}] size:[0x{}].",
+                    Integer.toHexString(this.pc - 1),
+                    this.pc - 1,
+                    Integer.toHexString(openCode & 0xff),
+                    instruction,
+                    Integer.toHexString(instruction6502.getBytes())
+            );
 
         if (instruction == CPUInstruction.JMP) {
             this.pc = this.bus.readInt(this.getOperandAddr(instruction6502.getAddressMode()));
@@ -455,7 +438,7 @@ public class CPU {
         if (instruction == CPUInstruction.AND
                 || instruction == CPUInstruction.ORA
                 || instruction == CPUInstruction.EOR) {
-            this.logic(instruction6502);
+            this.logic(instruction6502.getInstruction(), instruction6502.getAddressMode());
         }
 
         //push累加寄存器/状态寄存器
@@ -522,7 +505,7 @@ public class CPU {
         if (instruction == CPUInstruction.INC
                 || instruction == CPUInstruction.INX
                 || instruction == CPUInstruction.INY) {
-            this.inc(instruction6502);
+            this.inc(instruction6502.getInstruction(), instruction6502.getAddressMode());
         }
 
 
@@ -607,14 +590,39 @@ public class CPU {
 
             this.NZUpdate(r);
         }
+        if (instruction == CPUInstruction.SLO) {
+            this.asl(instruction6502);
+            this.logic(CPUInstruction.ORA, instruction6502.getAddressMode());
+        }
+
+        if (instruction == CPUInstruction.ISC) {
+            this.inc(CPUInstruction.INC, instruction6502.getAddressMode());
+            this.maths(instruction6502.getAddressMode(), true);
+        }
+
+
+        if (instruction == CPUInstruction.SRE || instruction == CPUInstruction.LSR) {
+            this.lsr(instruction6502.getAddressMode());
+            if (instruction == CPUInstruction.SRE) {
+                this.logic(CPUInstruction.EOR, instruction6502.getAddressMode());
+            }
+        }
+
+        if (instruction == CPUInstruction.SHX) {
+            var addr = this.getOperandAddr(instruction6502.getAddressMode());
+            var value = this.bus.readUSByte(addr + 1);
+            value = this.rx & value;
+            this.bus.writeInt(addr, value);
+        }
 
         this.bus.tick(instruction6502.getCycle());
 
         //根据是否发生重定向来判断是否需要更改程序计数器的值
-        if (this.pc != pc0) {
+        if (this.pc != this.pcState) {
             this.pc += (instruction6502.getBytes() - 1);
         } else {
             log.debug("Program counter was redirect to [0x{}/{}]", Integer.toHexString(this.pc), this.pc);
         }
+        this.instructionState = instruction;
     }
 }
