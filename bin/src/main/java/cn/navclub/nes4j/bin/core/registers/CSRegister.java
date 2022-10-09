@@ -1,11 +1,17 @@
 package cn.navclub.nes4j.bin.core.registers;
 
-import lombok.Data;
+import cn.navclub.nes4j.bin.util.ByteUtil;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * CPU状态管理
+ *
  */
-@Data
+@Getter
+@Setter
+@Slf4j
 public class CSRegister {
     private byte value;
 
@@ -46,12 +52,18 @@ public class CSRegister {
         this.value = 0;
     }
 
+    @Override
+    public String toString() {
+        return ByteUtil.toBinStr(this.value);
+    }
+
     public enum BIFlag {
         CARRY_FLAG,
         ZERO_FLAG,
         INTERRUPT_DISABLE,
         DECIMAL_MODE,
         BREAK_COMMAND,
+        EMPTY,
         OVERFLOW_FLAG,
         NEGATIVE_FLAG
     }

@@ -6,22 +6,20 @@ public class ByteUtil {
         if (-128 > value || value > 255) {
             throw new IllegalArgumentException("Byte legal range in 0...255.");
         }
-//        final byte b;
-//        if (value > 127) {
-//            b = (byte) (value - 255);
-//        } else {
-//            b = (byte) value;
-//        }
         return (byte) value;
     }
 
-
-    public static byte[] toByteArray(int[] arr) {
-        var temp = new byte[arr.length];
-        for (int i = 0; i < arr.length; i++) {
-            temp[i] = overflow(arr[i]);
+    /**
+     *
+     * 将字节数组转换为二进制
+     *
+     */
+    public static String toBinStr(byte value) {
+        var sb = new StringBuilder();
+        for (int i = 0; i < 8; i++) {
+            sb.append((value & (1 << i)) != 0 ? 1 : 0);
         }
-        return temp;
+        return sb.toString();
     }
 
     /**

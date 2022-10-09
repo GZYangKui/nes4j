@@ -19,9 +19,6 @@ public class Bus {
      * 从内存中读取一个字节数据
      */
     public byte readByte(int address) {
-        if (address<0){
-            System.out.println("数组越界");
-        }
         if (address == 0x2002) {
             return this.ppu.readStatus();
         }

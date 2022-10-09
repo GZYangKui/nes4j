@@ -8,6 +8,9 @@ import cn.navclub.nes4j.bin.model.Instruction6502;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Slf4j
 public class CPU {
@@ -277,7 +280,7 @@ public class CPU {
         final int result;
         if (instruction == CPUInstruction.INC) {
             var address = this.getOperandAddr(mode);
-            var a = this.bus.readByte(address);
+            var a = this.bus.readUSByte(address);
             result = a + 1;
             this.bus.writeInt(address, result);
         } else if (instruction == CPUInstruction.INX) {
@@ -296,7 +299,7 @@ public class CPU {
     private void maths(AddressMode mode, boolean sbc) {
         int result;
         var address = this.getOperandAddr(mode);
-        var b = this.bus.readByte(address);
+        var b = this.bus.readUSByte(address);
         var carry = this.status.getFlagBit(CSRegister.BIFlag.CARRY_FLAG);
         if (sbc) {
             result = this.ra - b - carry;
@@ -393,16 +396,28 @@ public class CPU {
         if (instruction6502 == null) {
             return;
         }
-        var instruction = instruction6502.getInstruction();
-        if (instruction != CPUInstruction.BRK)
-            log.info("Current program counter in position [0x{}/{}] prepare execute instruction [0x{}] alias [{}] size:[0x{}].",
-                    Integer.toHexString(this.pc - 1),
-                    this.pc - 1,
-                    Integer.toHexString(openCode & 0xff),
-                    instruction,
-                    Integer.toHexString(instruction6502.getBytes())
-            );
 
+        var instruction = instruction6502.getInstruction();
+        var size = instruction6502.getBytes();
+        String operand = "";
+        if (size > 0) {
+            var mode = instruction6502.getAddressMode();
+            if (mode != null && mode != AddressMode.NoneAddressing) {
+                if (mode == AddressMode.Accumulator) {
+                    operand = Integer.toHexString(this.ra);
+                } else {
+                    operand = Integer.toHexString(this.bus.readUSByte(this.getOperandAddr(mode)));
+                }
+                operand = String.format("0x%s", operand.length() % 2 != 0 ? '0' + operand : operand);
+            }
+        }
+        if (instruction != CPUInstruction.BRK)
+            log.info("({}){}(0x{}) {}",
+                    this.pcState,
+                    instruction,
+                    Integer.toHexString(Byte.toUnsignedInt(openCode)),
+                    operand
+            );
         if (instruction == CPUInstruction.JMP) {
             this.pc = this.bus.readInt(this.getOperandAddr(instruction6502.getAddressMode()));
         }
@@ -618,7 +633,7 @@ public class CPU {
         this.bus.tick(instruction6502.getCycle());
 
         //根据是否发生重定向来判断是否需要更改程序计数器的值
-        if (this.pc != this.pcState) {
+        if (this.pc == this.pcState) {
             this.pc += (instruction6502.getBytes() - 1);
         } else {
             log.debug("Program counter was redirect to [0x{}/{}]", Integer.toHexString(this.pc), this.pc);

@@ -575,7 +575,7 @@ public enum CPUInstruction {
                 }
             }
         }
-        log.warn("unofficial opencode:[0x{}]", Integer.toHexString(openCode & 0xff));
+        log.debug("unofficial opencode:[0x{}]", Integer.toHexString(openCode & 0xff));
         return null;
     }
 }

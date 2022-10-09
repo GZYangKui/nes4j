@@ -2,7 +2,6 @@ package cn.navclub.nes4j.bin;
 
 import cn.navclub.nes4j.bin.core.Bus;
 import cn.navclub.nes4j.bin.core.CPU;
-import cn.navclub.nes4j.bin.core.MemoryMap;
 import cn.navclub.nes4j.bin.core.NESFile;
 import cn.navclub.nes4j.bin.model.NESHeader;
 import cn.navclub.nes4j.bin.util.IOUtil;
@@ -34,7 +33,7 @@ public class NES {
             try {
                 this.cpu.execute();
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         }
     }
