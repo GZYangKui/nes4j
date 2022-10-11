@@ -10,9 +10,19 @@ public class Bus {
 
     private int cycle;
 
-    public Bus(NESFile file) {
-        this.ppu = new PPU(file.getCh());
-        this.memoryMap = new MemoryMap(file.getRgb());
+
+    public Bus(byte[] rpg, byte[] ch) {
+        this.ppu = new PPU(ch);
+        this.memoryMap = new MemoryMap(rpg);
+    }
+
+    /**
+     *
+     * 获取当前rpg大小
+     *
+     */
+    public int rpgSize() {
+        return this.memoryMap.getRpgSize();
     }
 
     /**

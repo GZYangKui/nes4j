@@ -1,5 +1,6 @@
 package cn.navclub.nes4j.bin.core;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -7,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class MemoryMap {
+    @Getter
     private final int rpgSize;
     private final byte[] buffer;
 
