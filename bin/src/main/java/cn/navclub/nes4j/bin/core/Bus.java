@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Bus {
     private final PPU ppu;
+    private final JoyPad joyPad;
     private final MemoryMap memoryMap;
 
     private int cycle;
@@ -13,6 +14,7 @@ public class Bus {
 
     public Bus(byte[] rpg, byte[] ch) {
         this.ppu = new PPU(ch);
+        this.joyPad = new JoyPad();
         this.memoryMap = new MemoryMap(rpg);
     }
 
@@ -35,6 +37,14 @@ public class Bus {
         }
         if (address == 0x2004) {
             return this.ppu.readOam();
+        }
+        //player1
+        if (address == 0x4016) {
+            return this.joyPad.read();
+        }
+        //player2
+        if (address == 0x4017) {
+            return 0;
         }
         return this.memoryMap.read(address);
     }
@@ -77,6 +87,10 @@ public class Bus {
         //Write to ppu data
         if (address == 0x2007) {
             this.ppu.writeByte(b);
+        }
+        //Write to standard controller
+        if (address == 0x4016) {
+            this.joyPad.write(b);
         }
         this.memoryMap.write(address, b);
     }

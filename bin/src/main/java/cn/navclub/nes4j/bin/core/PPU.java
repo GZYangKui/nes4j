@@ -3,7 +3,6 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.core.impl.ControlRegister;
 import cn.navclub.nes4j.bin.core.impl.MaskRegister;
 import cn.navclub.nes4j.bin.enums.MaskFlag;
-import cn.navclub.nes4j.bin.enums.PControl;
 import cn.navclub.nes4j.bin.enums.PStatus;
 import cn.navclub.nes4j.bin.screen.Frame;
 import cn.navclub.nes4j.bin.util.ByteUtil;
