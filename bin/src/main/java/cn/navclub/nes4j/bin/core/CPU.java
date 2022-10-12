@@ -241,7 +241,7 @@ public class CPU {
         if (instruction == CPUInstruction.PHA) {
             this.pushByte(ByteUtil.overflow(this.ra));
         } else {
-            this.pushByte(this.status.getValue());
+            this.pushByte(this.status.getBits());
         }
         this.sp++;
     }
@@ -252,7 +252,7 @@ public class CPU {
         if (instruction == CPUInstruction.PLA) {
             this.raUpdate(value);
         } else {
-            this.status.setValue(value);
+            this.status.setBits(value);
         }
     }
 
@@ -373,7 +373,7 @@ public class CPU {
             this.reset();
         } else {
             this.pushInt(this.pc);
-            this.pushByte(ByteUtil.overflow(this.status.getValue()));
+            this.pushByte(ByteUtil.overflow(this.status.getBits()));
             //禁用中断
             this.status.set(CPUStatus.ID);
             this.pc = this.bus.readInt(interrupt == CPUInterrupt.NMI ? 0xFFFA : 0xFFFE);
@@ -407,9 +407,8 @@ public class CPU {
         }
 
         if (instruction == CPUInstruction.RTI) {
-            this.status.setValue(this.popByte());
-            this.status.clear(CPUStatus.BK);
-            this.status.clear(CPUStatus.BK0);
+            this.status.setBits(this.popByte());
+            this.status.clear(CPUStatus.BK, CPUStatus.BK0);
             this.pc = this.popInt();
         }
         if (instruction == CPUInstruction.JSR) {
