@@ -102,6 +102,11 @@ public class NES {
             return this;
         }
 
+        public NESBuilder file(String file){
+            this.file = new File(file);
+            return this;
+        }
+
         public NES build() {
             return new NES(this);
         }

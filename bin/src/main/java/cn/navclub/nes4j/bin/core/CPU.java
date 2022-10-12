@@ -1,6 +1,5 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.core.registers.CSRegister;
 import cn.navclub.nes4j.bin.enums.AddressMode;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
 import cn.navclub.nes4j.bin.enums.CPUInterrupt;
@@ -37,7 +36,7 @@ public class CPU {
     //栈指针寄存器,始终指向栈顶
     private int sp;
     //cpu状态
-    private final CSRegister status;
+    private final SRegister status;
 
     private final Bus bus;
 
@@ -45,7 +44,7 @@ public class CPU {
         this.bus = bus;
         this.pcReset = pcReset;
         this.stackReset = stackReset;
-        this.status = new CSRegister();
+        this.status = new SRegister();
     }
 
 

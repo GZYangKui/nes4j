@@ -10,9 +10,7 @@ public class ByteUtil {
     }
 
     /**
-     *
      * 将字节数组转换为二进制
-     *
      */
     public static String toBinStr(byte value) {
         var sb = new StringBuilder();
@@ -30,5 +28,9 @@ public class ByteUtil {
             throw new RuntimeException("Byte array required four length.");
         }
         return arr[0] | arr[1] << 8 | arr[2] << 16 | arr[3] << 24;
+    }
+
+    public static int toInt16(byte[] arr) {
+        return arr[1] << 8 | arr[0] & 0xff;
     }
 }

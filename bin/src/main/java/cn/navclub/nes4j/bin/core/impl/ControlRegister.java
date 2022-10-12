@@ -1,5 +1,6 @@
-package cn.navclub.nes4j.bin.core.registers;
+package cn.navclub.nes4j.bin.core.impl;
 
+import cn.navclub.nes4j.bin.core.SRegister;
 import cn.navclub.nes4j.bin.enums.PControl;
 import lombok.extern.slf4j.Slf4j;
 
@@ -9,8 +10,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-public class ControlRegister {
-    private int bits;
+public class ControlRegister extends SRegister {
 
     public ControlRegister() {
         this.bits = 0;
@@ -58,9 +58,5 @@ public class ControlRegister {
 
     public void update(byte bits){
         this.bits = bits;
-    }
-
-    private boolean contain(PControl control) {
-        return (this.bits & (1 << control.ordinal())) > 0;
     }
 }

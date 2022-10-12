@@ -1,6 +1,5 @@
 package cn.navclub.nes4j.bin.test.impl;
 
-import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.CPU;
 import cn.navclub.nes4j.bin.enums.CPUStatus;
 import cn.navclub.nes4j.bin.test.BaseTest;
@@ -8,7 +7,6 @@ import cn.navclub.nes4j.bin.util.ByteUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 
 
 /**
@@ -156,14 +154,6 @@ public class CPUTest extends BaseTest {
         var cpu = this.createInstance(rpg, data);
         Assertions.assertEquals(cpu.getPc(), 0x800A);
     }
-
-//    @Test
-//    void testNesFile() {
-//        var nes = NES.NESBuilder.newBuilder()
-//                .file(new File("nes/snow_bros.nes"))
-//                .build();
-//        nes.execute();
-//    }
 
     CPU createInstance(byte[] rpg, byte[] data) {
         return this.createInstance(rpg, new byte[]{}, data, 0x8000);

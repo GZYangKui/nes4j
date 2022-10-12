@@ -17,9 +17,7 @@ public class Bus {
     }
 
     /**
-     *
      * 获取当前rpg大小
-     *
      */
     public int rpgSize() {
         return this.memoryMap.getRpgSize();
@@ -31,6 +29,12 @@ public class Bus {
     public byte readByte(int address) {
         if (address == 0x2002) {
             return this.ppu.readStatus();
+        }
+        if (address == 0x2007) {
+            return this.ppu.readByte();
+        }
+        if (address == 0x2004) {
+            return this.ppu.readOam();
         }
         return this.memoryMap.read(address);
     }
@@ -64,7 +68,15 @@ public class Bus {
             for (int i = 0; i < 0x100; i++) {
                 buffer[i] = this.readByte(msb + i);
             }
-            //todo ppu oam
+            this.ppu.writeOam(buffer);
+        }
+        //Write to ppu address
+        if (address == 0x2006) {
+            this.ppu.writeAddr(b);
+        }
+        //Write to ppu data
+        if (address == 0x2007) {
+            this.ppu.writeByte(b);
         }
         this.memoryMap.write(address, b);
     }
@@ -99,6 +111,6 @@ public class Bus {
     public void tick(int cycle) {
         this.cycle += cycle;
         //触发PPU模块
-
+        this.ppu.tick(cycle);
     }
 }
