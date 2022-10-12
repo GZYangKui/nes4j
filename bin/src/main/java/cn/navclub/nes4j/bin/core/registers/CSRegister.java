@@ -1,5 +1,6 @@
 package cn.navclub.nes4j.bin.core.registers;
 
+import cn.navclub.nes4j.bin.enums.CPUStatus;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,34 +19,34 @@ public class CSRegister {
     /**
      * 清除某个标识位
      */
-    public void clearFlag(BIFlag flag) {
+    public void clear(CPUStatus flag) {
         this.value &= (0xff - (int) (Math.pow(2, flag.ordinal())));
     }
 
     /**
      * 设置某个标识位
      */
-    public void setFlag(BIFlag flag) {
-        this.value |= (1 << flag.ordinal());
+    public void set(CPUStatus status) {
+        this.value |= (1 << status.ordinal());
     }
 
-    public void update(BIFlag flag, boolean set) {
+    public void update(CPUStatus status, boolean set) {
         if (set) {
-            this.setFlag(flag);
+            this.set(status);
         } else {
-            this.clearFlag(flag);
+            this.clear(status);
         }
     }
 
     /**
      * 判断某个标识位是否设置
      */
-    public boolean hasFlag(BIFlag flag) {
+    public boolean contain(CPUStatus flag) {
         return ((1 << flag.ordinal()) & value) > 0;
     }
 
-    public int getFlagBit(BIFlag flag) {
-        return this.hasFlag(flag) ? 1 : 0;
+    public int get(CPUStatus flag) {
+        return this.contain(flag) ? 1 : 0;
     }
 
     public void reset() {
@@ -55,23 +56,5 @@ public class CSRegister {
     @Override
     public String toString() {
         return ByteUtil.toBinStr(this.value);
-    }
-
-    public enum BIFlag {
-        //Carry flag
-        CF,
-        //Zero flag
-        ZF,
-        //Interrupt disable
-        ID,
-        //Decimal mode
-        DM,
-        //Break command
-        BC,
-        EMPTY,
-        //Overflow flag
-        OF,
-        //Negative flag
-        NF
     }
 }

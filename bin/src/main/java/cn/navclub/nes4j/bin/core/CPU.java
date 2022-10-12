@@ -4,6 +4,7 @@ import cn.navclub.nes4j.bin.core.registers.CSRegister;
 import cn.navclub.nes4j.bin.enums.AddressMode;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
 import cn.navclub.nes4j.bin.enums.CPUInterrupt;
+import cn.navclub.nes4j.bin.enums.CPUStatus;
 import cn.navclub.nes4j.bin.model.Instruction6502;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import lombok.Getter;
@@ -78,10 +79,6 @@ public class CPU {
         return this.bus.readByte(STACK + this.sp);
     }
 
-    private int popUSByte() {
-        return Byte.toUnsignedInt(popByte());
-    }
-
     private int popInt() {
         var msb = Byte.toUnsignedInt(this.popByte());
         var lsb = Byte.toUnsignedInt(this.popByte());
@@ -110,8 +107,9 @@ public class CPU {
      * 更新负标识和零标识
      */
     private void NZUpdate(int result) {
-        this.status.update(CSRegister.BIFlag.ZF, result == 0);
-        this.status.update(CSRegister.BIFlag.NF, (result & 0x80) != 0);
+        var b = ByteUtil.overflow(result);
+        this.status.update(CPUStatus.ZF, (b == 0));
+        this.status.update(CPUStatus.NF, (b & 0x80) != 0);
     }
 
     /**
@@ -163,7 +161,7 @@ public class CPU {
                 ? this.ra
                 : this.bus.readUSByte(addr = this.getOperandAddr(mode));
 
-        this.status.update(CSRegister.BIFlag.CF, (operand & 1) != 0);
+        this.status.update(CPUStatus.CF, (operand & 1) != 0);
         operand >>= 1;
         if (mode == AddressMode.Accumulator) {
             this.raUpdate(operand);
@@ -175,7 +173,7 @@ public class CPU {
 
     private void rol(Instruction6502 instruction6502) {
         var mode = instruction6502.getAddressMode();
-        var cBit = this.status.hasFlag(CSRegister.BIFlag.CF) ? 0xff : 0xfe;
+        var cBit = this.status.contain(CPUStatus.CF) ? 0xff : 0xfe;
 
         int result, oBit;
         if (mode == AddressMode.Accumulator) {
@@ -192,14 +190,14 @@ public class CPU {
             this.NZUpdate(result);
         }
 
-        this.status.update(CSRegister.BIFlag.CF, oBit != 0);
+        this.status.update(CPUStatus.CF, oBit != 0);
     }
 
     private void ror(Instruction6502 instruction6502) {
         var mode = instruction6502.getAddressMode();
         var cBit = 0;
         var result = 0;
-        var oldCBit = this.status.hasFlag(CSRegister.BIFlag.CF) ? 0xff : 0x7f;
+        var oldCBit = this.status.contain(CPUStatus.CF) ? 0xff : 0x7f;
         if (mode == AddressMode.Accumulator) {
             cBit = this.ra & 1;
             result = this.ra >>= 1;
@@ -214,11 +212,11 @@ public class CPU {
             this.bus.writeByte(address, ByteUtil.overflow(result));
             this.NZUpdate(result);
         }
-        this.status.update(CSRegister.BIFlag.CF, cBit > 0);
+        this.status.update(CPUStatus.CF, cBit > 0);
     }
 
     private void asl(Instruction6502 instruction6502) {
-        final int b;
+        int b;
         var a = (instruction6502.getAddressMode() == AddressMode.Accumulator);
         var address = -1;
         if (a) {
@@ -227,15 +225,14 @@ public class CPU {
             address = this.getOperandAddr(instruction6502.getAddressMode());
             b = this.bus.readUSByte(address);
         }
-        var c = b & (1 << 7);
         //更新进位标识
-        this.status.update(CSRegister.BIFlag.CF, c != 0);
+        this.status.update(CPUStatus.CF, (b & 0x80) != 0);
         //左移1位
-        c = b << 1;
+        b = b << 1;
         if (a) {
-            this.raUpdate(c);
+            this.raUpdate(b);
         } else {
-            this.bus.writeByte(address, (byte) c);
+            this.bus.writeByte(address, (byte) b);
         }
     }
 
@@ -277,9 +274,9 @@ public class CPU {
         }
         var b = this.bus.readByte(address);
         //设置Carry Flag
-        this.status.update(CSRegister.BIFlag.CF, a >= b);
+        this.status.update(CPUStatus.CF, a >= b);
         //设置Zero Flag
-        this.status.update(CSRegister.BIFlag.ZF, a == b);
+        this.status.update(CPUStatus.ZF, a == b);
     }
 
     private void inc(CPUInstruction instruction, AddressMode mode) {
@@ -305,14 +302,14 @@ public class CPU {
         int result;
         var address = this.getOperandAddr(mode);
         var b = this.bus.readUSByte(address);
-        var carry = this.status.getFlagBit(CSRegister.BIFlag.CF);
+        var carry = this.status.get(CPUStatus.CF);
         if (sbc) {
             //变为当前数字的负数形式
             b = (~((byte) b) + 1) - 1;
         }
         result = this.ra + b + carry;
-        this.status.update(CSRegister.BIFlag.CF, result > 0xff);
-        this.status.update(CSRegister.BIFlag.OF, ((b ^ result) & (result ^ this.ra) & 0x80) != 0);
+        this.status.update(CPUStatus.CF, result > 0xff);
+        this.status.update(CPUStatus.OF, ((b ^ result) & (result ^ this.ra) & 0x80) != 0);
         this.raUpdate(result);
     }
 
@@ -324,8 +321,8 @@ public class CPU {
         } else {
             this.ry = data;
         }
-        this.status.update(CSRegister.BIFlag.CF, data == 0);
-        this.status.update(CSRegister.BIFlag.NF, (data & 0x40) > 0);
+        this.status.update(CPUStatus.CF, data == 0);
+        this.status.update(CPUStatus.NF, (data & 0x40) > 0);
     }
 
     private void branch(boolean condition) {
@@ -339,11 +336,10 @@ public class CPU {
 
     private void bit(Instruction6502 instruction6502) {
         var address = this.getOperandAddr(instruction6502.getAddressMode());
-        var value = this.bus.readByte(address);
-
-        this.status.update(CSRegister.BIFlag.NF, value < 0);
-        this.status.update(CSRegister.BIFlag.OF, (value & 0x20) != 0);
-        this.status.update(CSRegister.BIFlag.ZF, (value & this.ra) == 0);
+        var value = this.bus.readUSByte(address);
+        this.status.update(CPUStatus.ZF, (this.ra & value) == 0);
+        this.status.update(CPUStatus.NF, (value & 0x80) != 0);
+        this.status.update(CPUStatus.OF, (value & 0x40) != 0);
     }
 
     private void dec(Instruction6502 instruction6502) {
@@ -370,7 +366,7 @@ public class CPU {
 
     public void interrupt(CPUInterrupt interrupt) {
         //中断状态不可用
-        if (interrupt != CPUInterrupt.NMI && this.status.hasFlag(CSRegister.BIFlag.ID)) {
+        if (interrupt != CPUInterrupt.NMI && this.status.contain(CPUStatus.ID)) {
             return;
         }
         if (interrupt == CPUInterrupt.RESET) {
@@ -379,9 +375,9 @@ public class CPU {
             this.pushInt(this.pc);
             this.pushByte(ByteUtil.overflow(this.status.getValue()));
             //禁用中断
-            this.status.setFlag(CSRegister.BIFlag.ID);
+            this.status.set(CPUStatus.ID);
             this.pc = this.bus.readInt(interrupt == CPUInterrupt.NMI ? 0xFFFA : 0xFFFE);
-            this.status.update(CSRegister.BIFlag.BC, interrupt == CPUInterrupt.BRK);
+            this.status.update(CPUStatus.BK, interrupt == CPUInterrupt.BRK);
         }
     }
 
@@ -403,14 +399,18 @@ public class CPU {
         }
 
         if (instruction == CPUInstruction.JMP) {
-            this.pc = this.bus.readInt(this.getOperandAddr(instruction6502.getAddressMode()));
+            var addr = this.getOperandAddr(instruction6502.getAddressMode());
+            if (instruction6502.getAddressMode() == AddressMode.Indirect) {
+                addr = this.bus.readInt(addr);
+            }
+            this.pc = addr;
         }
 
         if (instruction == CPUInstruction.RTI) {
             this.status.setValue(this.popByte());
-            //取消中断标识
-            this.status.clearFlag(CSRegister.BIFlag.ID);
-            this.pc = this.popUSByte();
+            this.status.clear(CPUStatus.BK);
+            this.status.clear(CPUStatus.BK0);
+            this.pc = this.popInt();
         }
         if (instruction == CPUInstruction.JSR) {
             this.pushInt(this.pc + 1);
@@ -479,21 +479,21 @@ public class CPU {
 
         //清除进位标识
         if (instruction == CPUInstruction.CLC) {
-            this.status.clearFlag(CSRegister.BIFlag.CF);
+            this.status.clear(CPUStatus.CF);
         }
 
         //清除Decimal model
         if (instruction == CPUInstruction.CLD) {
-            this.status.clearFlag(CSRegister.BIFlag.DM);
+            this.status.clear(CPUStatus.DM);
         }
 
         //清除中断标识
         if (instruction == CPUInstruction.CLI) {
-            this.status.clearFlag(CSRegister.BIFlag.ID);
+            this.status.clear(CPUStatus.ID);
         }
 
         if (instruction == CPUInstruction.CLV) {
-            this.status.clearFlag(CSRegister.BIFlag.OF);
+            this.status.clear(CPUStatus.OF);
         }
 
         if (instruction == CPUInstruction.CMP
@@ -518,34 +518,34 @@ public class CPU {
         }
 
         if (instruction == CPUInstruction.BCC) {
-            this.branch(!this.status.hasFlag(CSRegister.BIFlag.CF));
+            this.branch(!this.status.contain(CPUStatus.CF));
         }
 
         if (instruction == CPUInstruction.BCS) {
-            this.branch(this.status.hasFlag(CSRegister.BIFlag.CF));
+            this.branch(this.status.contain(CPUStatus.CF));
         }
 
         if (instruction == CPUInstruction.BEQ) {
-            this.branch(this.status.hasFlag(CSRegister.BIFlag.ZF));
+            this.branch(this.status.contain(CPUStatus.ZF));
         }
 
         if (instruction == CPUInstruction.BMI) {
-            this.branch(this.status.hasFlag(CSRegister.BIFlag.NF));
+            this.branch(this.status.contain(CPUStatus.NF));
         }
 
         if (instruction == CPUInstruction.BPL) {
-            this.branch(!this.status.hasFlag(CSRegister.BIFlag.NF));
+            this.branch(!this.status.contain(CPUStatus.NF));
         }
 
         if (instruction == CPUInstruction.BNE) {
-            this.branch(!this.status.hasFlag(CSRegister.BIFlag.ZF));
+            this.branch(!this.status.contain(CPUStatus.ZF));
         }
 
         if (instruction == CPUInstruction.BVC) {
-            this.branch(!this.status.hasFlag(CSRegister.BIFlag.OF));
+            this.branch(!this.status.contain(CPUStatus.OF));
         }
         if (instruction == CPUInstruction.BCS) {
-            this.branch(this.status.hasFlag(CSRegister.BIFlag.OF));
+            this.branch(this.status.contain(CPUStatus.OF));
         }
 
         if (instruction == CPUInstruction.DEC
@@ -556,15 +556,15 @@ public class CPU {
 
 
         if (instruction == CPUInstruction.SEC) {
-            this.status.setFlag(CSRegister.BIFlag.CF);
+            this.status.set(CPUStatus.CF);
         }
 
         if (instruction == CPUInstruction.SED) {
-            this.status.setFlag(CSRegister.BIFlag.DM);
+            this.status.set(CPUStatus.DM);
         }
 
         if (instruction == CPUInstruction.SEI) {
-            this.status.setFlag(CSRegister.BIFlag.ID);
+            this.status.set(CPUStatus.ID);
         }
 
         if (instruction == CPUInstruction.TAX

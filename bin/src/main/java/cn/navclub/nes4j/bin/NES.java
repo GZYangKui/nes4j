@@ -16,6 +16,7 @@ public class NES {
     //程序栈重置地址
     private static final int STACK_RESET = 0xFD;
 
+    @Getter
     private final Bus bus;
     @Getter
     private final CPU cpu;
