@@ -175,18 +175,18 @@ public class CPU {
 
     private void rol(Instruction6502 instruction6502) {
         var mode = instruction6502.getAddressMode();
-        var cBit = this.status.hasFlag(CSRegister.BIFlag.CARRY_FLAG) ? 0b1111_1111 : 0b1111_1110;
+        var cBit = this.status.hasFlag(CSRegister.BIFlag.CARRY_FLAG) ? 0xff : 0xfe;
 
         int result, oBit;
         if (mode == AddressMode.Accumulator) {
-            oBit = (this.ra & 0b1000_0000);
+            oBit = (this.ra & 0x80);
             result = this.ra << 1;
             result &= cBit;
             this.raUpdate(result);
         } else {
             var address = this.getOperandAddr(mode);
             var value = this.bus.readByte(address);
-            oBit = value & 0b1000_0000;
+            oBit = value & 0x80;
             result = value << 1;
             result &= cBit;
             this.NZUpdate(result);
@@ -199,16 +199,16 @@ public class CPU {
         var mode = instruction6502.getAddressMode();
         var cBit = 0;
         var result = 0;
-        var oldCBit = this.status.hasFlag(CSRegister.BIFlag.CARRY_FLAG) ? 0b1111_1111 : 0b0111_1111;
+        var oldCBit = this.status.hasFlag(CSRegister.BIFlag.CARRY_FLAG) ? 0xff : 0x7f;
         if (mode == AddressMode.Accumulator) {
-            cBit = this.ra & 0b0000_0001;
+            cBit = this.ra & 1;
             result = this.ra >>= 1;
             result &= oldCBit;
             this.raUpdate(result);
         } else {
             var address = this.getOperandAddr(mode);
             var value = this.bus.readByte(address);
-            cBit = value & 0b0000_0001;
+            cBit = value & 1;
             result = value >> 1;
             result &= oldCBit;
             this.bus.writeByte(address, ByteUtil.overflow(result));
@@ -299,7 +299,7 @@ public class CPU {
             return;
         }
         this.status.update(CSRegister.BIFlag.ZERO_FLAG, result == 0);
-        this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, (result & 0b0100_0000) != 0);
+        this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, (result & 0x40) != 0);
     }
 
     private void maths(AddressMode mode, boolean sbc) {
@@ -326,7 +326,7 @@ public class CPU {
             this.ry = data;
         }
         this.status.update(CSRegister.BIFlag.CARRY_FLAG, data == 0);
-        this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, (data & 0b0100_0000) > 0);
+        this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, (data & 0x40) > 0);
     }
 
     private void branch(boolean condition) {
@@ -343,7 +343,7 @@ public class CPU {
         var value = this.bus.readByte(address);
 
         this.status.update(CSRegister.BIFlag.NEGATIVE_FLAG, value < 0);
-        this.status.update(CSRegister.BIFlag.OVERFLOW_FLAG, (value & 0b0010_0000) != 0);
+        this.status.update(CSRegister.BIFlag.OVERFLOW_FLAG, (value & 0x20) != 0);
         this.status.update(CSRegister.BIFlag.ZERO_FLAG, (value & this.ra) == 0);
     }
 
