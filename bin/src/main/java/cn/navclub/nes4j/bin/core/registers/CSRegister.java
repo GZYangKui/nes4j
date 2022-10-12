@@ -58,13 +58,20 @@ public class CSRegister {
     }
 
     public enum BIFlag {
-        CARRY_FLAG,
-        ZERO_FLAG,
-        INTERRUPT_DISABLE,
-        DECIMAL_MODE,
-        BREAK_COMMAND,
+        //Carry flag
+        CF,
+        //Zero flag
+        ZF,
+        //Interrupt disable
+        ID,
+        //Decimal mode
+        DM,
+        //Break command
+        BC,
         EMPTY,
-        OVERFLOW_FLAG,
-        NEGATIVE_FLAG
+        //Overflow flag
+        OF,
+        //Negative flag
+        NF
     }
 }

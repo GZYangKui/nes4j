@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 
-
 public class CPUTest extends BaseTest {
     @Test
     void lad() {
@@ -38,9 +37,9 @@ public class CPUTest extends BaseTest {
         var cpu = createInstance(rpg);
         var status = cpu.getStatus();
         Assertions.assertEquals(cpu.getRa(), 0x00);
-        Assertions.assertTrue(status.hasFlag(CSRegister.BIFlag.ZERO_FLAG));
-        Assertions.assertTrue(status.hasFlag(CSRegister.BIFlag.CARRY_FLAG));
-        Assertions.assertFalse(status.hasFlag(CSRegister.BIFlag.OVERFLOW_FLAG));
+        Assertions.assertTrue(status.hasFlag(CSRegister.BIFlag.ZF));
+        Assertions.assertTrue(status.hasFlag(CSRegister.BIFlag.CF));
+        Assertions.assertFalse(status.hasFlag(CSRegister.BIFlag.OF));
     }
 
     @Test
@@ -51,7 +50,7 @@ public class CPUTest extends BaseTest {
         };
         var cpu = this.createInstance(rpg);
         var status = cpu.getStatus();
-        Assertions.assertTrue(status.hasFlag(CSRegister.BIFlag.OVERFLOW_FLAG));
+        Assertions.assertTrue(status.hasFlag(CSRegister.BIFlag.OF));
     }
 
     @Test
@@ -61,7 +60,7 @@ public class CPUTest extends BaseTest {
                 ByteUtil.overflow(0xE9), 0x02
         };
         var cpu = this.createInstance(rpg);
-        Assertions.assertEquals(cpu.getRa(), 0x0e);
+        Assertions.assertEquals(cpu.getRa(), 0x0d);
     }
 
     @Test
@@ -71,7 +70,29 @@ public class CPUTest extends BaseTest {
                 ByteUtil.overflow(0xE9), 0x0B
         };
         var cpu = this.createInstance(rpg);
-        Assertions.assertEquals(cpu.getRa(), 0xff);
+        Assertions.assertEquals(cpu.getRa(), 0xfe);
+    }
+
+    @Test
+    void test_0xe9_sbc_negative() {
+        var rpg = new byte[]{
+                ByteUtil.overflow(0xa9), 0x02,
+                ByteUtil.overflow(0xe9), 0x03
+        };
+        var cpu = this.createInstance(rpg);
+        var status = cpu.getStatus();
+        Assertions.assertTrue(status.hasFlag(CSRegister.BIFlag.NF));
+        Assertions.assertEquals(cpu.getRa(), 0xfe);
+    }
+
+    @Test
+    void test_0xe9_sbc_overflow() {
+        var rpg = new byte[]{
+                ByteUtil.overflow(0xa9), 0x50,
+                ByteUtil.overflow(0xe9), ByteUtil.overflow(0xb0)
+        };
+        var cpu = this.createInstance(rpg);
+        Assertions.assertEquals(cpu.getRa(), 0x9f);
     }
 
 //    @Test
