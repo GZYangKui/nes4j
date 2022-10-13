@@ -234,7 +234,7 @@ public enum CPUInstruction {
     ),
 
     /**
-     * 自增指令
+     *
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INC">相关文档</a>
      */
     INC(new Instruction6502[]{

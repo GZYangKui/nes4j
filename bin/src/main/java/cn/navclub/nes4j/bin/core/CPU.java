@@ -242,12 +242,11 @@ public class CPU {
         } else {
             this.pushByte(this.status.getBits());
         }
-        this.sp++;
     }
 
     private void pull(Instruction6502 instruction6502) {
         var instruction = instruction6502.getInstruction();
-        var value = this.bus.readByte(this.sp);
+        var value = this.popByte();
         if (instruction == CPUInstruction.PLA) {
             this.raUpdate(value);
         } else {
@@ -329,8 +328,14 @@ public class CPU {
         if (!condition) {
             return;
         }
-        var jump = this.bus.readByte(this.pc);
-        this.pc = this.pc + 1 + jump;
+//        this.bus.tick(1);
+        var b = this.bus.readByte(this.pc);
+        var jump = this.pc + 1 + b;
+//        if ((this.pc + 1 & 0xff00) != (jump & 0xff00)) {
+//            this.bus.tick(1);
+//        }
+
+        this.pc = jump;
     }
 
     private void bit(Instruction6502 instruction6502) {
@@ -515,35 +520,23 @@ public class CPU {
             this.bit(instruction6502);
         }
 
-        if (instruction == CPUInstruction.BCC) {
-            this.branch(!this.status.contain(CPUStatus.CF));
+        //By negative flag to jump
+        if (instruction == CPUInstruction.BPL || instruction == CPUInstruction.BMI) {
+            this.branch((instruction == CPUInstruction.BMI) == this.status.contain(CPUStatus.NF));
         }
 
-        if (instruction == CPUInstruction.BCS) {
-            this.branch(this.status.contain(CPUStatus.CF));
+        //By zero flag to jump
+        if (instruction == CPUInstruction.BEQ || instruction == CPUInstruction.BNE) {
+            this.branch((instruction == CPUInstruction.BEQ) == this.status.contain(CPUStatus.ZF));
         }
 
-        if (instruction == CPUInstruction.BEQ) {
-            this.branch(this.status.contain(CPUStatus.ZF));
+        //By overflow flag to jump
+        if (instruction == CPUInstruction.BVC || instruction == CPUInstruction.BVS) {
+            this.branch((instruction == CPUInstruction.BVS) == this.status.contain(CPUStatus.OF));
         }
 
-        if (instruction == CPUInstruction.BMI) {
-            this.branch(this.status.contain(CPUStatus.NF));
-        }
-
-        if (instruction == CPUInstruction.BPL) {
-            this.branch(!this.status.contain(CPUStatus.NF));
-        }
-
-        if (instruction == CPUInstruction.BNE) {
-            this.branch(!this.status.contain(CPUStatus.ZF));
-        }
-
-        if (instruction == CPUInstruction.BVC) {
-            this.branch(!this.status.contain(CPUStatus.OF));
-        }
-        if (instruction == CPUInstruction.BCS) {
-            this.branch(this.status.contain(CPUStatus.OF));
+        if (instruction == CPUInstruction.BCS || instruction == CPUInstruction.BCC) {
+            this.branch((instruction == CPUInstruction.BCS) == this.status.contain(CPUStatus.CF));
         }
 
         if (instruction == CPUInstruction.DEC
@@ -644,9 +637,9 @@ public class CPU {
         if (value > 0xff) {
             var lsb = value & 0xff;
             var msb = (value >>> 8) & 0xff;
-            str = String.format("0x%s,0x%s", Integer.toHexString(lsb), Integer.toHexString(msb));
+            str = String.format("(%d)0x%s,0x%s", value,Integer.toHexString(lsb), Integer.toHexString(msb));
         } else {
-            str = String.format("0x%s", Integer.toHexString(value));
+            str = String.format("(%d)0x%s", value,Integer.toHexString(value));
         }
         return str;
     }

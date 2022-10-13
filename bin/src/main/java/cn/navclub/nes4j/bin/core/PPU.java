@@ -1,13 +1,15 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.core.impl.ControlRegister;
-import cn.navclub.nes4j.bin.core.impl.MaskRegister;
+import cn.navclub.nes4j.bin.core.impl.CTRegister;
+import cn.navclub.nes4j.bin.core.impl.MKRegister;
 import cn.navclub.nes4j.bin.enums.MaskFlag;
 import cn.navclub.nes4j.bin.enums.PStatus;
 import cn.navclub.nes4j.bin.screen.Frame;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 
 /**
+ *
+ * <a href="https://www.nesdev.org/wiki/PPU_programmer_reference">PPU document</a>
  *
  */
 public class PPU {
@@ -50,13 +52,17 @@ public class PPU {
     }
 
     private final byte[] ch;
+    //The data necessary for render the screen
     private final byte[] vram;
     private final Frame frame;
-    private final MaskRegister mask;
+    private final MKRegister mask;
     private final SRegister status;
-    private final ControlRegister control;
+    private final CTRegister control;
     private final byte[][] zeroSPixels;
     private final Addr addr;
+    /**
+     * <a href="https://www.nesdev.org/wiki/PPU_OAM">OAM</a>
+     */
     private final byte[] oam;
     private final byte[] palatteTable;
 
@@ -76,11 +82,11 @@ public class PPU {
         this.frame = new Frame();
         this.oam = new byte[256];
         this.vram = new byte[2048];
-        this.mask = new MaskRegister();
+        this.mask = new MKRegister();
         this.palatteTable = new byte[32];
         this.zeroSPixels = new byte[0][0];
         this.status = new SRegister();
-        this.control = new ControlRegister();
+        this.control = new CTRegister();
     }
 
     public void tick(int cycles) {
@@ -196,7 +202,7 @@ public class PPU {
     }
 
 
-    public void writeControl(byte b) {
+    public void writeCtr(byte b) {
         this.control.update(b);
     }
 

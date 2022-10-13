@@ -9,9 +9,6 @@ public class Bus {
     private final JoyPad joyPad;
     private final MemoryMap memoryMap;
 
-    private int cycle;
-
-
     public Bus(byte[] rpg, byte[] ch) {
         this.ppu = new PPU(ch);
         this.joyPad = new JoyPad();
@@ -61,7 +58,7 @@ public class Bus {
      */
     public void writeByte(int address, byte b) {
         if (address == 0x2000) {
-            this.ppu.writeControl(b);
+            this.ppu.writeCtr(b);
         }
 
         if (address == 0x2001) {
@@ -71,6 +68,9 @@ public class Bus {
         if (address == 0x2002) {
             log.warn("Attempt to modify ppu status register.");
             return;
+        }
+        if (address == 0x2004){
+            System.out.println("aaa");
         }
         if (address == 0x4104) {
             var buffer = new byte[0x100];
@@ -123,7 +123,6 @@ public class Bus {
      * 一个指令执行完毕触发当前函数
      */
     public void tick(int cycle) {
-        this.cycle += cycle;
         //触发PPU模块
         this.ppu.tick(cycle);
     }

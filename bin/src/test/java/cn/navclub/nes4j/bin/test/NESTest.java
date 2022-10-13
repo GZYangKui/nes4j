@@ -14,4 +14,20 @@ public class NESTest {
                 .build();
         nes.execute();
     }
+
+    @Test
+    void test_palette_ram(){
+        var nes = NES.NESBuilder.newBuilder()
+                .file(new File("nes/ppu/palette_ram.nes"))
+                .build();
+        nes.execute();
+    }
+
+    @Test
+    void test_vram_access(){
+        var nes = NES.NESBuilder.newBuilder()
+                .file(new File("nes/ppu/vram_access.nes"))
+                .build();
+        nes.execute();
+    }
 }
