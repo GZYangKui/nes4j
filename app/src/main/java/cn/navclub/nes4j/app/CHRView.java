@@ -21,7 +21,7 @@ public class CHRView extends Application {
             event.acceptTransferModes(TransferMode.ANY);
             event.consume();
         });
-        scene.setOnDragEntered(event -> {
+        scene.setOnDragDropped(event -> {
             var board = event.getDragboard();
             var list = board
                     .getFiles()
@@ -31,6 +31,7 @@ public class CHRView extends Application {
             if (list.isEmpty()) {
                 return;
             }
+            event.consume();
         });
         stage.setWidth(400);
         stage.setHeight(600);
