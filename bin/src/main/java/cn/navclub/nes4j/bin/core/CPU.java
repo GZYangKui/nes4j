@@ -40,6 +40,7 @@ public class CPU {
 
     private final Bus bus;
 
+
     public CPU(final Bus bus, int stackReset, int pcReset) {
         this.bus = bus;
         this.pcReset = pcReset;
@@ -270,7 +271,7 @@ public class CPU {
         } else {
             return;
         }
-        var b = this.bus.readByte(address);
+        var b = this.bus.readUSByte(address);
         //设置Carry Flag
         this.status.update(CPUStatus.CF, a >= b);
         //设置Zero Flag
@@ -296,24 +297,40 @@ public class CPU {
         this.NZUpdate(result);
     }
 
-    private void maths(AddressMode mode, boolean sbc) {
-        int result;
+
+    private void adc(AddressMode mode) {
         var address = this.getOperandAddr(mode);
         var b = this.bus.readUSByte(address);
-        var carry = this.status.get(CPUStatus.CF);
-        if (sbc) {
-            //变为当前数字的负数形式
-            b = (~((byte) b) + 1) - 1;
+        var c = this.status.contain(CPUStatus.CF);
+        var m = ByteUtil.addition(this.ra, b, c);
+        this.status.update(CPUStatus.CF, m.carry());
+        this.status.update(CPUStatus.OF, m.overflow());
+        this.raUpdate(m.result());
+    }
+
+
+    private void sbc(AddressMode mode) {
+        var addr = this.getOperandAddr(mode);
+        var a = this.ra;
+        var c = this.status.contain(CPUStatus.CF);
+        var b = this.bus.readUSByte(addr);
+        final ByteUtil.Mathematics m;
+        if (ByteUtil.negative(b) && ByteUtil.negative(a)) {
+            b = ByteUtil.origin(b);
+            m = ByteUtil.subtract(a, b, c);
+        } else if (ByteUtil.negative(b) && !ByteUtil.negative(a)) {
+            m = ByteUtil.addition(a, ByteUtil.origin(b), c);
+        } else {
+            m = ByteUtil.subtract(a, b, this.status.contain(CPUStatus.CF));
         }
-        result = this.ra + b + carry;
-        this.status.update(CPUStatus.CF, result > 0xff);
-        this.status.update(CPUStatus.OF, ((b ^ result) & (result ^ this.ra) & 0x80) != 0);
-        this.raUpdate(result);
+        this.status.update(CPUStatus.CF, m.carry());
+        this.status.update(CPUStatus.OF, m.overflow());
+        this.raUpdate(m.result());
     }
 
     private void loadXY(Instruction6502 instruction6502) {
         var address = this.getOperandAddr(instruction6502.getAddressMode());
-        var data = this.bus.readByte(address);
+        var data = this.bus.readUSByte(address);
         if (instruction6502.getInstruction() == CPUInstruction.LDX) {
             this.rx = data;
         } else {
@@ -351,9 +368,9 @@ public class CPU {
         var value = switch (instruction) {
             case DEC -> {
                 var address = getOperandAddr(instruction6502.getAddressMode());
-                var b = this.bus.readByte(address);
+                var b = this.bus.readUSByte(address);
                 b--;
-                this.bus.writeByte(address, b);
+                this.bus.writeUSByte(address, b);
                 yield b;
             }
             case DEX -> {
@@ -432,8 +449,12 @@ public class CPU {
         }
 
         //加减运算
-        if (instruction == CPUInstruction.ADC || instruction == CPUInstruction.SBC) {
-            this.maths(instruction6502.getAddressMode(), instruction == CPUInstruction.SBC);
+        if (instruction == CPUInstruction.ADC) {
+            this.adc(instruction6502.getAddressMode());
+        }
+
+        if (instruction == CPUInstruction.SBC) {
+            this.sbc(instruction6502.getAddressMode());
         }
 
         //或、与、异或逻辑运算
@@ -589,7 +610,7 @@ public class CPU {
 
         if (instruction == CPUInstruction.ISC) {
             this.inc(CPUInstruction.INC, instruction6502.getAddressMode());
-            this.maths(instruction6502.getAddressMode(), true);
+            this.sbc(instruction6502.getAddressMode());
         }
 
 
@@ -637,9 +658,9 @@ public class CPU {
         if (value > 0xff) {
             var lsb = value & 0xff;
             var msb = (value >>> 8) & 0xff;
-            str = String.format("(%d)0x%s,0x%s", value,Integer.toHexString(lsb), Integer.toHexString(msb));
+            str = String.format("(%d)0x%s,0x%s", value, Integer.toHexString(lsb), Integer.toHexString(msb));
         } else {
-            str = String.format("(%d)0x%s", value,Integer.toHexString(value));
+            str = String.format("(%d)0x%s", value, Integer.toHexString(value));
         }
         return str;
     }
