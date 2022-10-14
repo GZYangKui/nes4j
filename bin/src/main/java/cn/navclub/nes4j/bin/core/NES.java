@@ -1,39 +1,38 @@
-package cn.navclub.nes4j.bin;
+package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.core.Bus;
-import cn.navclub.nes4j.bin.core.CPU;
-import cn.navclub.nes4j.bin.core.NESFile;
-import cn.navclub.nes4j.bin.model.NESHeader;
-import cn.navclub.nes4j.bin.util.IOUtil;
+import cn.navclub.nes4j.bin.NESFile;
 import lombok.Getter;
 
 import java.io.File;
-import java.util.Objects;
 
+@Getter
 public class NES {
     //程序计数器重置地址
     private static final int PC_RESET = 0xFFFC;
     //程序栈重置地址
     private static final int STACK_RESET = 0xFD;
 
-    @Getter
     private final Bus bus;
-    @Getter
     private final CPU cpu;
+    private final PPU ppu;
+    private final NESFile file;
 
 
     private NES(NESBuilder builder) {
-        var buffer = Objects.requireNonNullElseGet(
-                builder.buffer,
-                () -> IOUtil.readFileAllByte(builder.file)
-        );
-        var nesFile = new NESFile(new NESHeader(buffer), buffer);
-        this.bus = new Bus(nesFile.getRgb(), nesFile.getCh());
+        if (builder.buffer != null) {
+            this.file = new NESFile(builder.buffer);
+        } else {
+            this.file = new NESFile(builder.file);
+        }
+        this.ppu = new PPU(file.getCh(), file.getMirrors());
+        this.bus = new Bus(file.getRgb(), ppu);
         this.cpu = new CPU(this.bus, builder.stackRest, builder.pcReset);
     }
 
     public NES(byte[] rpg, byte[] ch, int pcReset, int stackReset) {
-        this.bus = new Bus(rpg, ch);
+        this.file = null;
+        this.ppu = new PPU(ch, 1);
+        this.bus = new Bus(rpg, ppu);
         this.cpu = new CPU(this.bus, stackReset, pcReset);
     }
 
@@ -102,7 +101,7 @@ public class NES {
             return this;
         }
 
-        public NESBuilder file(String file){
+        public NESBuilder file(String file) {
             this.file = new File(file);
             return this;
         }

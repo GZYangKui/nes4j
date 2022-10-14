@@ -404,6 +404,9 @@ public class CPU {
 
 
     public void execute() {
+        if (this.bus.pollPPUNMI()) {
+            this.interrupt(CPUInterrupt.NMI);
+        }
         var openCode = this.bus.readByte(this.pc);
         var pcState = (++this.pc);
         var instruction6502 = CPUInstruction.getInstance(openCode);

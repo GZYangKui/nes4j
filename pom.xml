@@ -6,6 +6,7 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>bin</module>
+        <module>app</module>
     </modules>
     <modelVersion>4.0.0</modelVersion>
 
@@ -16,6 +17,8 @@
         <junit.version>5.9.0</junit.version>
         <lombok.version>1.18.24</lombok.version>
         <logback.version>1.4.0</logback.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
 

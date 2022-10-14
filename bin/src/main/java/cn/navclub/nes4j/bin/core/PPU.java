@@ -8,9 +8,7 @@ import cn.navclub.nes4j.bin.screen.Frame;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 
 /**
- *
  * <a href="https://www.nesdev.org/wiki/PPU_programmer_reference">PPU document</a>
- *
  */
 public class PPU {
     private static class Addr {
@@ -18,7 +16,7 @@ public class PPU {
         private final byte[] arr;
 
         public Addr() {
-            this.msb = true;
+            this.msb = false;
             this.arr = new byte[2];
         }
 
@@ -64,16 +62,19 @@ public class PPU {
      * <a href="https://www.nesdev.org/wiki/PPU_OAM">OAM</a>
      */
     private final byte[] oam;
-    private final byte[] palatteTable;
+    private final byte[] paletteTable;
 
     private int line;
     private int oamAddr;
     private byte readByteBuf;
 
+    private boolean nmiInterrupt;
 
     private int cycles;
+    //Mirrors
+    private final int mirrors;
 
-    public PPU(byte[] ch) {
+    public PPU(byte[] ch, int mirrors) {
         this.ch = ch;
         this.line = 0;
         this.oamAddr = 0;
@@ -81,9 +82,10 @@ public class PPU {
         this.addr = new Addr();
         this.frame = new Frame();
         this.oam = new byte[256];
+        this.mirrors = mirrors;
         this.vram = new byte[2048];
         this.mask = new MKRegister();
-        this.palatteTable = new byte[32];
+        this.paletteTable = new byte[32];
         this.zeroSPixels = new byte[0][0];
         this.status = new SRegister();
         this.control = new CTRegister();
@@ -97,10 +99,13 @@ public class PPU {
         if (this.spriteHit(cycles)) {
             this.status.set(PStatus.SPRITE_ZERO_HIT);
         }
-        this.cycles -= 341;
         this.line += 1;
+        this.cycles -= 341;
         if (this.line < 241) {
-
+            this.status.set(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT);
+            if (this.control.generateVBlankNMI()) {
+                this.nmiInterrupt = true;
+            }
         }
         if (this.line == 241) {
             this.status.set(PStatus.V_BLANK_OCCUR);
@@ -108,8 +113,8 @@ public class PPU {
         }
         if (this.line >= 262) {
             this.line = 0;
-            this.status.clear(PStatus.V_BLANK_OCCUR);
-            this.status.clear(PStatus.SPRITE_ZERO_HIT);
+            this.nmiInterrupt = false;
+            this.status.clear(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT);
         }
     }
 
@@ -139,16 +144,16 @@ public class PPU {
             this.readByteBuf = this.ch[addr];
         }
         if (addr >= 0x2000 && addr <= 0x2fff) {
-            this.readByteBuf = this.vram[VRamMirror(addr)];
+            this.readByteBuf = this.vram[ramMirror(addr)];
         }
 
         if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
             var mirror = addr - 0x10;
-            temp = this.palatteTable[mirror - 0x3f00];
+            temp = this.paletteTable[mirror - 0x3f00];
         }
 
         if (addr >= 0x3f00 && addr <= 0x3fff) {
-            temp = this.palatteTable[addr - 0x3f00];
+            temp = this.paletteTable[addr - 0x3f00];
         }
 
         return temp;
@@ -160,15 +165,15 @@ public class PPU {
             //todo Only read memory area
         }
         if (addr >= 0x2000 && addr <= 0x2fff) {
-            this.vram[this.VRamMirror(addr)] = b;
+            this.vram[this.ramMirror(addr)] = b;
         }
 
         if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
             addr = addr - 0x10;
-            this.palatteTable[addr - 0x3f00] = b;
+            this.paletteTable[addr - 0x3f00] = b;
         }
         if (addr >= 0x3f00 && addr <= 0x3fff) {
-            this.palatteTable[addr - 0x3f00] = b;
+            this.paletteTable[addr - 0x3f00] = b;
         }
         this.incVRamAddr();
     }
@@ -180,12 +185,18 @@ public class PPU {
         return b;
     }
 
-    private int VRamMirror(int addr) {
-        var MVRam = addr & 0b10111111111111;
-        var IRam = MVRam - 0x2000;
-        var table = IRam / 0x400;
-
-        return 0;
+    private int ramMirror(int addr) {
+        var mirrorRam = addr & 0b10111111111111;
+        var ramIndex = mirrorRam - 0x2000;
+        var nameTable = mirrorRam / 0x400;
+        if ((mirrors == 1 && nameTable == 2) | (mirrors == 1 && nameTable == 3))
+            return ramIndex - 1;
+        else if (mirrors == 0 && (nameTable == 2 || nameTable == 1))
+            return ramIndex - 0x400;
+        else if (mirrors == 0 && nameTable == 3)
+            return ramIndex - 0x800;
+        else
+            return nameTable;
     }
 
     private boolean spriteHit(int cycle) {
@@ -201,9 +212,21 @@ public class PPU {
         }
     }
 
+    public int getAddrVal() {
+        return this.addr.get();
+    }
+
 
     public void writeCtr(byte b) {
+        var temp = this.control.generateVBlankNMI();
         this.control.update(b);
+        if (!temp && this.control.generateVBlankNMI() && this.status.contain(PStatus.V_BLANK_OCCUR)) {
+            this.nmiInterrupt = true;
+        }
+    }
+
+    public boolean isNMI() {
+        return this.nmiInterrupt;
     }
 
     public void writeMask(byte b) {

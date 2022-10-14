@@ -9,8 +9,8 @@ public class Bus {
     private final JoyPad joyPad;
     private final MemoryMap memoryMap;
 
-    public Bus(byte[] rpg, byte[] ch) {
-        this.ppu = new PPU(ch);
+    public Bus(byte[] rpg, final PPU ppu) {
+        this.ppu = ppu;
         this.joyPad = new JoyPad();
         this.memoryMap = new MemoryMap(rpg);
     }
@@ -46,6 +46,10 @@ public class Bus {
         return this.memoryMap.read(address);
     }
 
+    public boolean pollPPUNMI() {
+        return this.ppu.isNMI();
+    }
+
     /**
      * 读无符号字节
      */
@@ -57,20 +61,26 @@ public class Bus {
      * 向内存中写入一字节数据
      */
     public void writeByte(int address, byte b) {
+        //
+        // Controller (0x2000) - instructs PPU on general logic flow (which memory table to use,
+        // if PPU should interrupt CPU, etc.)
+        //
         if (address == 0x2000) {
             this.ppu.writeCtr(b);
         }
 
+        //instructs PPU how to render sprites and background
         if (address == 0x2001) {
             this.ppu.writeMask(b);
         }
 
-        if (address == 0x2002) {
-            log.warn("Attempt to modify ppu status register.");
-            return;
-        }
-        if (address == 0x2004){
+        if (address == 0x2004) {
             System.out.println("aaa");
+        }
+
+        //instructs PPU how to set a viewport
+        if (address == 0x2005) {
+
         }
         if (address == 0x4104) {
             var buffer = new byte[0x100];
@@ -99,7 +109,7 @@ public class Bus {
      * 写入无符号字节
      */
     public void writeUSByte(int address, int data) {
-        this.memoryMap.write(address, ByteUtil.overflow(data));
+        this.writeByte(address, (byte) data);
     }
 
 
@@ -123,7 +133,7 @@ public class Bus {
      * 一个指令执行完毕触发当前函数
      */
     public void tick(int cycle) {
-        //触发PPU模块
-        this.ppu.tick(cycle);
+        //PPU时钟是CPU时钟的3倍
+        this.ppu.tick(cycle * 3);
     }
 }

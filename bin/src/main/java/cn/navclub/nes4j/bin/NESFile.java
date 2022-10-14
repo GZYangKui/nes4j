@@ -1,34 +1,67 @@
-package cn.navclub.nes4j.bin.model;
+package cn.navclub.nes4j.bin;
+
 
 import cn.navclub.nes4j.bin.enums.NESFormat;
 import cn.navclub.nes4j.bin.util.ByteUtil;
+import cn.navclub.nes4j.bin.util.IOUtil;
 import lombok.Data;
 
-/**
- * NES 文件头
- */
-@Data
-public class NESHeader {
-    public final static int HEADER_SIZE = 16;
+import java.io.File;
 
+@Data
+public class NESFile {
+    public final static int HEADER_SIZE = 16;
     private final byte[] headers;
     private final NESFormat format;
     private final int rgbSize;
     private final int chSize;
     private final int flag6;
     private final int flag7;
+    //0->horizontal 1->vertical
+    private final int mirrors;
 
-    public NESHeader(byte[] buffer) {
+    private final byte[] rgb;
+    private final byte[] ch;
+    private final byte[] train;
+    private final byte[] cellaneous;
+
+    public NESFile(byte[] buffer) {
         this.headers = new byte[HEADER_SIZE];
-
         //从原始数据中复制Header数据
-        System.arraycopy(buffer, 0, this.headers, 0, HEADER_SIZE);
+        System.arraycopy(buffer, 0, headers, 0, HEADER_SIZE);
 
         this.format = this.parseFormat();
         this.rgbSize = this.calRgbSize();
         this.chSize = this.calChSize();
         this.flag6 = Byte.toUnsignedInt(headers[6]);
         this.flag7 = Byte.toUnsignedInt(headers[7]);
+        this.mirrors = (flag6 & 1) != 0 ? 1 : 0;
+
+        var trainSize = this.trainAreaSize();
+        var left = buffer.length - chSize - rgbSize - trainSize - HEADER_SIZE;
+
+        ch = new byte[chSize];
+        rgb = new byte[rgbSize];
+        train = new byte[trainSize];
+        cellaneous = new byte[left];
+
+        if (trainSize > 0) {
+            System.arraycopy(buffer, HEADER_SIZE, train, 0, trainSize);
+        }
+        var offset = HEADER_SIZE + trainSize;
+        System.arraycopy(buffer, offset, rgb, 0, rgbSize);
+        if (chSize > 0) {
+            offset += rgbSize;
+            System.arraycopy(buffer, offset, ch, 0, chSize);
+        }
+        if (left > 0) {
+            offset += chSize;
+            System.arraycopy(buffer, offset, this.cellaneous, 0, left);
+        }
+    }
+
+    public NESFile(File file) {
+        this(IOUtil.readFileAllByte(file));
     }
 
     private int calChSize() {

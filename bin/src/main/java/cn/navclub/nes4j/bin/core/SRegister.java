@@ -13,6 +13,12 @@ public class SRegister {
         this.bits |= (1 << instance.ordinal());
     }
 
+    public void set(Enum<?>... is) {
+        for (Enum<?> i : is) {
+            this.set(i);
+        }
+    }
+
     /**
      * 清除某个标识位
      */
@@ -30,9 +36,7 @@ public class SRegister {
     }
 
     /**
-     *
      * 更新某个标识
-     *
      */
     public void update(Enum<?> instance, boolean set) {
         if (set) {
@@ -43,27 +47,21 @@ public class SRegister {
     }
 
     /**
-     *
      * 获取某个标识的值
-     *
      */
     public int get(Enum<?> flag) {
         return this.contain(flag) ? 1 : 0;
     }
 
     /**
-     *
      * 重置当前状态
-     *
      */
     public void reset() {
         this.bits = 0;
     }
 
     /**
-     *
      * 判断某个标识是否设置
-     *
      */
     public boolean contain(Enum<?> instance) {
         return ((1 << instance.ordinal()) & bits) > 0;

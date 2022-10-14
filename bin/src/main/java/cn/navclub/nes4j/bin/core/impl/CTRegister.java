@@ -71,7 +71,7 @@ public class CTRegister extends SRegister {
         return this.contain(PControl.MASTER_SLAVE) ? 1 : 0;
     }
 
-    public boolean VBankNMI(){
+    public boolean generateVBlankNMI(){
         return this.contain(PControl.V_BANK_NMI);
     }
 
