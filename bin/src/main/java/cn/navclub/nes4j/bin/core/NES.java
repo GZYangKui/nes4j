@@ -4,6 +4,7 @@ import cn.navclub.nes4j.bin.NESFile;
 import lombok.Getter;
 
 import java.io.File;
+import java.util.function.BiConsumer;
 
 @Getter
 public class NES {
@@ -25,7 +26,7 @@ public class NES {
             this.file = new NESFile(builder.file);
         }
         this.ppu = new PPU(file.getCh(), file.getMirrors());
-        this.bus = new Bus(file.getRgb(), ppu);
+        this.bus = new Bus(file.getRgb(), ppu, builder.gameLoopCallback);
         this.cpu = new CPU(this.bus, builder.stackRest, builder.pcReset);
     }
 
@@ -75,6 +76,7 @@ public class NES {
         private byte[] buffer;
         private int pcReset;
         private int stackRest;
+        private BiConsumer<PPU, JoyPad> gameLoopCallback;
 
         public NESBuilder() {
             this.pcReset = PC_RESET;
@@ -103,6 +105,11 @@ public class NES {
 
         public NESBuilder file(String file) {
             this.file = new File(file);
+            return this;
+        }
+
+        public NESBuilder gameLoopCallback(BiConsumer<PPU, JoyPad> gameLoopCallback) {
+            this.gameLoopCallback = gameLoopCallback;
             return this;
         }
 

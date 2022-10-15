@@ -3,17 +3,26 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.function.BiConsumer;
+
 @Slf4j
 public class Bus {
     private final PPU ppu;
     private final JoyPad joyPad;
     private final MemoryMap memoryMap;
+    private final BiConsumer<PPU, JoyPad> gameLoopCallback;
 
-    public Bus(byte[] rpg, final PPU ppu) {
+    public Bus(byte[] rpg, final PPU ppu, BiConsumer<PPU, JoyPad> gameLoopCallback) {
         this.ppu = ppu;
         this.joyPad = new JoyPad();
         this.memoryMap = new MemoryMap(rpg);
+        this.gameLoopCallback = gameLoopCallback;
     }
+
+    public Bus(byte[] rpg, final PPU ppu) {
+        this(rpg, ppu, null);
+    }
+
 
     /**
      * 获取当前rpg大小
@@ -29,11 +38,11 @@ public class Bus {
         if (address == 0x2002) {
             return this.ppu.readStatus();
         }
-        if (address == 0x2007) {
-            return this.ppu.readByte();
-        }
         if (address == 0x2004) {
             return this.ppu.readOam();
+        }
+        if (address == 0x2007) {
+            return this.ppu.readByte();
         }
         //player1
         if (address == 0x4016) {
@@ -42,6 +51,11 @@ public class Bus {
         //player2
         if (address == 0x4017) {
             return 0;
+        }
+        //0x2008<=address<=0x4000 mirror 0x2000-0x2007
+        if (address >= 0x2008 && address <= 0x3fff) {
+            address = address & 0b00100000_00000111;
+            return this.readByte(address);
         }
         return this.memoryMap.read(address);
     }
@@ -82,8 +96,8 @@ public class Bus {
         if (address == 0x2005) {
 
         }
-        //4014?
-        if (address == 0x4104) {
+        //4104->4014
+        if (address == 0x4014) {
             var buffer = new byte[0x100];
             var msb = b << 8;
             for (int i = 0; i < 0x100; i++) {
@@ -102,6 +116,12 @@ public class Bus {
         //Write to standard controller
         if (address == 0x4016) {
             this.joyPad.write(b);
+        }
+        //0x2008<=address<=0x3fff mirror 0x2000-0x2007
+        if (address >= 0x2008 && address <= 0x3fff) {
+            address = address & 0b00100000_00000111;
+            this.writeByte(address, b);
+            return;
         }
         this.memoryMap.write(address, b);
     }
@@ -134,7 +154,12 @@ public class Bus {
      * 一个指令执行完毕触发当前函数
      */
     public void tick(int cycle) {
+        var before = this.ppu.isNMI();
         //PPU时钟是CPU时钟的3倍
         this.ppu.tick(cycle * 3);
+        var after = this.ppu.isNMI();
+        if (!before && after && gameLoopCallback != null) {
+            this.gameLoopCallback.accept(this.ppu, this.joyPad);
+        }
     }
 }

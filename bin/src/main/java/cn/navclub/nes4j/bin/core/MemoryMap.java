@@ -29,9 +29,9 @@ public class MemoryMap {
             address &= 0b11111111111;
         }
 
-        if (0x2008 <= address && address <= 0x3FFF) {
-            address &= 0b10000000000111;
-        }
+//        if (0x2008 <= address && address <= 0x3FFF) {
+//            address &= 0b10000000000111;
+//        }
 
         //映射rpg内容
         if (address >= 0xC000 && rpgSize == 0x4000) {

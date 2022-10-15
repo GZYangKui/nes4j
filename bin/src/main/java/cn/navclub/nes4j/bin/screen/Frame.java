@@ -6,23 +6,23 @@ public class Frame {
     private final static int WIDTH = 250;
     private final static int HEIGHT = 240;
 
-    private final byte[] buffer;
+    private final byte[] pixles;
 
     public Frame() {
-        this.buffer = new byte[WIDTH * HEIGHT * 3];
+        this.pixles = new byte[WIDTH * HEIGHT * 3];
     }
 
 
-    public void updatePixel(int x, int y, byte r, byte g, byte b) {
+    public void updatePixel(int x, int y, int rgb) {
         var index = y * 3 * WIDTH + x * 3;
-        if (index + 2 < this.buffer.length) {
-            this.buffer[index] = r;
-            this.buffer[index + 1] = g;
-            this.buffer[index + 2] = b;
+        if (index + 2 < this.pixles.length) {
+            this.pixles[index] = (byte) (rgb & 0xff);
+            this.pixles[index + 1] = (byte) ((rgb >> 8) & 0xff);
+            this.pixles[index + 2] = (byte) ((rgb >> 16) & 0xff);
         }
     }
 
     public void clear() {
-        Arrays.fill(this.buffer, 0, this.buffer.length, (byte) 0);
+        Arrays.fill(this.pixles, 0, this.pixles.length, (byte) 0);
     }
 }

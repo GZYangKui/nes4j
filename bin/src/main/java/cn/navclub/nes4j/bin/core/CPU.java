@@ -121,13 +121,13 @@ public class CPU {
             case Immediate -> this.pc;
             case ZeroPage -> this.bus.readUSByte(this.pc);
             case Absolute, Indirect -> this.bus.readInt(this.pc);
-            case ZeroPage_X -> this.bus.readUSByte(this.pc) + this.rx;
-            case ZeroPage_Y -> this.bus.readUSByte(this.pc) + this.ry;
+            case ZeroPage_X -> (this.bus.readUSByte(this.pc) + this.rx) % 256;
+            case ZeroPage_Y -> (this.bus.readUSByte(this.pc) + this.ry) % 256;
             case Absolute_X -> this.bus.readInt(this.pc) + this.rx;
             case Absolute_Y -> this.bus.readInt(this.pc) + this.ry;
             case Indirect_X -> {
                 var base = this.bus.readInt(this.pc);
-                var ptr = base + this.ra;
+                var ptr = base + this.rx;
                 yield this.bus.readInt(ptr);
             }
             case Indirect_Y -> {

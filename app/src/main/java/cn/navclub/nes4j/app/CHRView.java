@@ -9,6 +9,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.TransferMode;
@@ -26,6 +27,8 @@ import java.util.concurrent.CompletableFuture;
  * ch-rom数据可视化查看程序
  */
 public class CHRView extends Application {
+    private static final Color TRANSPARENT = new Color(102 / 255.0, 102 / 255.0, 102 / 255.0, .5);
+
     private FlowPane flowPane;
 
     @Override
@@ -91,7 +94,8 @@ public class CHRView extends Application {
         stage.setHeight(800);
         stage.setScene(scene);
         stage.setTitle("CHView");
-        scene.getStylesheets().add(getClass().getResource("css/common.css").toExternalForm());
+        stage.getIcons().add(FXResource.loadImage("bin.png"));
+        scene.getStylesheets().add(FXResource.loadStyleSheet("common.css"));
 
         stage.show();
     }
@@ -130,16 +134,12 @@ public class CHRView extends Application {
         for (int i = 0; i < tile.length; i++) {
             for (int j = 0; j < tile[i].length; j++) {
                 var value = tile[i][j];
-                var color = new Color(102 / 255.0, 102 / 255.0, 102 / 255.0, .5);
-                if (value == 1) {
-                    color = Color.RED;
-                }
-                if (value == 2) {
-                    color = Color.GREEN;
-                }
-                if (value == 3) {
-                    color = Color.BLUE;
-                }
+                var color = switch (value) {
+                    case 1 -> Color.RED;
+                    case 2 -> Color.GREEN;
+                    case 3 -> Color.BLUE;
+                    default -> TRANSPARENT;
+                };
                 var arr = new byte[w * h];
                 for (int k = 0; k < (w * h); k++) {
                     arr[k] = (byte) Math.round(color.getBlue() * 0xff);

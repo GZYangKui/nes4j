@@ -5,7 +5,6 @@ import cn.navclub.nes4j.bin.enums.PControl;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- *
  * PPU控制寄存器
  *
  * <code>
@@ -24,9 +23,8 @@ import lombok.extern.slf4j.Slf4j;
  * |+-------- PPU master/slave select
  * |          (0: read backdrop from EXT pins; 1: output color on EXT pins)
  * +--------- Generate an NMI at the start of the
- *            vertical blanking interval (0: off; 1: on)
+ * vertical blanking interval (0: off; 1: on)
  * </code>
- *
  */
 @Slf4j
 public class CTRegister extends SRegister {
@@ -36,10 +34,12 @@ public class CTRegister extends SRegister {
     }
 
     /**
-     * 获取命名表地址
+     *
+     * Get current name table address
+     *
      */
     public int nameTableAddr() {
-        return switch (this.bits & 0b11) {
+        return switch (this.bits & 0x03) {
             case 0 -> 0x2000;
             case 1 -> 0x2400;
             case 2 -> 0x2800;
@@ -71,11 +71,11 @@ public class CTRegister extends SRegister {
         return this.contain(PControl.MASTER_SLAVE) ? 1 : 0;
     }
 
-    public boolean generateVBlankNMI(){
+    public boolean generateVBlankNMI() {
         return this.contain(PControl.V_BANK_NMI);
     }
 
-    public void update(byte bits){
+    public void update(byte bits) {
         this.bits = bits;
     }
 }

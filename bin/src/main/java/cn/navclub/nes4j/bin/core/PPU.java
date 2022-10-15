@@ -6,6 +6,7 @@ import cn.navclub.nes4j.bin.enums.MaskFlag;
 import cn.navclub.nes4j.bin.enums.PStatus;
 import cn.navclub.nes4j.bin.screen.Frame;
 import cn.navclub.nes4j.bin.util.ByteUtil;
+import lombok.Getter;
 
 /**
  * <a href="https://www.nesdev.org/wiki/PPU_programmer_reference">PPU document</a>
@@ -48,13 +49,15 @@ public class PPU {
         }
 
     }
-
+    @Getter
     private final byte[] ch;
     //The data necessary for render the screen
+    @Getter
     private final byte[] vram;
     private final Frame frame;
     private final MKRegister mask;
     private final SRegister status;
+    @Getter
     private final CTRegister control;
     private final byte[][] zeroSPixels;
     private final Addr addr;
