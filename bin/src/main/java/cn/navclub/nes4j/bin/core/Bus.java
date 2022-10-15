@@ -82,6 +82,7 @@ public class Bus {
         if (address == 0x2005) {
 
         }
+        //4014?
         if (address == 0x4104) {
             var buffer = new byte[0x100];
             var msb = b << 8;

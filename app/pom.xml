@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
-        <javafx.version>20-ea+4</javafx.version>
+        <javafx.version>19</javafx.version>
     </properties>
     <artifactId>app</artifactId>
     <dependencies>

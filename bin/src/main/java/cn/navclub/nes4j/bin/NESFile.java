@@ -10,7 +10,7 @@ import java.io.File;
 
 @Data
 public class NESFile {
-    public final static int HEADER_SIZE = 16;
+    private final static int HEADER_SIZE = 16;
     private final byte[] headers;
     private final NESFormat format;
     private final int rgbSize;

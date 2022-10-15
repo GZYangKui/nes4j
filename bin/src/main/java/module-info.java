@@ -3,4 +3,6 @@ module cn.navclub.nes4j.bin {
     requires static lombok;
     exports cn.navclub.nes4j.bin;
     exports cn.navclub.nes4j.bin.core;
+    exports cn.navclub.nes4j.bin.util;
+    exports cn.navclub.nes4j.bin.screen;
 }

@@ -2,7 +2,7 @@ package cn.navclub.nes4j.bin.core.impl;
 
 
 import cn.navclub.nes4j.bin.core.SRegister;
-import cn.navclub.nes4j.bin.enums.Color;
+import cn.navclub.nes4j.bin.screen.Color;
 import cn.navclub.nes4j.bin.enums.MaskFlag;
 
 import java.util.ArrayList;

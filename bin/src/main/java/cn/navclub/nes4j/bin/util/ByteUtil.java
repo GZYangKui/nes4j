@@ -102,6 +102,14 @@ public class ByteUtil {
         return new Mathematics(l > 0, value, ((b ^ value) & (value ^ a) & 0x80) != 0);
     }
 
+    public static byte fixBit(byte b, int i) {
+        return fixBit(b, i, (byte) 1, (byte) 0);
+    }
+
+    public static byte fixBit(byte b, int i, byte ifPresent, byte ifAbsent) {
+        return (b & (1 << i)) != 0 ? ifPresent : 0;
+    }
+
     public static int toInt16(byte[] arr) {
         return arr[1] << 8 | arr[0] & 0xff;
     }
