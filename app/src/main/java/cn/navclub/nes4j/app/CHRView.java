@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.app;
 
 import cn.navclub.nes4j.app.control.Tile;
+import cn.navclub.nes4j.app.util.OSUtil;
 import cn.navclub.nes4j.bin.NESFile;
 import cn.navclub.nes4j.bin.util.PatternTableUtil;
 import javafx.application.Application;
@@ -9,7 +10,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.TransferMode;
@@ -55,14 +55,11 @@ public class CHRView extends Application {
         var open = new MenuItem("Open");
         var setting = new MenuItem("Setting");
         open.setOnAction(e -> {
-            var chooser = new FileChooser();
-            chooser.setInitialDirectory(new File(System.getProperty("user.home")));
-            chooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("NES rom file", "*.nes", "*.NES"));
-            var opt = chooser.showOpenDialog(stage);
-            if (opt == null) {
+            var optional = OSUtil.chooseFile(stage, "NES rom file", "*.nes", "*.NES");
+            if (optional.isEmpty()) {
                 return;
             }
-            this.loadNESFile(opt);
+            this.loadNESFile(optional.get());
         });
         menu.getItems().addAll(open, setting);
         menuBar.getMenus().add(menu);

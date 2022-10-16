@@ -158,7 +158,7 @@ public class Bus {
         //PPU时钟是CPU时钟的3倍
         this.ppu.tick(cycle * 3);
         var after = this.ppu.isNMI();
-        if (!before && after && gameLoopCallback != null) {
+        if (after && gameLoopCallback != null) {
             this.gameLoopCallback.accept(this.ppu, this.joyPad);
         }
     }

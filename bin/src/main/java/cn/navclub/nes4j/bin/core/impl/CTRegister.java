@@ -59,8 +59,8 @@ public class CTRegister extends SRegister {
         return this.contain(PControl.SPRITE_PATTERN_ADDR) ? 0x1000 : 0x000;
     }
 
-    public int BPatternTable() {
-        return this.contain(PControl.BACKGROUND_PATTERN_TABLE) ? 0x1000 : 0x000;
+    public int patternNameAddr() {
+        return this.contain(PControl.BKG_PATTERN_TABLE) ? 0x1000 : 0x000;
     }
 
     public int spriteSize() {

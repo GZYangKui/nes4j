@@ -14,25 +14,23 @@ import java.util.function.BiConsumer;
 public class NESTest {
     @Test
     void testNesFile() {
-        var render = new Render();
         var frame = new Frame();
         BiConsumer<PPU, JoyPad> gameLoopCallback = (ppu, joyPad) -> {
-            render.render(ppu, frame);
+            Render.render(ppu, frame);
         };
 
         var nes = NES.NESBuilder.newBuilder()
-                .file(new File("nes/snow_bros.nes"))
+                .file(new File("nes/Super_Mario_Bros(J).nes"))
                 .gameLoopCallback(gameLoopCallback)
                 .build();
         nes.execute();
     }
 
     @Test
-    void test_hello_world(){
-        var render = new Render();
+    void test_hello_world() {
         var frame = new Frame();
         BiConsumer<PPU, JoyPad> gameLoopCallback = (ppu, joyPad) -> {
-            render.render(ppu, frame);
+            Render.render(ppu, frame);
         };
 
         var nes = NES.NESBuilder.newBuilder()

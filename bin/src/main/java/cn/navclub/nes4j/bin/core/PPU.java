@@ -4,7 +4,6 @@ import cn.navclub.nes4j.bin.core.impl.CTRegister;
 import cn.navclub.nes4j.bin.core.impl.MKRegister;
 import cn.navclub.nes4j.bin.enums.MaskFlag;
 import cn.navclub.nes4j.bin.enums.PStatus;
-import cn.navclub.nes4j.bin.screen.Frame;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import lombok.Getter;
 
@@ -55,17 +54,15 @@ public class PPU {
     //The data necessary for render the screen
     @Getter
     private final byte[] vram;
-    private final Frame frame;
     private final MKRegister mask;
     private final SRegister status;
     @Getter
     private final CTRegister control;
     private final byte[][] zeroSPixels;
     private final Addr addr;
-    /**
-     * <a href="https://www.nesdev.org/wiki/PPU_OAM">OAM</a>
-     */
+    //Save sprite info total 64 each 4 byte.
     private final byte[] oam;
+    //https://www.nesdev.org/wiki/PPU_palettes
     private final byte[] paletteTable;
 
     private int line;
@@ -84,7 +81,6 @@ public class PPU {
         this.oamAddr = 0;
         this.readByteBuf = 0;
         this.addr = new Addr();
-        this.frame = new Frame();
         this.oam = new byte[256];
         this.mirrors = mirrors;
         this.vram = new byte[2048];
@@ -107,7 +103,7 @@ public class PPU {
             this.status.set(PStatus.SPRITE_ZERO_HIT);
         }
         this.line += 1;
-        this.cycles -= 341;
+        this.cycles %= 341;
         if (this.line < 241) {
             this.status.set(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT);
             if (this.control.generateVBlankNMI()) {
@@ -117,6 +113,9 @@ public class PPU {
         if (this.line == 241) {
             this.status.set(PStatus.V_BLANK_OCCUR);
             this.status.clear(PStatus.SPRITE_ZERO_HIT);
+            if (this.control.generateVBlankNMI()) {
+                this.nmiInterrupt = true;
+            }
         }
         if (this.line >= 262) {
             this.line = 0;
@@ -159,6 +158,7 @@ public class PPU {
             temp = this.paletteTable[mirror - 0x3f00];
         }
 
+        //读取调色板数据
         if (addr >= 0x3f00 && addr <= 0x3fff) {
             temp = this.paletteTable[addr - 0x3f00];
         }
@@ -179,6 +179,8 @@ public class PPU {
             addr = addr - 0x10;
             this.paletteTable[addr - 0x3f00] = b;
         }
+
+        //更新调色板数据
         if (addr >= 0x3f00 && addr <= 0x3fff) {
             this.paletteTable[addr - 0x3f00] = b;
         }
@@ -197,7 +199,7 @@ public class PPU {
         var ramIndex = mirrorRam - 0x2000;
         var nameTable = mirrorRam / 0x400;
         if ((mirrors == 1 && nameTable == 2) | (mirrors == 1 && nameTable == 3))
-            return ramIndex - 1;
+            return ramIndex - 0x800;
         else if (mirrors == 0 && (nameTable == 2 || nameTable == 1))
             return ramIndex - 0x400;
         else if (mirrors == 0 && nameTable == 3)

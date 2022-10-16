@@ -2,9 +2,11 @@ package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.NESFile;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.io.File;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 @Getter
 public class NES {
@@ -17,6 +19,9 @@ public class NES {
     private final CPU cpu;
     private final PPU ppu;
     private final NESFile file;
+    @Setter
+    private volatile boolean stop;
+    private final Function<Throwable, Boolean> errorHandler;
 
 
     private NES(NESBuilder builder) {
@@ -25,6 +30,7 @@ public class NES {
         } else {
             this.file = new NESFile(builder.file);
         }
+        this.errorHandler = builder.errorHandler;
         this.ppu = new PPU(file.getCh(), file.getMirrors());
         this.bus = new Bus(file.getRgb(), ppu, builder.gameLoopCallback);
         this.cpu = new CPU(this.bus, builder.stackRest, builder.pcReset);
@@ -32,6 +38,7 @@ public class NES {
 
     public NES(byte[] rpg, byte[] ch, int pcReset, int stackReset) {
         this.file = null;
+        this.errorHandler = null;
         this.ppu = new PPU(ch, 1);
         this.bus = new Bus(rpg, ppu);
         this.cpu = new CPU(this.bus, stackReset, pcReset);
@@ -44,11 +51,14 @@ public class NES {
 
     public void execute() {
         this.cpu.reset();
-        while (true) {
+        while (!stop) {
             try {
                 this.cpu.execute();
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                stop = (this.errorHandler == null);
+                if (!stop) {
+                    stop = this.errorHandler.apply(e);
+                }
             }
         }
     }
@@ -76,6 +86,7 @@ public class NES {
         private byte[] buffer;
         private int pcReset;
         private int stackRest;
+        private Function<Throwable, Boolean> errorHandler;
         private BiConsumer<PPU, JoyPad> gameLoopCallback;
 
         public NESBuilder() {
@@ -110,6 +121,11 @@ public class NES {
 
         public NESBuilder gameLoopCallback(BiConsumer<PPU, JoyPad> gameLoopCallback) {
             this.gameLoopCallback = gameLoopCallback;
+            return this;
+        }
+
+        public NESBuilder errorHandler(Function<Throwable, Boolean> callable) {
+            this.errorHandler = callable;
             return this;
         }
 

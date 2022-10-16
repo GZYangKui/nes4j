@@ -3,6 +3,7 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.enums.AddressMode;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
 import cn.navclub.nes4j.bin.enums.CPUInterrupt;
+import cn.navclub.nes4j.bin.enums.CPUStatus;
 import cn.navclub.nes4j.bin.model.Instruction6502;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import lombok.Getter;
@@ -373,12 +374,12 @@ public class CPU {
                 yield b & 0xff;
             }
             case DEX -> {
-                this.rx -= 1;
-                yield this.rx & 0xff;
+                this.rx = (this.rx - 1) & 0xff;
+                yield this.rx;
             }
             default -> {
-                this.ry -= 1;
-                yield this.ry & 0xff;
+                this.ry = (this.ry - 1) & 0xff;
+                yield this.ry;
             }
         };
         this.NZUpdate(value);
@@ -390,7 +391,7 @@ public class CPU {
             return;
         }
         this.pushInt(this.pc);
-        this.pushByte(ByteUtil.overflow(this.status.getBits()));
+        this.pushByte(this.status.getBits());
         //禁用中断
         this.status.set(CPUStatus.ID);
         this.pc = this.bus.readInt(interrupt == CPUInterrupt.NMI ? 0xFFFA : 0xFFFE);
@@ -487,7 +488,7 @@ public class CPU {
         //刷新累加寄存器值到内存
         if (instruction == CPUInstruction.STA) {
             var addr = this.getOperandAddr(instruction6502.getAddressMode());
-            this.bus.writeUSByte(this.getOperandAddr(instruction6502.getAddressMode()), this.ra);
+            this.bus.writeUSByte(addr, this.ra);
         }
 
         //刷新y寄存器值到内存
