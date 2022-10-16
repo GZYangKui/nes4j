@@ -1,7 +1,7 @@
 package cn.navclub.nes4j.bin.test.impl;
 
 import cn.navclub.nes4j.bin.core.CPU;
-import cn.navclub.nes4j.bin.enums.CPUStatus;
+import cn.navclub.nes4j.bin.core.CPUStatus;
 import cn.navclub.nes4j.bin.test.BaseTest;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import org.junit.jupiter.api.Assertions;

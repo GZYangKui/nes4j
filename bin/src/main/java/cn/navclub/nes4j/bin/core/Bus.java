@@ -99,7 +99,7 @@ public class Bus {
         //4104->4014
         if (address == 0x4014) {
             var buffer = new byte[0x100];
-            var msb = b << 8;
+            var msb = Byte.toUnsignedInt(b) << 8;
             for (int i = 0; i < 0x100; i++) {
                 buffer[i] = this.readByte(msb + i);
             }

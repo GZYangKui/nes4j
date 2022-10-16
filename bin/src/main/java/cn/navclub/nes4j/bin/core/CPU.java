@@ -3,7 +3,6 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.enums.AddressMode;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
 import cn.navclub.nes4j.bin.enums.CPUInterrupt;
-import cn.navclub.nes4j.bin.enums.CPUStatus;
 import cn.navclub.nes4j.bin.model.Instruction6502;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import lombok.Getter;
@@ -64,7 +63,7 @@ public class CPU {
 
     private void pushByte(byte data) {
         this.bus.writeByte(STACK + this.sp, data);
-        this.sp--;
+        this.sp = (this.sp - 1) & 0xff;
     }
 
     private void pushInt(int data) {
@@ -75,7 +74,7 @@ public class CPU {
     }
 
     private byte popByte() {
-        this.sp++;
+        this.sp = (this.sp + 1) & 0xff;
         return this.bus.readByte(STACK + this.sp);
     }
 
@@ -287,10 +286,10 @@ public class CPU {
             this.bus.writeInt(address, result);
         } else if (instruction == CPUInstruction.INX) {
             var x = this.rx;
-            this.rx = result = x + 1;
+            this.rx = result = (x + 1) & 0xff;
         } else if (instruction == CPUInstruction.INY) {
             var y = this.ry;
-            this.ry = result = y + 1;
+            this.ry = result = (y + 1) & 0xff;
         } else {
             return;
         }
@@ -371,15 +370,15 @@ public class CPU {
                 var b = this.bus.readUSByte(address);
                 b--;
                 this.bus.writeUSByte(address, b);
-                yield b;
+                yield b & 0xff;
             }
             case DEX -> {
                 this.rx -= 1;
-                yield this.rx;
+                yield this.rx & 0xff;
             }
             default -> {
                 this.ry -= 1;
-                yield this.ry;
+                yield this.ry & 0xff;
             }
         };
         this.NZUpdate(value);
@@ -390,18 +389,16 @@ public class CPU {
         if (interrupt != CPUInterrupt.NMI && this.status.contain(CPUStatus.ID)) {
             return;
         }
-        if (interrupt == CPUInterrupt.RESET) {
-            this.reset();
-        } else {
-            this.pushInt(this.pc);
-            this.pushByte(ByteUtil.overflow(this.status.getBits()));
-            //禁用中断
-            this.status.set(CPUStatus.ID);
-            this.pc = this.bus.readInt(interrupt == CPUInterrupt.NMI ? 0xFFFA : 0xFFFE);
-            this.status.update(CPUStatus.BK, interrupt == CPUInterrupt.BRK);
+        this.pushInt(this.pc);
+        this.pushByte(ByteUtil.overflow(this.status.getBits()));
+        //禁用中断
+        this.status.set(CPUStatus.ID);
+        this.pc = this.bus.readInt(interrupt == CPUInterrupt.NMI ? 0xFFFA : 0xFFFE);
+        this.status.update(CPUStatus.BK, interrupt == CPUInterrupt.BRK);
+        if (interrupt == CPUInterrupt.NMI) {
+            this.bus.tick(2);
         }
     }
-
 
     public void execute() {
         if (this.bus.pollPPUNMI()) {
@@ -413,10 +410,7 @@ public class CPU {
         if (instruction6502 == null) {
             return;
         }
-
         var instruction = instruction6502.getInstruction();
-
-
         if (instruction != CPUInstruction.BRK) {
             log.info("({}){}(0x{}) {}", pcState - 1, instruction,
                     Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502));
@@ -492,6 +486,7 @@ public class CPU {
 
         //刷新累加寄存器值到内存
         if (instruction == CPUInstruction.STA) {
+            var addr = this.getOperandAddr(instruction6502.getAddressMode());
             this.bus.writeUSByte(this.getOperandAddr(instruction6502.getAddressMode()), this.ra);
         }
 

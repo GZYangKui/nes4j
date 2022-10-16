@@ -28,6 +28,21 @@ public class NESTest {
     }
 
     @Test
+    void test_hello_world(){
+        var render = new Render();
+        var frame = new Frame();
+        BiConsumer<PPU, JoyPad> gameLoopCallback = (ppu, joyPad) -> {
+            render.render(ppu, frame);
+        };
+
+        var nes = NES.NESBuilder.newBuilder()
+                .file(new File("nes/helloworld.nes"))
+                .gameLoopCallback(gameLoopCallback)
+                .build();
+        nes.execute();
+    }
+
+    @Test
     void test_palette_ram() {
         var nes = NES.NESBuilder.newBuilder()
                 .file(new File("nes/ppu/palette_ram.nes"))

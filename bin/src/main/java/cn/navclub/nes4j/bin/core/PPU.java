@@ -49,6 +49,7 @@ public class PPU {
         }
 
     }
+
     @Getter
     private final byte[] ch;
     //The data necessary for render the screen
@@ -94,6 +95,9 @@ public class PPU {
         this.control = new CTRegister();
     }
 
+    /**
+     * <a hrep="https://www.nesdev.org/wiki/PPU_rendering">PPU Render</a>
+     */
     public void tick(int cycles) {
         this.cycles += cycles;
         if (this.cycles < 341) {
@@ -124,7 +128,7 @@ public class PPU {
     public void writeOam(byte[] arr) {
         for (byte b : arr) {
             this.oam[this.oamAddr] = b;
-            ++this.oamAddr;
+            this.oamAddr = (this.oamAddr + 1) & 0xff;
         }
     }
 

@@ -1,4 +1,4 @@
-package cn.navclub.nes4j.bin.enums;
+package cn.navclub.nes4j.bin.core;
 
 public enum CPUStatus {
     //Carry flag

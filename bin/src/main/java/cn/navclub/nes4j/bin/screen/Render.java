@@ -13,7 +13,8 @@ public class Render {
             var arr = new byte[16];
             var offset = bank + index * 16;
             System.arraycopy(ppu.getCh(), offset, arr, 0, 16);
-            var pixles = PatternTableUtil.tiles(arr);
+            var pixles = PatternTableUtil.tiles2Str(arr);
+            System.out.println(pixles);
         }
     }
 }
