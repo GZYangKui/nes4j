@@ -1,12 +1,12 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.util.ByteUtil;
+import cn.navclub.nes4j.bin.ByteReadWriter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.function.BiConsumer;
 
 @Slf4j
-public class Bus {
+public class Bus implements ByteReadWriter {
     private final PPU ppu;
     private final JoyPad joyPad;
     private final MemoryMap memoryMap;
@@ -31,10 +31,8 @@ public class Bus {
         return this.memoryMap.getRpgSize();
     }
 
-    /**
-     * 从内存中读取一个字节数据
-     */
-    public byte readByte(int address) {
+    @Override
+    public byte read(int address) {
         if (address == 0x2002) {
             return this.ppu.readStatus();
         }
@@ -42,7 +40,7 @@ public class Bus {
             return this.ppu.readOam();
         }
         if (address == 0x2007) {
-            return this.ppu.readByte();
+            return this.ppu.read(address);
         }
         //player1
         if (address == 0x4016) {
@@ -55,7 +53,7 @@ public class Bus {
         //0x2008<=address<=0x4000 mirror 0x2000-0x2007
         if (address >= 0x2008 && address <= 0x3fff) {
             address = address & 0b00100000_00000111;
-            return this.readByte(address);
+            return this.read(address);
         }
         return this.memoryMap.read(address);
     }
@@ -65,43 +63,38 @@ public class Bus {
     }
 
     /**
-     * 读无符号字节
-     */
-    public int readUSByte(int address) {
-        return Byte.toUnsignedInt(this.readByte(address));
-    }
-
-    /**
      * 向内存中写入一字节数据
      */
-    public void writeByte(int address, byte b) {
-        //
-        // Controller (0x2000) - instructs PPU on general logic flow (which memory table to use,
-        // if PPU should interrupt CPU, etc.)
-        //
+    public void write(int address, byte b) {
+        if (address >= 0x4000 && address <= 0x4017) {
+            System.out.println("APU");
+        }
+
+        //https://www.nesdev.org/wiki/PPU_programmer_reference#Controller_($2000)_%3E_write
         if (address == 0x2000) {
             this.ppu.writeCtr(b);
         }
 
-        //instructs PPU how to render sprites and background
+        //https://www.nesdev.org/wiki/PPU_programmer_reference#Mask_($2001)_%3E_write
         if (address == 0x2001) {
             this.ppu.writeMask(b);
         }
 
-        if (address == 0x2004) {
-            System.out.println("aaa");
+        //https://www.nesdev.org/wiki/PPU_programmer_reference#OAM_address_($2003)_%3E_write
+        if (address == 0x2003) {
+            this.ppu.writeOamAddr(b);
         }
 
-        //instructs PPU how to set a viewport
+        //https://www.nesdev.org/wiki/PPU_programmer_reference#Scroll_($2005)_%3E%3E_write_x2
         if (address == 0x2005) {
 
         }
-        //4104->4014
+        //https://www.nesdev.org/wiki/PPU_programmer_reference#OAM_DMA_($4014)_%3E_write
         if (address == 0x4014) {
             var buffer = new byte[0x100];
             var msb = Byte.toUnsignedInt(b) << 8;
             for (int i = 0; i < 0x100; i++) {
-                buffer[i] = this.readByte(msb + i);
+                buffer[i] = this.read(msb + i);
             }
             this.ppu.writeOam(buffer);
         }
@@ -111,7 +104,7 @@ public class Bus {
         }
         //Write to ppu data
         if (address == 0x2007) {
-            this.ppu.writeByte(b);
+            this.ppu.write(address, b);
         }
         //Write to standard controller
         if (address == 0x4016) {
@@ -120,34 +113,10 @@ public class Bus {
         //0x2008<=address<=0x3fff mirror 0x2000-0x2007
         if (address >= 0x2008 && address <= 0x3fff) {
             address = address & 0b00100000_00000111;
-            this.writeByte(address, b);
+            this.write(address, b);
             return;
         }
         this.memoryMap.write(address, b);
-    }
-
-    /**
-     * 写入无符号字节
-     */
-    public void writeUSByte(int address, int data) {
-        this.writeByte(address, (byte) data);
-    }
-
-
-    /**
-     * 以小端序形式读取数据
-     */
-    public int readInt(int address) {
-        var lsb = Byte.toUnsignedInt(this.readByte(address));
-        var msb = Byte.toUnsignedInt(this.readByte(address + 1));
-        return lsb | (msb << 8);
-    }
-
-    /**
-     * 向指定地址写入整形数据
-     */
-    public void writeInt(int address, int value) {
-        this.writeByte(address, ByteUtil.overflow(value));
     }
 
     /**
@@ -158,7 +127,7 @@ public class Bus {
         //PPU时钟是CPU时钟的3倍
         this.ppu.tick(cycle * 3);
         var after = this.ppu.isNMI();
-        if (after && gameLoopCallback != null) {
+        if (!before && after && gameLoopCallback != null) {
             this.gameLoopCallback.accept(this.ppu, this.joyPad);
         }
     }

@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.test;
 
-import cn.navclub.nes4j.bin.core.NES;
+import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.CPU;
 
 public class BaseTest {

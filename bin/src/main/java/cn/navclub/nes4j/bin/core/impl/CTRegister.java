@@ -34,9 +34,7 @@ public class CTRegister extends SRegister {
     }
 
     /**
-     *
      * Get current name table address
-     *
      */
     public int nameTableAddr() {
         return switch (this.bits & 0x03) {
@@ -52,7 +50,7 @@ public class CTRegister extends SRegister {
     }
 
     public int VRamIncrement() {
-        return (!this.contain(PControl.VRAM_INCREMENT) ? 32 : 1);
+        return this.contain(PControl.VRAM_INCREMENT) ? 32 : 1;
     }
 
     public int spritePattern() {

@@ -2,7 +2,7 @@ package cn.navclub.nes4j.app;
 
 import cn.navclub.nes4j.app.control.Tile;
 import cn.navclub.nes4j.app.util.OSUtil;
-import cn.navclub.nes4j.bin.NESFile;
+import cn.navclub.nes4j.bin.core.NESFile;
 import cn.navclub.nes4j.bin.util.PatternTableUtil;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -16,7 +16,6 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;

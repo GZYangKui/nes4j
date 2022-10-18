@@ -2,7 +2,7 @@ package cn.navclub.nes4j.bin.test;
 
 
 import cn.navclub.nes4j.bin.core.JoyPad;
-import cn.navclub.nes4j.bin.core.NES;
+import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.PPU;
 import cn.navclub.nes4j.bin.screen.Frame;
 import cn.navclub.nes4j.bin.screen.Render;

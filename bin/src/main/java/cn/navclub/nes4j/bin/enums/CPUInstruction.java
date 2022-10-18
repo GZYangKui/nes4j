@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.enums;
 
-import cn.navclub.nes4j.bin.model.Instruction6502;
+import cn.navclub.nes4j.bin.core.Instruction6502;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
 

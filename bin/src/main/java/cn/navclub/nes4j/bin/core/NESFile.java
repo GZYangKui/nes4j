@@ -1,4 +1,4 @@
-package cn.navclub.nes4j.bin;
+package cn.navclub.nes4j.bin.core;
 
 
 import cn.navclub.nes4j.bin.enums.NESFormat;
@@ -38,12 +38,10 @@ public class NESFile {
         this.mirrors = (flag6 & 1) != 0 ? 1 : 0;
 
         var trainSize = this.trainAreaSize();
-        var left = buffer.length - chSize - rgbSize - trainSize - HEADER_SIZE;
 
         ch = new byte[chSize];
         rgb = new byte[rgbSize];
         train = new byte[trainSize];
-        cellaneous = new byte[left];
 
         if (trainSize > 0) {
             System.arraycopy(buffer, HEADER_SIZE, train, 0, trainSize);
@@ -54,9 +52,14 @@ public class NESFile {
             offset += rgbSize;
             System.arraycopy(buffer, offset, ch, 0, chSize);
         }
-        if (left > 0) {
+
+        var left = buffer.length - chSize - rgbSize - trainSize - HEADER_SIZE;
+        if (this.format == NESFormat.NES_20 && left > 0) {
+            cellaneous = new byte[left];
             offset += chSize;
             System.arraycopy(buffer, offset, this.cellaneous, 0, left);
+        } else {
+            this.cellaneous = new byte[0];
         }
     }
 
@@ -66,12 +69,16 @@ public class NESFile {
 
     private int calChSize() {
         var lsb = this.headers[5];
-        var msb = this.headers[9] & 0b1111_0000;
-        var size = ByteUtil.toInt(new byte[]{lsb, ByteUtil.overflow(msb), 0, 0});
-        if (msb <= 0x0E) {
-            size *= 8 * 1024;
+        var size = lsb & 0xff;
+        var scale = 8 * 1024;
+        if (this.format == NESFormat.NES_20) {
+            var msb = (this.headers[9]) >>> 4;
+            size = (lsb | msb << 8);
+            if (msb > 0x0e) {
+                scale = 0;
+            }
         }
-        return size;
+        return size * scale;
     }
 
     /**
@@ -79,13 +86,16 @@ public class NESFile {
      */
     private int calRgbSize() {
         var lsb = this.headers[4];
-        var msb = this.headers[9] & 0b0000_1111;
-        var size = ByteUtil.toInt(new byte[]{lsb, ByteUtil.overflow(msb), 0, 0});
-
-        if (msb <= 0X0E) {
-            size *= 16 * 1024;
+        var size = (lsb & 0xff);
+        var scale = 16 * 1024;
+        if (this.format == NESFormat.NES_20) {
+            var msb = this.headers[9] & 0x0f;
+            size = ByteUtil.toInt(new byte[]{lsb, ByteUtil.overflow(msb), 0, 0});
+            if (msb > 0x0e) {
+                scale = 0;
+            }
         }
-        return size;
+        return size * scale;
     }
 
     /**

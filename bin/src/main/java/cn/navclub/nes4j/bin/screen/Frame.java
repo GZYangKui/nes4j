@@ -18,7 +18,7 @@ public class Frame {
 
     public Frame() {
         //width=32*8 height=30*8
-        this(900, 600);
+        this(256, 240);
     }
 
     public void updatePixel(int x, int y, int rgb) {

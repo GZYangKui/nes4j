@@ -1,6 +1,6 @@
-package cn.navclub.nes4j.bin.core;
+package cn.navclub.nes4j.bin;
 
-import cn.navclub.nes4j.bin.NESFile;
+import cn.navclub.nes4j.bin.core.*;
 import lombok.Getter;
 import lombok.Setter;
 

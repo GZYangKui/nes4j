@@ -4,8 +4,8 @@ import cn.navclub.nes4j.bin.enums.AddressMode;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
 import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.enums.CPUStatus;
-import cn.navclub.nes4j.bin.model.Instruction6502;
 import cn.navclub.nes4j.bin.util.ByteUtil;
+import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -63,20 +63,20 @@ public class CPU {
 
 
     private void pushByte(byte data) {
-        this.bus.writeByte(STACK + this.sp, data);
-        this.sp = (this.sp - 1) & 0xff;
+        this.bus.write(STACK + this.sp, data);
+        this.sp = MathUtil.unsignedSub(this.sp, 1);
     }
 
     private void pushInt(int data) {
-        var lsb = data & 0xFF;
-        var msb = (data >> 8) & 0xFF;
-        this.pushByte(ByteUtil.overflow(lsb));
-        this.pushByte(ByteUtil.overflow(msb));
+        var lsb = data & 0xff;
+        var msb = (data >> 8) & 0xff;
+        this.pushByte((byte) lsb);
+        this.pushByte((byte) msb);
     }
 
     private byte popByte() {
-        this.sp = (this.sp + 1) & 0xff;
-        return this.bus.readByte(STACK + this.sp);
+        this.sp = MathUtil.unsignedAdd(this.sp, 1);
+        return this.bus.read(STACK + this.sp);
     }
 
     private int popInt() {
@@ -107,7 +107,7 @@ public class CPU {
      * 更新负标识和零标识
      */
     private void NZUpdate(int result) {
-        var b = ByteUtil.overflow(result);
+        var b = (byte) result;
         this.status.update(CPUStatus.ZF, (b == 0));
         this.status.update(CPUStatus.NF, (b & 0x80) != 0);
     }
@@ -121,19 +121,19 @@ public class CPU {
             case Immediate -> this.pc;
             case ZeroPage -> this.bus.readUSByte(this.pc);
             case Absolute, Indirect -> this.bus.readInt(this.pc);
-            case ZeroPage_X -> (this.bus.readUSByte(this.pc) + this.rx) % 256;
-            case ZeroPage_Y -> (this.bus.readUSByte(this.pc) + this.ry) % 256;
+            case ZeroPage_X -> MathUtil.unsignedAdd(this.bus.readUSByte(this.pc), this.rx);
+            case ZeroPage_Y -> MathUtil.unsignedAdd(this.bus.readUSByte(this.pc), this.ry);
             case Absolute_X -> this.bus.readInt(this.pc) + this.rx;
             case Absolute_Y -> this.bus.readInt(this.pc) + this.ry;
             case Indirect_X -> {
-                var base = this.bus.readInt(this.pc);
-                var ptr = base + this.rx;
+                var base = this.bus.readUSByte(this.pc);
+                var ptr = MathUtil.unsignedAdd(base, this.rx);
                 yield this.bus.readInt(ptr);
             }
             case Indirect_Y -> {
-                var base = this.bus.readInt(this.pc);
-                var ptr = base + this.ry;
-                yield this.bus.readInt(ptr);
+                var base = this.bus.readUSByte(this.pc);
+                var ptr = this.bus.readInt(base);
+                yield ptr + this.ry;
             }
             default -> -1;
         };
@@ -172,25 +172,27 @@ public class CPU {
     }
 
     private void rol(Instruction6502 instruction6502) {
+        var bit = 0;
+        var addr = 0;
+        var value = 0;
         var mode = instruction6502.getAddressMode();
-        var cBit = this.status.contain(CPUStatus.CF) ? 0xff : 0xfe;
-
-        int result, oBit;
-        if (mode == AddressMode.Accumulator) {
-            oBit = (this.ra & 0x80);
-            result = this.ra << 1;
-            result &= cBit;
-            this.raUpdate(result);
+        var updateRA = (mode == AddressMode.Accumulator);
+        if (updateRA) {
+            value = this.ra;
         } else {
-            var address = this.getOperandAddr(mode);
-            var value = this.bus.readByte(address);
-            oBit = value & 0x80;
-            result = value << 1;
-            result &= cBit;
-            this.NZUpdate(result);
+            addr = this.getOperandAddr(mode);
+            value = this.bus.readUSByte(addr);
         }
-
-        this.status.update(CPUStatus.CF, oBit != 0);
+        bit = value >> 7;
+        value <<= 1;
+        value |= this.status.get(CPUStatus.CF);
+        this.status.update(CPUStatus.CF, bit == 1);
+        if (updateRA) {
+            this.raUpdate(value);
+        } else {
+            this.bus.writeUSByte(addr, value);
+            this.NZUpdate(value);
+        }
     }
 
     private void ror(Instruction6502 instruction6502) {
@@ -205,11 +207,11 @@ public class CPU {
             this.raUpdate(result);
         } else {
             var address = this.getOperandAddr(mode);
-            var value = this.bus.readByte(address);
+            var value = this.bus.read(address);
             cBit = value & 1;
             result = value >> 1;
             result &= oldCBit;
-            this.bus.writeByte(address, ByteUtil.overflow(result));
+            this.bus.write(address, ByteUtil.overflow(result));
             this.NZUpdate(result);
         }
         this.status.update(CPUStatus.CF, cBit > 0);
@@ -226,13 +228,14 @@ public class CPU {
             b = this.bus.readUSByte(address);
         }
         //更新进位标识
-        this.status.update(CPUStatus.CF, (b & 0x80) != 0);
+        this.status.update(CPUStatus.CF, (b >> 7) == 1);
         //左移1位
         b = b << 1;
         if (a) {
             this.raUpdate(b);
         } else {
-            this.bus.writeByte(address, (byte) b);
+            this.NZUpdate(b);
+            this.bus.writeUSByte(address, b);
         }
     }
 
@@ -255,9 +258,6 @@ public class CPU {
         }
     }
 
-    /**
-     * {@link CPUInstruction#CMP}、{@link  CPUInstruction#CPX}和{@link CPUInstruction#CPY} 具体实现
-     */
     private void cmp(Instruction6502 instruction6502) {
         var address = this.getOperandAddr(instruction6502.getAddressMode());
         final int a;
@@ -266,31 +266,28 @@ public class CPU {
             a = this.ra;
         } else if (instruction == CPUInstruction.CPX) {
             a = this.rx;
-        } else if (instruction == CPUInstruction.CPY) {
-            a = this.ry;
         } else {
-            return;
+            a = this.ry;
         }
         var b = this.bus.readUSByte(address);
+        var c = (a - b);
         //设置Carry Flag
         this.status.update(CPUStatus.CF, a >= b);
-        //设置Zero Flag
-        this.status.update(CPUStatus.ZF, a == b);
+        //更新cpu状态
+        this.NZUpdate(c);
     }
 
     private void inc(CPUInstruction instruction, AddressMode mode) {
         final int result;
         if (instruction == CPUInstruction.INC) {
             var address = this.getOperandAddr(mode);
-            var a = this.bus.readUSByte(address);
-            result = a + 1;
-            this.bus.writeInt(address, result);
+            var m = this.bus.readUSByte(address);
+            result = MathUtil.unsignedAdd(this.ra, m);
+            this.bus.writeUSByte(address, result);
         } else if (instruction == CPUInstruction.INX) {
-            var x = this.rx;
-            this.rx = result = (x + 1) & 0xff;
+            this.rx = result = MathUtil.unsignedAdd(this.rx, 1);
         } else if (instruction == CPUInstruction.INY) {
-            var y = this.ry;
-            this.ry = result = (y + 1) & 0xff;
+            this.ry = result = MathUtil.unsignedAdd(this.ry, 1);
         } else {
             return;
         }
@@ -302,7 +299,7 @@ public class CPU {
         var address = this.getOperandAddr(mode);
         var b = this.bus.readUSByte(address);
         var c = this.status.contain(CPUStatus.CF);
-        var m = ByteUtil.addition(this.ra, b, c);
+        var m = MathUtil.addition(this.ra, b, c);
         this.status.update(CPUStatus.CF, m.carry());
         this.status.update(CPUStatus.OF, m.overflow());
         this.raUpdate(m.result());
@@ -314,14 +311,14 @@ public class CPU {
         var a = this.ra;
         var c = this.status.contain(CPUStatus.CF);
         var b = this.bus.readUSByte(addr);
-        final ByteUtil.Mathematics m;
+        final MathUtil.Mathematics m;
         if (ByteUtil.negative(b) && ByteUtil.negative(a)) {
             b = ByteUtil.origin(b);
-            m = ByteUtil.subtract(a, b, c);
+            m = MathUtil.subtract(a, b, c);
         } else if (ByteUtil.negative(b) && !ByteUtil.negative(a)) {
-            m = ByteUtil.addition(a, ByteUtil.origin(b), c);
+            m = MathUtil.addition(a, ByteUtil.origin(b), c);
         } else {
-            m = ByteUtil.subtract(a, b, this.status.contain(CPUStatus.CF));
+            m = MathUtil.subtract(a, b, this.status.contain(CPUStatus.CF));
         }
         this.status.update(CPUStatus.CF, m.carry());
         this.status.update(CPUStatus.OF, m.overflow());
@@ -345,12 +342,12 @@ public class CPU {
         if (!condition) {
             return;
         }
-//        this.bus.tick(1);
-        var b = this.bus.readByte(this.pc);
+        this.bus.tick(1);
+        var b = this.bus.read(this.pc);
         var jump = this.pc + 1 + b;
-//        if ((this.pc + 1 & 0xff00) != (jump & 0xff00)) {
-//            this.bus.tick(1);
-//        }
+        if ((this.pc + 1 & 0xff00) != (jump & 0xff00)) {
+            this.bus.tick(1);
+        }
 
         this.pc = jump;
     }
@@ -368,17 +365,16 @@ public class CPU {
         var value = switch (instruction) {
             case DEC -> {
                 var address = getOperandAddr(instruction6502.getAddressMode());
-                var b = this.bus.readUSByte(address);
-                b--;
+                var b = MathUtil.unsignedSub(this.bus.readUSByte(address), 1);
                 this.bus.writeUSByte(address, b);
-                yield b & 0xff;
+                yield b;
             }
             case DEX -> {
-                this.rx = (this.rx - 1) & 0xff;
+                this.rx = MathUtil.unsignedSub(this.rx, 1);
                 yield this.rx;
             }
             default -> {
-                this.ry = (this.ry - 1) & 0xff;
+                this.ry = MathUtil.unsignedSub(this.ry, 1);
                 yield this.ry;
             }
         };
@@ -405,7 +401,7 @@ public class CPU {
         if (this.bus.pollPPUNMI()) {
             this.interrupt(CPUInterrupt.NMI);
         }
-        var openCode = this.bus.readByte(this.pc);
+        var openCode = this.bus.read(this.pc);
         var pcState = (++this.pc);
         var instruction6502 = CPUInstruction.getInstance(openCode);
         if (instruction6502 == null) {
@@ -420,7 +416,11 @@ public class CPU {
         if (instruction == CPUInstruction.JMP) {
             var addr = this.getOperandAddr(instruction6502.getAddressMode());
             if (instruction6502.getAddressMode() == AddressMode.Indirect) {
-                addr = this.bus.readInt(addr);
+                var lsb = addr & 0xff;
+                var msb = addr >> 8 & 0xff;
+                lsb = this.bus.readUSByte(lsb);
+                msb = this.bus.readUSByte(msb);
+                addr = (lsb | msb << 8);
             }
             this.pc = addr;
         }

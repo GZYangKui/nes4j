@@ -1,4 +1,4 @@
-package cn.navclub.nes4j.bin.model;
+package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.enums.AddressMode;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;

@@ -2,7 +2,7 @@ package cn.navclub.nes4j.app;
 
 import cn.navclub.nes4j.app.util.OSUtil;
 import cn.navclub.nes4j.bin.core.JoyPad;
-import cn.navclub.nes4j.bin.core.NES;
+import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.PPU;
 import cn.navclub.nes4j.bin.screen.Frame;
 import cn.navclub.nes4j.bin.screen.Render;
@@ -68,6 +68,10 @@ public class NES4j extends Application {
                     })
                     .build();
             nes.execute();
+        }).whenComplete((r, t) -> {
+            if (t != null) {
+                t.printStackTrace();
+            }
         });
     }
 
@@ -80,15 +84,16 @@ public class NES4j extends Application {
         var writer = image.getPixelWriter();
         var format = PixelFormat.getByteRgbInstance();
         for (int i = 0; i < h; i++) {
-            var start = i * w;
+            var offset = i * w * 3;
             for (int j = 0; j < w; j++) {
-                arr[0] = frame.getPixels()[start];
-                arr[1] = frame.getPixels()[start + 1];
-                arr[2] = frame.getPixels()[start + 2];
+                arr[0] = frame.getPixels()[offset];
+                arr[1] = frame.getPixels()[offset + 1];
+                arr[2] = frame.getPixels()[offset + 2];
                 writer.setPixels(j, i, 1, 1, format, ByteBuffer.wrap(arr), 0);
-                start += 3;
+                offset += 3;
             }
         }
+        frame.clear();
         Platform.runLater(() -> this.canvas.getGraphicsContext2D().drawImage(image, 0, 0));
     }
 
