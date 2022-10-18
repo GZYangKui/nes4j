@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.test;
 
 import cn.navclub.nes4j.bin.util.ByteUtil;
+import cn.navclub.nes4j.bin.util.MathUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -9,7 +10,7 @@ public class ByteTest {
     void test_basic_add() {
         var a = 10;
         var b = 20;
-        var m = ByteUtil.addition(a, b, false);
+        var m = MathUtil.addition(a, b, false);
         Assertions.assertEquals(m.result(), 30);
     }
 
@@ -17,7 +18,7 @@ public class ByteTest {
     void test_add_neg() {
         var a = 10;
         var b = -20;
-        var m = ByteUtil.addition(a, b, false);
+        var m = MathUtil.addition(a, b, false);
         Assertions.assertEquals(m.result(), -10);
     }
 
@@ -25,7 +26,7 @@ public class ByteTest {
     void test_neg_add() {
         var a = -10;
         var b = 20;
-        var m = ByteUtil.addition(a, b, false);
+        var m = MathUtil.addition(a, b, false);
         Assertions.assertEquals(m.result(), 10);
     }
 
@@ -33,7 +34,7 @@ public class ByteTest {
     void test_carry_add() {
         var a = 255;
         var b = 1;
-        var m = ByteUtil.addition(a, b, false);
+        var m = MathUtil.addition(a, b, false);
         Assertions.assertEquals(m.result(), 0);
         Assertions.assertTrue(m.carry());
     }
@@ -45,9 +46,9 @@ public class ByteTest {
         var bl = 0x10;
         var bm = 0x20;
         var rs = 0;
-        var m = ByteUtil.addition(al, bl, false);
+        var m = MathUtil.addition(al, bl, false);
         rs = m.result();
-        m = ByteUtil.addition(am, bm, m.carry());
+        m = MathUtil.addition(am, bm, m.carry());
         rs |= (m.result() << 8);
         Assertions.assertFalse(m.carry());
         Assertions.assertEquals(rs, 0x2010 * 2);

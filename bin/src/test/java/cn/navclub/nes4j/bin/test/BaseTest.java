@@ -14,7 +14,7 @@ public class BaseTest {
         if (data != null) {
             var bus = nes.getBus();
             for (int i = 0; i < data.length; i++) {
-                bus.writeByte(i, data[i]);
+                bus.write(i, data[i]);
             }
         }
         nes.test(pc);

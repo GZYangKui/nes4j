@@ -356,8 +356,8 @@ public class CPU {
         var address = this.getOperandAddr(instruction6502.getAddressMode());
         var value = this.bus.readUSByte(address);
         this.status.update(CPUStatus.ZF, (this.ra & value) == 0);
-        this.status.update(CPUStatus.NF, (value & 0x80) != 0);
-        this.status.update(CPUStatus.OF, (value & 0x40) != 0);
+        this.status.update(CPUStatus.NF, (value >> 7) == 1);
+        this.status.update(CPUStatus.OF, (value >> 6) == 1);
     }
 
     private void dec(Instruction6502 instruction6502) {
@@ -390,7 +390,7 @@ public class CPU {
         this.pushByte(this.status.getBits());
         //禁用中断
         this.status.set(CPUStatus.ID);
-        this.pc = this.bus.readInt(interrupt == CPUInterrupt.NMI ? 0xFFFA : 0xFFFE);
+        this.pc = this.bus.readInt(interrupt == CPUInterrupt.NMI ? 0Xfffa : 0xfffe);
         this.status.update(CPUStatus.BK, interrupt == CPUInterrupt.BRK);
         if (interrupt == CPUInterrupt.NMI) {
             this.bus.tick(2);
@@ -488,6 +488,9 @@ public class CPU {
         //刷新累加寄存器值到内存
         if (instruction == CPUInstruction.STA) {
             var addr = this.getOperandAddr(instruction6502.getAddressMode());
+            if (addr == 0x2001){
+                System.out.println("a");
+            }
             this.bus.writeUSByte(addr, this.ra);
         }
 

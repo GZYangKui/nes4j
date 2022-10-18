@@ -72,14 +72,14 @@ public class PPU implements ByteReadWriter {
         if (this.line < 241) {
             this.status.set(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT);
             if (this.control.generateVBlankNMI()) {
-            this.nmiInterrupt = true;
+                this.nmiInterrupt = true;
             }
         }
         if (this.line == 241) {
             this.status.set(PStatus.V_BLANK_OCCUR);
             this.status.clear(PStatus.SPRITE_ZERO_HIT);
             if (this.control.generateVBlankNMI()) {
-            this.nmiInterrupt = true;
+                this.nmiInterrupt = true;
             }
         }
         //一帧渲染完毕
