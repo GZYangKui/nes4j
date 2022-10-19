@@ -237,10 +237,10 @@ public enum CPUInstruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INC">相关文档</a>
      */
     INC(new Instruction6502[]{
-            Instruction6502.create(ByteUtil.overflow(0xF6), 2, 5, ZeroPage_X),
-            Instruction6502.create(ByteUtil.overflow(0xFE), 2, 6, Absolute_X),
-            Instruction6502.create(ByteUtil.overflow(0xE6), 3, 6, ZeroPage),
-            Instruction6502.create(ByteUtil.overflow(0xEE), 3, 7, Absolute),
+            Instruction6502.create(ByteUtil.overflow(0xE6), 2, 5, ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0xF6), 2, 6, ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0xEE), 3, 6, Absolute),
+            Instruction6502.create(ByteUtil.overflow(0xFE), 3, 7, Absolute_X),
     }
     ),
 

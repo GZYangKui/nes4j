@@ -487,7 +487,7 @@ public class CPUTest extends BaseTest {
         var cpu = nes.getCpu();
         var status = cpu.getStatus();
         status.setBits((byte) 0b11000001);
-        cpu.setPc(0x100);
+        cpu.setPc(0x8010);
         cpu.pushInt(cpu.getPc());
         cpu.pushByte(status.getBits());
 
@@ -496,9 +496,123 @@ public class CPUTest extends BaseTest {
 
         nes.test(PC_OFFSET);
 
-        Assertions.assertEquals(status.getBits(), 0b11100001);
-        Assertions.assertEquals(cpu.getPc(), 0x100);
+        Assertions.assertEquals(status.getBits() & 0xff, 0b11000001);
+        Assertions.assertEquals(cpu.getPc(), 0x8010);
     }
+
+    @Test
+    void test_0xaa_tax() {
+        var cpu = this.createInstance(new byte[]{
+                (byte) 0xa9, 66,
+                (byte) 0xaa
+        });
+        Assertions.assertEquals(cpu.getRa(), 66);
+    }
+
+    @Test
+    void test_0xa8_tay() {
+        var cpu = this.createInstance(new byte[]{
+                (byte) 0xa9, 66,
+                (byte) 0xa8
+        });
+        Assertions.assertEquals(cpu.getRa(), 66);
+    }
+
+    @Test
+    void test_0xba_tsx() {
+        var cpu = this.createInstance(new byte[]{
+                (byte) 0xba
+        });
+        Assertions.assertEquals(cpu.getRx(), cpu.getStackReset());
+        Assertions.assertTrue(cpu.getStatus().contain(CPUStatus.NF));
+    }
+
+    @Test
+    void test_0x8a_txa() {
+        var cpu = this.createInstance(new byte[]{
+                (byte) 0xa2, 66,
+                (byte) 0x8a
+        });
+        Assertions.assertEquals(cpu.getRa(), 66);
+    }
+
+    @Test
+    void test_0x9a_txs() {
+        var nes = this.createNES(new byte[]{
+                (byte) 0x9a
+        });
+        var cpu = nes.getCpu();
+        cpu.setRx(0);
+        nes.test(PC_OFFSET);
+        Assertions.assertEquals(cpu.getSp(), 0);
+        Assertions.assertFalse(cpu.getStatus().contain(CPUStatus.ZF));
+    }
+
+    @Test
+    void test_0x98_tya() {
+        var nes = this.createNES(new byte[]{
+                (byte) 0x98
+        });
+        var cpu = nes.getCpu();
+        cpu.setRy(66);
+        nes.test(PC_OFFSET);
+        Assertions.assertEquals(cpu.getRa(), 66);
+    }
+
+    @Test
+    void test_0x20_jsr() {
+        var cpu = this.createInstance(new byte[]{
+                0x20, 0x30, (byte) 0x80
+        });
+        Assertions.assertEquals(cpu.getPc(), 0x8030);
+        Assertions.assertEquals(cpu.getSp(), cpu.getStackReset() - 0x02);
+        var pos = cpu.popInt();
+        Assertions.assertEquals(PC_OFFSET + 2, pos);
+    }
+
+    @Test
+    void test_0xc9_cmp_immidiate() {
+        var nes = this.createNES(new byte[]{(byte) 0xc9, 0x05});
+        var cpu = nes.getCpu();
+        cpu.setRa(0x6);
+        nes.test(PC_OFFSET);
+        Assertions.assertTrue(cpu.getStatus().contain(CPUStatus.CF));
+//
+//        cpu.program_counter = 0;
+//        cpu.flags.bits = 0;
+//        cpu.interpret( & CPU::transform ("c9 06"), 100);
+//        assert !(cpu.flags.contains(CpuFlags::CARRY));
+//        assert !(cpu.flags.contains(CpuFlags::ZERO));
+//
+//        cpu.program_counter = 0;
+//        cpu.flags.bits = 0;
+//        cpu.interpret( & CPU::transform ("c9 07"), 100);
+//        assert !(!cpu.flags.contains(CpuFlags::CARRY));
+//        assert !(!cpu.flags.contains(CpuFlags::ZERO));
+//        assert !(cpu.flags.contains(CpuFlags::NEGATIV));
+//
+//        cpu.program_counter = 0;
+//        cpu.flags.bits = 0;
+//        cpu.interpret( & CPU::transform ("c9 90"), 100);
+//        assert !(!cpu.flags.contains(CpuFlags::CARRY));
+//        assert !(!cpu.flags.contains(CpuFlags::ZERO));
+//        assert !(!cpu.flags.contains(CpuFlags::NEGATIV));
+    }
+
+
+//    @Test
+//    void test_0x60_rts() {
+//        var cpu = this.createInstance(new byte[]{
+//                //JSR 0x8003
+//                0x20, 0x03, (byte) 0x80,
+//                (byte) 0xa2, 0x05,
+//                //RTS
+//                0x60
+//        });
+//        Assertions.assertEquals(cpu.getPc(), 108);
+//        Assertions.assertEquals(cpu.getSp(), cpu.getStackReset());
+//        Assertions.assertEquals(cpu.getRx(), 0x5);
+//    }
 
 
     CPU createInstance(byte[] rpg, byte[] data) {

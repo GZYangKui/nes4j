@@ -4,15 +4,13 @@ import cn.navclub.nes4j.bin.enums.AddressMode;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
 import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.enums.CPUStatus;
-import cn.navclub.nes4j.bin.util.ByteUtil;
 import cn.navclub.nes4j.bin.util.MathUtil;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
-@Getter
+@Data
 public class CPU {
     //栈开始位置
     public static final int STACK = 0x0100;
@@ -23,14 +21,9 @@ public class CPU {
     private int rx;
     //Y寄存器
     private int ry;
-    @Setter
-    @Getter
     //程序计数器
     private int pc;
-
-    @Setter
     private int pcReset;
-    @Setter
     private int stackReset;
 
     //栈指针寄存器,始终指向栈顶
@@ -587,30 +580,30 @@ public class CPU {
             this.status.set(CPUStatus.ID);
         }
 
-        if (instruction == CPUInstruction.TAX
-                || instruction == CPUInstruction.TAY
-                || instruction == CPUInstruction.TSX
-                || instruction == CPUInstruction.TXA
-                || instruction == CPUInstruction.TXS
-                || instruction == CPUInstruction.TYA) {
-            final int r;
-            if (instruction == CPUInstruction.TAX)
-                r = this.rx = this.ra;
-            else if (instruction == CPUInstruction.TAY)
-                r = this.ry = this.ra;
-            else if (instruction == CPUInstruction.TSX)
-                r = this.rx = this.sp;
-            else if (instruction == CPUInstruction.TXA)
-                r = this.rx;
-            else if (instruction == CPUInstruction.TXS)
-                r = this.sp = this.rx;
-            else
-                r = this.rx = this.ry;
-            //fix:TXS not affect relative status
-            if (instruction != CPUInstruction.TXS) {
-                this.NZUpdate(r);
-            }
+        if (instruction == CPUInstruction.TAX) {
+            this.rx = this.ra;
+            this.NZUpdate(this.rx);
         }
+        if (instruction == CPUInstruction.TAY) {
+            this.ry = this.ra;
+            this.NZUpdate(this.ry);
+        }
+        if (instruction == CPUInstruction.TSX) {
+            this.rx = this.sp;
+            this.NZUpdate(this.rx);
+        }
+        if (instruction == CPUInstruction.TXA) {
+            this.raUpdate(this.rx);
+        }
+
+        if (instruction == CPUInstruction.TXS) {
+            this.sp = this.rx;
+        }
+
+        if (instruction == CPUInstruction.TYA) {
+            this.raUpdate(this.ry);
+        }
+
         if (instruction == CPUInstruction.SLO) {
             this.asl(instruction6502);
             this.logic(CPUInstruction.ORA, instruction6502.getAddressMode());
