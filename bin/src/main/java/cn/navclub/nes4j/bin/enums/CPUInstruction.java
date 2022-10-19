@@ -227,14 +227,13 @@ public enum CPUInstruction {
     LDY(new Instruction6502[]{
             Instruction6502.create(ByteUtil.overflow(0xA0), 2, 2, Immediate),
             Instruction6502.create(ByteUtil.overflow(0xA4), 2, 3, ZeroPage),
-            Instruction6502.create(ByteUtil.overflow(0xB4), 2, 4, ZeroPage_Y),
+            Instruction6502.create(ByteUtil.overflow(0xb4), 2, 4, ZeroPage_X),
             Instruction6502.create(ByteUtil.overflow(0xAC), 3, 4, Absolute),
             Instruction6502.create(ByteUtil.overflow(0xBC), 3, 4, Absolute_X)
     }
     ),
 
     /**
-     *
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INC">相关文档</a>
      */
     INC(new Instruction6502[]{
@@ -468,8 +467,65 @@ public enum CPUInstruction {
      * 中断指令
      */
     BRK(ByteUtil.overflow(0x00), 1, 7),
+    /**
+     * AND+LSR
+     */
+    ALR(Instruction6502.create((byte) 0x4b, 2, 2, Immediate)),
 
     SHX(Instruction6502.create(ByteUtil.overflow(0x9e), 3, 5, Absolute_Y)),
+
+    XAA(Instruction6502.create((byte) 0x8b, 2, 2, Immediate)),
+
+    ARR(Instruction6502.create((byte) 0x6b, 2, 2, Immediate)),
+    /**
+     * M AND SP -> A, X, SP
+     */
+    LAS(Instruction6502.create((byte) 0xbb, 3, 4, Immediate)),
+
+
+    /**
+     * AND oper + set C as ASL
+     */
+    ANC(new Instruction6502[]{
+            Instruction6502.create((byte) 0x0b, 2, 2, Immediate),
+            Instruction6502.create((byte) 0x2b, 2, 2, Immediate)
+    }),
+    /**
+     * LAD+LDX
+     */
+    LAX(new Instruction6502[]{
+            Instruction6502.create((byte) 0xa7, 2, 3, ZeroPage),
+            Instruction6502.create((byte) 0xb7, 2, 4, ZeroPage_Y),
+            Instruction6502.create((byte) 0xaf, 3, 4, Absolute),
+            Instruction6502.create((byte) 0xbf, 3, 4, Absolute_Y),
+            Instruction6502.create((byte) 0xa3, 2, 6, Indirect_X),
+            Instruction6502.create((byte) 0xb3, 2, 5, Indirect_Y)
+    }),
+
+    /**
+     * DEC oper + CMP oper
+     * <p>
+     * M - 1 -> M, A - M
+     */
+    DCP(new Instruction6502[]{
+            Instruction6502.create((byte) 0xc7, 2, 5, ZeroPage),
+            Instruction6502.create((byte) 0xd7, 2, 6, ZeroPage_X),
+            Instruction6502.create((byte) 0xcf, 3, 6, Absolute),
+            Instruction6502.create((byte) 0xdf, 3, 7, Absolute_X),
+            Instruction6502.create((byte) 0xdb, 3, 7, Absolute_Y),
+            Instruction6502.create((byte) 0xc3, 2, 8, Indirect_X),
+            Instruction6502.create((byte) 0xd3, 2, 8, Indirect_Y)
+    }),
+
+    RLA(new Instruction6502[]{
+            Instruction6502.create(ByteUtil.overflow(0x27), 2, 5, ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0x37), 2, 6, ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0x2f), 3, 6, Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x3f), 3, 7, Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0x3b), 3, 7, Absolute_Y),
+            Instruction6502.create(ByteUtil.overflow(0x23), 2, 8, Indirect_X),
+            Instruction6502.create(ByteUtil.overflow(0x33), 2, 8, Indirect_Y)
+    }),
 
     ISC(new Instruction6502[]{
             Instruction6502.create(ByteUtil.overflow(0xE7), 2, 5, ZeroPage),
@@ -491,6 +547,7 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x13), 2, 8, Indirect_Y)
 
     }),
+
     SRE(new Instruction6502[]{
             Instruction6502.create(ByteUtil.overflow(0x47), 2, 5, ZeroPage),
             Instruction6502.create(ByteUtil.overflow(0x57), 2, 6, ZeroPage_X),

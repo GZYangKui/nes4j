@@ -3,11 +3,13 @@ package cn.navclub.nes4j.bin;
 import cn.navclub.nes4j.bin.core.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+@Slf4j
 @Getter
 public class NES {
     //程序计数器重置地址
@@ -59,12 +61,13 @@ public class NES {
                 if (!stop) {
                     stop = this.errorHandler.apply(e);
                 }
+                log.error("Execute target nes rom happen error!", e);
             }
         }
     }
 
     public void test(int pcStart) {
-        this.cpu.reset();
+//        this.cpu.reset();
         this.cpu.setPc(pcStart);
         while (loop()) {
             this.cpu.execute();

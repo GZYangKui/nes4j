@@ -66,10 +66,6 @@ public class Bus implements ByteReadWriter {
      * 向内存中写入一字节数据
      */
     public void write(int address, byte b) {
-        if (address >= 0x4000 && address <= 0x4017) {
-            System.out.println("APU");
-        }
-
         //https://www.nesdev.org/wiki/PPU_programmer_reference#Controller_($2000)_%3E_write
         if (address == 0x2000) {
             this.ppu.writeCtr(b);

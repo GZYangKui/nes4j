@@ -5,6 +5,9 @@ import cn.navclub.nes4j.bin.enums.CPUInstruction;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 @Getter
 public class Instruction6502 {

@@ -6,4 +6,5 @@ module cn.navclub.nes4j.app {
     requires cn.navclub.nes4j.bin;
 
     opens cn.navclub.nes4j.app;
+    opens cn.navclub.nes4j.app.view;
 }
