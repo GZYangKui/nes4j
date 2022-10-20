@@ -42,10 +42,7 @@ public class CTRegister extends SRegister {
             case 1 -> 0x2400;
             case 2 -> 0x2800;
             case 3 -> 0x2c00;
-            default -> {
-                log.debug("Name table not matching.");
-                yield 0;
-            }
+            default -> 0;
         };
     }
 

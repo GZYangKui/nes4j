@@ -1,37 +1,39 @@
 package cn.navclub.nes4j.bin.core;
 
+import cn.navclub.nes4j.bin.util.ByteUtil;
+
 /**
- *
  * <a href="https://www.nesdev.org/wiki/PPU_programmer_reference#PPUADDR">PPU address</a>
- *
  */
 public class PPUAddress {
-    private int address;
     private boolean latch;
+    //非小端序 高位字节->低位字节
+    private final byte[] address;
 
     public PPUAddress() {
         this.latch = true;
+        this.address = new byte[2];
     }
 
     public void set(int data) {
-        this.address = (data & 0xffff);
+        this.address[0] = (byte) (data >> 8);
+        this.address[1] = (byte) data;
     }
 
-    public int set(byte b) {
-        final int temp;
+    public int update(byte b) {
         if (this.latch) {
-            temp = this.address & (b << 8);
+            this.address[0] = b;
         } else {
-            temp = this.address | b;
+            this.address[1] = b;
         }
-        this.set(temp);
         this.latch = !latch;
-        return address;
+        return this.toInt16();
     }
 
     public int inc(int b) {
-        this.set(this.address + b);
-        return this.address;
+        var addr = this.toInt16() + b;
+        this.set(addr);
+        return addr;
     }
 
     public void reset() {
@@ -39,11 +41,15 @@ public class PPUAddress {
     }
 
     public int get() {
-        return this.address;
+        return this.toInt16();
     }
 
     @Override
     public String toString() {
-        return String.valueOf(this.address);
+        return String.valueOf(this.toInt16());
+    }
+
+    private int toInt16() {
+        return (address[0] & 0xff) << 8 | address[1];
     }
 }

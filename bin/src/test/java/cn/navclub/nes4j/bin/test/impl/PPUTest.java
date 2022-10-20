@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.test.impl;
 
 import cn.navclub.nes4j.bin.test.BaseTest;
+import cn.navclub.nes4j.bin.util.ByteUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

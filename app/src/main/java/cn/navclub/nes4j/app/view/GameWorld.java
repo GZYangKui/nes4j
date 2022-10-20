@@ -12,11 +12,13 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.io.File;
@@ -26,39 +28,38 @@ import java.util.concurrent.CompletableFuture;
 public class GameWorld extends Stage {
     private final Frame frame;
     private final Canvas canvas;
-    private final TextArea textArea;
     private final GraphicsContext ctx;
-    private final SplitPane splitPane;
-    private final HBox gameViewpoint;
-
+    private final BorderPane viewpoint;
     private NES instance;
 
 
     public GameWorld(final File file) {
         this.frame = new Frame();
         this.canvas = new Canvas();
-        this.textArea = new TextArea();
-        this.gameViewpoint = new HBox();
-//        this.textArea.setWrapText(true);
+        this.viewpoint = new BorderPane();
+        this.ctx = canvas.getGraphicsContext2D();
+
+        var menuBar = new MenuBar();
+        var emulator = new Menu("Emulator");
+
+        var pausePlay = new MenuItem("Pause/Play");
+        var softRest = new MenuItem("Rest(Soft)");
+        var hardwareRest = new MenuItem("Reset(Hardware)");
+
+        menuBar.getMenus().add(emulator);
+        emulator.getItems().addAll(pausePlay, softRest, hardwareRest);
+
+        this.viewpoint.setTop(menuBar);
+        this.viewpoint.setCenter(canvas);
+        this.viewpoint.heightProperty().addListener(
+                (observable, oldValue, newValue) -> canvas.setHeight(newValue.doubleValue() - menuBar.getHeight()));
+        canvas.widthProperty().bind(viewpoint.widthProperty());
 
 
-        this.canvas.setWidth(256);
-        this.canvas.setHeight(240);
-        this.ctx = this.canvas.getGraphicsContext2D();
-
-        this.gameViewpoint.setAlignment(Pos.CENTER);
-        this.gameViewpoint.getChildren().add(canvas);
-
-
-        this.splitPane = new SplitPane();
-        this.splitPane.getItems().add(this.gameViewpoint);
-        this.splitPane.getItems().add(this.textArea);
-
-
-        this.setWidth(800);
-        this.setHeight(900);
-        this.setTitle(file.getName());
-        this.setScene(new Scene(this.splitPane));
+        this.setWidth(900);
+        this.setHeight(600);
+        this.setScene(new Scene(viewpoint));
+        this.setTitle(file.getName().substring(0, file.getName().indexOf(".")));
         this.getScene().getStylesheets().add(FXResource.loadStyleSheet("common.css"));
         this.show();
 
@@ -84,41 +85,12 @@ public class GameWorld extends Stage {
                         return true;
                     })
                     .build();
-            this.renderAssembly(this.instance.getFile());
             this.instance.execute();
         }).whenComplete((r, t) -> {
             if (t != null) {
                 t.printStackTrace();
             }
         });
-    }
-
-    private void renderAssembly(NESFile nesFile) {
-        var rgb = nesFile.getRgb();
-        var sb = new StringBuilder();
-        var line = 0;
-        for (int i = 0; i < nesFile.getRgbSize(); i++) {
-            if (i % 16 == 0) {
-                var str = Integer.toHexString(line * 16);
-                var temp = new StringBuilder(str);
-                var fw = 8 - str.length();
-                for (int j = 0; j < fw; j++) {
-                    temp.insert(0, "0");
-                }
-                if (i != 0) {
-                    sb.append("\n");
-                }
-                sb.append(temp);
-                sb.append(" ");
-                line++;
-            }
-            var code = Integer.toHexString(rgb[i] & 0xff);
-            code = String.format("0x%s%s", code.length() < 2 ? "0" : "", code);
-            sb.append(code);
-            sb.append(" ");
-        }
-        var size = this.textArea.getFont().getSize();
-        Platform.runLater(() -> this.textArea.setText(sb.toString()));
     }
 
     private void gameLoopCallback(PPU ppu, JoyPad joyPad) {
@@ -140,6 +112,10 @@ public class GameWorld extends Stage {
             }
         }
         frame.clear();
-        Platform.runLater(() -> this.ctx.drawImage(image, 0, 0));
+        Platform.runLater(() -> {
+            this.ctx.setFill(Color.BLACK);
+            this.ctx.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+            this.ctx.drawImage(image, 0, 0);
+        });
     }
 }

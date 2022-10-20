@@ -250,7 +250,6 @@ public class CPU {
     }
 
     private void cmp(Instruction6502 instruction6502) {
-        var address = this.getOperandAddr(instruction6502.getAddressMode());
         final int a;
         final CPUInstruction instruction = instruction6502.getInstruction();
         if (instruction == CPUInstruction.CMP) {
@@ -260,10 +259,11 @@ public class CPU {
         } else {
             a = this.ry;
         }
-        var b = this.bus.readUSByte(address);
-        var c = (a - b);
+        var address = this.getOperandAddr(instruction6502.getAddressMode());
+        var m = this.bus.readUSByte(address);
+        var c = (a - m);
         //设置Carry Flag
-        this.status.update(CPUStatus.CF, a >= b);
+        this.status.update(CPUStatus.CF, a >= m);
         //更新cpu状态
         this.NZUpdate(c);
     }
@@ -382,19 +382,17 @@ public class CPU {
     }
 
     public void interrupt(CPUInterrupt interrupt) {
-        //中断状态不可用
-        if (interrupt != CPUInterrupt.NMI && this.status.contain(CPUStatus.ID)) {
-            return;
-        }
         this.pushInt(this.pc);
-        this.pushByte(this.status.getBits());
-        //禁用中断
+        var flag = this.status._clone();
+
+        flag.clear(CPUStatus.BK, CPUStatus.BK2);
+
+        this.pushByte(flag.getBits());
+
         this.status.set(CPUStatus.ID);
-        this.pc = this.bus.readInt(interrupt == CPUInterrupt.NMI ? 0Xfffa : 0xfffe);
-        this.status.update(CPUStatus.BK, interrupt == CPUInterrupt.BRK);
-        if (interrupt == CPUInterrupt.NMI) {
-            this.bus.tick(2);
-        }
+        this.bus.tick(interrupt.getCycle());
+
+        this.pc = this.bus.readInt(interrupt.getVector());
     }
 
     public void execute() {
@@ -403,16 +401,19 @@ public class CPU {
         }
         var openCode = this.bus.read(this.pc);
         var pcState = (++this.pc);
-        var instruction6502 = CPUInstruction.getInstance(openCode);
-        if (instruction6502 == null) {
+        final Instruction6502 instruction6502;
+        if (openCode == 0x00 || (instruction6502 = CPUInstruction.getInstance(openCode)) == null) {
+            if (openCode == 0x00) {
+                this.interrupt(CPUInterrupt.BRK);
+            }
             return;
         }
+
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
-        if (instruction != CPUInstruction.BRK) {
-            log.info("({}){}(0x{}) {}", pcState - 1, instruction,
-                    Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502));
-        }
+
+        log.info("({}){}(0x{}) {}", pcState - 1, instruction,
+                Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502));
 
         if (instruction == CPUInstruction.JMP) {
             var addr = this.getOperandAddr(instruction6502.getAddressMode());
@@ -429,7 +430,7 @@ public class CPU {
 
         if (instruction == CPUInstruction.RTI) {
             this.status.setBits(this.popByte());
-            this.status.clear(CPUStatus.BK, CPUStatus.BK0);
+            this.status.clear(CPUStatus.BK, CPUStatus.BK2);
             this.pc = this.popInt();
         }
         if (instruction == CPUInstruction.JSR) {
@@ -690,13 +691,15 @@ public class CPU {
             this.bus.writeInt(addr, value);
         }
 
+        if (instruction == CPUInstruction.NOP_S){
+            System.out.println("asa");
+        }
+
         this.bus.tick(instruction6502.getCycle());
 
         //根据是否发生重定向来判断是否需要更改程序计数器的值
         if (this.pc == pcState) {
             this.pc += (instruction6502.getBytes() - 1);
-        } else {
-            log.debug("Program counter was redirect to [0x{}/{}]", Integer.toHexString(this.pc), this.pc);
         }
     }
 

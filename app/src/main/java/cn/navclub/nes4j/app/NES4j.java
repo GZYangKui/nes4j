@@ -4,6 +4,7 @@ import cn.navclub.nes4j.app.util.OSUtil;
 import cn.navclub.nes4j.app.view.GameWorld;
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -20,6 +21,7 @@ public class NES4j extends Application {
         var menuBar = new MenuBar();
         var menu = new Menu("File");
         var open = new MenuItem("Open");
+        var listView = new ListView<String>();
         open.setOnAction(e -> {
             var optional = OSUtil.chooseFile(stage, "NES rom file", "*.nes", "*.NES");
             if (optional.isEmpty()) {
@@ -30,10 +32,11 @@ public class NES4j extends Application {
         menu.getItems().add(open);
         menuBar.getMenus().add(menu);
         root.setTop(menuBar);
+        root.setCenter(listView);
         stage.setScene(new Scene(root));
-        stage.setWidth(900);
-        stage.setHeight(600);
-        stage.setTitle("NES4j");
+        stage.setWidth(400);
+        stage.setHeight(900);
+        stage.setTitle("nes4j");
         stage.show();
     }
 

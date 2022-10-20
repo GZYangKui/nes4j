@@ -12,7 +12,7 @@ public enum CPUStatus {
     //Break command
     BK,
     //Empty
-    BK0,
+    BK2,
     //Overflow flag
     OF,
     //Negative flag

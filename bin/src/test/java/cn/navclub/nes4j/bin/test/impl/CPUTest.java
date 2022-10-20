@@ -572,31 +572,72 @@ public class CPUTest extends BaseTest {
 
     @Test
     void test_0xc9_cmp_immidiate() {
-        var nes = this.createNES(new byte[]{(byte) 0xc9, 0x05});
-        var cpu = nes.getCpu();
-        cpu.setRa(0x6);
-        nes.test(PC_OFFSET);
+        var cpu = this.createInstance(new byte[]{
+                (byte) 0xa9, 0x06,
+                (byte) 0xc9, 0x05
+        });
         Assertions.assertTrue(cpu.getStatus().contain(CPUStatus.CF));
-//
-//        cpu.program_counter = 0;
-//        cpu.flags.bits = 0;
-//        cpu.interpret( & CPU::transform ("c9 06"), 100);
-//        assert !(cpu.flags.contains(CpuFlags::CARRY));
-//        assert !(cpu.flags.contains(CpuFlags::ZERO));
-//
-//        cpu.program_counter = 0;
-//        cpu.flags.bits = 0;
-//        cpu.interpret( & CPU::transform ("c9 07"), 100);
-//        assert !(!cpu.flags.contains(CpuFlags::CARRY));
-//        assert !(!cpu.flags.contains(CpuFlags::ZERO));
-//        assert !(cpu.flags.contains(CpuFlags::NEGATIV));
-//
-//        cpu.program_counter = 0;
-//        cpu.flags.bits = 0;
-//        cpu.interpret( & CPU::transform ("c9 90"), 100);
-//        assert !(!cpu.flags.contains(CpuFlags::CARRY));
-//        assert !(!cpu.flags.contains(CpuFlags::ZERO));
-//        assert !(!cpu.flags.contains(CpuFlags::NEGATIV));
+
+        cpu = this.createInstance(new byte[]{
+                (byte) 0xa9, 0x06,
+                (byte) 0xc9,
+                0x06
+        });
+        Assertions.assertTrue(cpu.getStatus().contain(CPUStatus.CF));
+        Assertions.assertTrue(cpu.getStatus().contain(CPUStatus.ZF));
+
+        cpu = this.createInstance(new byte[]{
+                (byte) 0xa9, 0x06,
+                (byte) 0xc9, 0x07
+        });
+
+        Assertions.assertFalse(cpu.getStatus().contain(CPUStatus.CF));
+        Assertions.assertFalse(cpu.getStatus().contain(CPUStatus.ZF));
+        Assertions.assertTrue(cpu.getStatus().contain(CPUStatus.NF));
+
+        cpu = this.createInstance(new byte[]{
+                (byte) 0xa9, 0x06,
+                (byte) 0xc9, (byte) 0x90
+        });
+
+        Assertions.assertFalse(cpu.getStatus().contain(CPUStatus.CF));
+        Assertions.assertFalse(cpu.getStatus().contain(CPUStatus.ZF));
+        Assertions.assertFalse(cpu.getStatus().contain(CPUStatus.NF));
+    }
+
+    @Test
+    void test_0xd0_bne() {
+        //jump
+        var cpu = this.createInstance(new byte[]{
+                (byte) 0xd0, 0x04
+        });
+        Assertions.assertEquals(cpu.getPc(), PC_OFFSET + 0x06);
+
+        //no jump
+        var nes = this.createNES(new byte[]{
+                (byte) 0xd0, 0x04
+        });
+        nes.getCpu().getStatus().set(CPUStatus.ZF);
+        nes.test(PC_OFFSET);
+        Assertions.assertEquals(nes.getCpu().getPc(), PC_OFFSET + 0x02);
+    }
+
+    @Test
+    void test_0xd0_bne_snippet() {
+        var cpu = this.createInstance(new byte[]{
+                //LDX
+                (byte) 0xa2, 0x08,
+                //DEX
+                (byte) 0xca,
+                //INY
+                (byte) 0xc8,
+                //CPX
+                (byte) 0xe0, 0x03,
+                //BNE
+                (byte) 0xd0, (byte) 0xfa,
+                //BRK
+                0x00
+        });
     }
 
 

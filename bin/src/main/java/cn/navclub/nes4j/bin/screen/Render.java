@@ -27,6 +27,34 @@ public class Render {
         SYS_2C03_05_PALETTE = paletteStr2Arr(palette2C0305Str, ',');
     }
 
+    /**
+     * <a href="https://www.nesdev.org/wiki/PPU_attribute_tables">PPU attribute tables</a>
+     */
+
+    private static byte[] bgPalette(PPU ppu, int column, int row) {
+        var idx = row / 4 * 8 + column / 4;
+        var attrByte = ppu.getVram()[idx + 0x3c0];
+        var paletteIdx = 0;
+        var a = column % 4 / 2;
+        var b = row % 4 / 2;
+        if (a == 0 && b == 0)
+            paletteIdx = attrByte & 0x11;
+        else if (a == 1 && b == 0)
+            paletteIdx = attrByte >> 2 & 0b11;
+        else if (a == 0 && b == 1)
+            paletteIdx = attrByte >> 4 & 0b11;
+        else if (a == 1 && b == 1)
+            paletteIdx = attrByte >> 6 & 0b11;
+        var offset = 1 + paletteIdx * 4;
+
+        return new byte[]{
+                ppu.getPaletteTable()[0],
+                ppu.getPaletteTable()[offset],
+                ppu.getPaletteTable()[offset + 1],
+                ppu.getPaletteTable()[offset + 2]
+        };
+    }
+
     public static void render(PPU ppu, Frame frame) {
         var ctr = ppu.getControl();
         var index = ctr.patternNameAddr();
@@ -36,18 +64,20 @@ public class Render {
             var x = i % 32;
             var y = i / 32;
             var tile = new byte[16];
+            var vram = ppu.getVram();
+            var palette = bgPalette(ppu, x, y);
             //获取tile编号
-            var numbered = ppu.getVram()[i] & 0xff;
+            var numbered = vram[i] & 0xff;
             System.arraycopy(ppu.getCh(), index + numbered * 16, tile, 0, 16);
             var arr = PatternTableUtil.tiles(tile);
             for (int h = 0; h < arr.length; h++) {
                 var row = arr[h];
                 for (int k = 0; k < row.length; k++) {
-                    var rgb = switch (row[k]) {
-                        case 1 -> 0xff0000;
-                        case 2 -> 0x008000;
-                        case 3 -> 0x0000ff;
-                        default -> 0;
+                    var rgb = switch (k) {
+                        case 0 -> SYS_2C02_PALETTE[ppu.getPaletteTable()[0]];
+                        case 1 -> SYS_2C02_PALETTE[palette[1]];
+                        case 2 -> SYS_2C02_PALETTE[palette[2]];
+                        default -> SYS_2C02_PALETTE[SYS_2C02_PALETTE[3]];
                     };
                     frame.updatePixel(x * 8 + k, y * 8 + h, rgb);
                 }

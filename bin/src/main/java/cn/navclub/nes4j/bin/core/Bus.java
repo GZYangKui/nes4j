@@ -81,6 +81,10 @@ public class Bus implements ByteReadWriter {
             this.ppu.writeOamAddr(b);
         }
 
+        if (address == 0x2004) {
+            this.ppu.writeOamByte(b);
+        }
+
         //https://www.nesdev.org/wiki/PPU_programmer_reference#Scroll_($2005)_%3E%3E_write_x2
         if (address == 0x2005) {
 

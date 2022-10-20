@@ -22,10 +22,10 @@ public class PPU implements ByteReadWriter {
     private final SRegister status;
     @Getter
     private final CTRegister control;
-    private final byte[][] zeroSPixels;
     private final PPUAddress addr;
     //Save sprite info total 64 each 4 byte.
     private final byte[] oam;
+    @Getter
     //https://www.nesdev.org/wiki/PPU_palettes
     private final byte[] paletteTable;
 
@@ -50,7 +50,6 @@ public class PPU implements ByteReadWriter {
         this.vram = new byte[2048];
         this.mask = new MKRegister();
         this.paletteTable = new byte[32];
-        this.zeroSPixels = new byte[0][0];
         this.status = new SRegister();
         this.control = new CTRegister();
     }
@@ -60,6 +59,8 @@ public class PPU implements ByteReadWriter {
      */
     public void tick(int cycles) {
         this.cycles += cycles;
+        //图像渲染期间不不应该出现NMI?
+//        this.nmiInterrupt = false;
         //每条扫描线条耗时341个PPU时钟约113.667个CPU时钟
         if (this.cycles < 341) {
             return;
@@ -97,6 +98,11 @@ public class PPU implements ByteReadWriter {
         }
     }
 
+    public void writeOamByte(byte b) {
+        this.oam[this.oamAddr] = b;
+        this.oamAddr = MathUtil.unsignedAdd(this.oamAddr, 1);
+    }
+
     public byte readOam() {
         return this.oam[this.oamAddr];
     }
@@ -106,7 +112,7 @@ public class PPU implements ByteReadWriter {
     }
 
     public void writeAddr(byte b) {
-        var value = this.addr.set(b);
+        var value = this.addr.update(b);
         if (value > 0x3fff) {
             this.addr.set(value & 0x3fff);
         }
@@ -131,9 +137,6 @@ public class PPU implements ByteReadWriter {
 
         //读取调色板数据
         if (addr >= 0x3f00 && addr <= 0x3fff) {
-            if (addr >= 0x3f20) {
-                addr = 0x3f00;
-            }
             temp = this.paletteTable[addr - 0x3f00];
         }
 
@@ -156,9 +159,6 @@ public class PPU implements ByteReadWriter {
 
         //更新调色板数据
         if (addr >= 0x3f00 && addr <= 0x3fff) {
-            if (addr >= 0x3f20) {
-                addr = 0x3f00;
-            }
             this.paletteTable[addr - 0x3f00] = b;
         }
         this.inc();
@@ -175,19 +175,20 @@ public class PPU implements ByteReadWriter {
         var mirrorRam = addr & 0b10111111111111;
         var ramIndex = mirrorRam - 0x2000;
         var nameTable = mirrorRam / 0x400;
+
         if ((mirrors == 1 && nameTable == 2) | (mirrors == 1 && nameTable == 3))
             return ramIndex - 0x800;
         else if (mirrors == 0 && (nameTable == 2 || nameTable == 1))
             return ramIndex - 0x400;
         else if (mirrors == 0 && nameTable == 3)
             return ramIndex - 0x800;
-        else
-            return nameTable;
+
+        return nameTable;
     }
 
     private boolean spriteHit(int cycle) {
-        var y = Byte.toUnsignedInt(this.oam[0]);
-        var x = Byte.toUnsignedInt(this.oam[3]);
+        var y = this.oam[0] & 0xff;
+        var x = this.oam[3] & 0xff;
         return y + 5 == this.line && x <= cycle && this.mask.contain(MaskFlag.SHOW_SPRITES);
     }
 

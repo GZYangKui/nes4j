@@ -111,12 +111,7 @@ public class CHRView extends Application {
                 var k = i * 16;
                 var arr = new byte[0x10];
                 System.arraycopy(ch, k, arr, 0, 0x10);
-                try {
-                    this.renderTile(PatternTableUtil.tiles(arr), i);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    break;
-                }
+                this.renderTile(PatternTableUtil.tiles(arr), i);
             }
         });
     }

@@ -9,6 +9,13 @@ public class SRegister {
     @Setter
     protected byte bits;
 
+    public SRegister(byte bits) {
+        this.bits = bits;
+    }
+
+    public SRegister() {
+    }
+
     public void set(Enum<?> instance) {
         this.bits |= (1 << instance.ordinal());
     }
@@ -70,5 +77,9 @@ public class SRegister {
     @Override
     public String toString() {
         return ByteUtil.toBinStr(this.bits);
+    }
+
+    public final SRegister _clone() {
+        return new SRegister(this.bits);
     }
 }
