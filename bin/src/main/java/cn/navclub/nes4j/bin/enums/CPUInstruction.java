@@ -4,6 +4,9 @@ import cn.navclub.nes4j.bin.core.Instruction6502;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import static cn.navclub.nes4j.bin.enums.AddressMode.*;
 
 
@@ -273,8 +276,8 @@ public enum CPUInstruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#JMP">相关文档</a>
      */
     JMP(new Instruction6502[]{
-            Instruction6502.create(ByteUtil.overflow(0x4C), 3, 3, Absolute),
-            Instruction6502.create(ByteUtil.overflow(0x6C), 3, 5, Indirect)
+            Instruction6502.create(ByteUtil.overflow(0x4c), 3, 3, Absolute),
+            Instruction6502.create(ByteUtil.overflow(0x6c), 3, 5, Indirect)
     }),
 
     /**
@@ -303,15 +306,16 @@ public enum CPUInstruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#ADC">相关文档</a>
      */
     SBC(new Instruction6502[]{
-            Instruction6502.create(ByteUtil.overflow(0xE9), 2, 2, Immediate),
-            Instruction6502.create(ByteUtil.overflow(0xE5), 2, 3, ZeroPage),
-            Instruction6502.create(ByteUtil.overflow(0xF5), 2, 4, ZeroPage_X),
-            Instruction6502.create(ByteUtil.overflow(0xED), 3, 4, Absolute),
-            Instruction6502.create(ByteUtil.overflow(0xFD), 3, 4, Absolute_X),
-            Instruction6502.create(ByteUtil.overflow(0xF9), 3, 4, Absolute_Y),
-            Instruction6502.create(ByteUtil.overflow(0xE1), 2, 6, Indirect_X),
-            Instruction6502.create(ByteUtil.overflow(0xF1), 2, 5, Indirect_Y),
-
+            Instruction6502.create(ByteUtil.overflow(0xe9), 2, 2, Immediate),
+            Instruction6502.create(ByteUtil.overflow(0xe5), 2, 3, ZeroPage),
+            Instruction6502.create(ByteUtil.overflow(0xf5), 2, 4, ZeroPage_X),
+            Instruction6502.create(ByteUtil.overflow(0xed), 3, 4, Absolute),
+            Instruction6502.create(ByteUtil.overflow(0xfd), 3, 4, Absolute_X),
+            Instruction6502.create(ByteUtil.overflow(0xf9), 3, 4, Absolute_Y),
+            Instruction6502.create(ByteUtil.overflow(0xe1), 2, 6, Indirect_X),
+            Instruction6502.create(ByteUtil.overflow(0xf1), 2, 5, Indirect_Y),
+            //un-office sbc+NOP
+            Instruction6502.create((byte) 0xeb, 2, 2, Immediate)
     }),
 
     /**
@@ -371,7 +375,7 @@ public enum CPUInstruction {
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#NOP">相关文档</a>
      */
-    NOP(ByteUtil.overflow(0xEA), 1, 2),
+    NOP(ByteUtil.overflow(0xea), 1, 2),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BCC">相关文档</a>
@@ -472,7 +476,7 @@ public enum CPUInstruction {
      */
     ALR(Instruction6502.create((byte) 0x4b, 2, 2, Immediate)),
 
-    SHX(Instruction6502.create(ByteUtil.overflow(0x9e), 3, 5, Absolute_Y)),
+    SHX(Instruction6502.create((byte) 0x9e, 3, 5, Absolute_Y)),
 
     XAA(Instruction6502.create((byte) 0x8b, 2, 2, Immediate)),
 
@@ -481,8 +485,10 @@ public enum CPUInstruction {
      * M AND SP -> A, X, SP
      */
     LAS(Instruction6502.create((byte) 0xbb, 3, 4, Immediate)),
-
-
+    /**
+     * Store * AND oper in A and X
+     */
+    LXA(Instruction6502.create((byte) 0xab, 2, 2, Immediate)),
     /**
      * AND oper + set C as ASL
      */
@@ -560,12 +566,12 @@ public enum CPUInstruction {
 
 
     NOP_S(new Instruction6502[]{
-            Instruction6502.create(ByteUtil.overflow(0x1A), 1, 2, NoneAddressing),
-            Instruction6502.create(ByteUtil.overflow(0x3A), 1, 2, NoneAddressing),
-            Instruction6502.create(ByteUtil.overflow(0x5A), 1, 2, NoneAddressing),
-            Instruction6502.create(ByteUtil.overflow(0x7A), 1, 2, NoneAddressing),
-            Instruction6502.create(ByteUtil.overflow(0xDA), 1, 2, NoneAddressing),
-            Instruction6502.create(ByteUtil.overflow(0xFA), 1, 2, NoneAddressing),
+            Instruction6502.create(ByteUtil.overflow(0x1A), 1, 2, Implied),
+            Instruction6502.create(ByteUtil.overflow(0x3A), 1, 2, Implied),
+            Instruction6502.create(ByteUtil.overflow(0x5A), 1, 2, Implied),
+            Instruction6502.create(ByteUtil.overflow(0x7A), 1, 2, Implied),
+            Instruction6502.create(ByteUtil.overflow(0xDA), 1, 2, Implied),
+            Instruction6502.create(ByteUtil.overflow(0xFA), 1, 2, Implied),
             Instruction6502.create(ByteUtil.overflow(0x80), 2, 2, Immediate),
             Instruction6502.create(ByteUtil.overflow(0x82), 2, 2, Immediate),
             Instruction6502.create(ByteUtil.overflow(0x89), 2, 2, Immediate),
@@ -620,19 +626,18 @@ public enum CPUInstruction {
     public static Instruction6502 getInstance(byte openCode) {
         for (CPUInstruction value : values()) {
             var parent = value.instruction6502;
-            if (parent != null) {
-                if (openCode == parent.getOpenCode()) {
+            if (parent != null || value.instruction6502s == null) {
+                if (parent != null && parent.getOpenCode() == openCode) {
                     return parent;
                 }
-            } else {
-                for (Instruction6502 instruction6502 : value.instruction6502s) {
-                    if (instruction6502.getOpenCode() == openCode) {
-                        return instruction6502;
-                    }
+                continue;
+            }
+            for (Instruction6502 instruction6502 : value.instruction6502s) {
+                if (instruction6502.getOpenCode() == openCode) {
+                    return instruction6502;
                 }
             }
         }
-        log.debug("unofficial opencode:[0x{}]", Integer.toHexString(openCode & 0xff));
-        return null;
+        throw new RuntimeException("Illegal open code:0x" + Integer.toHexString(openCode & 0xff));
     }
 }

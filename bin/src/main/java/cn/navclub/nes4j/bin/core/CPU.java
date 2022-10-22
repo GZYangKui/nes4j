@@ -25,14 +25,15 @@ public class CPU {
     private int pc;
     private int pcReset;
     private int stackReset;
+    //记录当前是否跨页
+    private int pageCross;
 
     //栈指针寄存器,始终指向栈顶
     private int sp;
+    private final Bus bus;
     //cpu状态
     private final SRegister status;
-
-    private final Bus bus;
-
+    private final AddressModeProvider modeProvider;
 
     public CPU(final Bus bus, int stackReset, int pcReset) {
         this.bus = bus;
@@ -40,6 +41,7 @@ public class CPU {
         this.pcReset = pcReset;
         this.stackReset = stackReset;
         this.status = new SRegister();
+        this.modeProvider = new AddressModeProvider(this, bus);
     }
 
 
@@ -82,8 +84,8 @@ public class CPU {
     /**
      * LDA指令实现
      */
-    private void lda(Instruction6502 instruction6502) {
-        var address = this.getOperandAddr(instruction6502.getAddressMode());
+    private void lda(AddressMode mode) {
+        var address = this.modeProvider.getAbsAddr(mode);
         var value = this.bus.readUSByte(address);
         this.raUpdate(value);
     }
@@ -107,37 +109,10 @@ public class CPU {
     }
 
     /**
-     * 根据指定寻址模式获取操作数地址,
-     * <a href="https://www.nesdev.org/obelisk-6502-guide/addressing.html#IMM">相关开发文档.</a></p>
-     */
-    private int getOperandAddr(AddressMode mode) {
-        return switch (mode) {
-            case Immediate -> this.pc;
-            case ZeroPage -> this.bus.readUSByte(this.pc);
-            case Absolute, Indirect -> this.bus.readInt(this.pc);
-            case ZeroPage_X -> MathUtil.unsignedAdd(this.bus.readUSByte(this.pc), this.rx);
-            case ZeroPage_Y -> MathUtil.unsignedAdd(this.bus.readUSByte(this.pc), this.ry);
-            case Absolute_X -> this.bus.readInt(this.pc) + this.rx;
-            case Absolute_Y -> this.bus.readInt(this.pc) + this.ry;
-            case Indirect_X -> {
-                var base = this.bus.readUSByte(this.pc);
-                var ptr = MathUtil.unsignedAdd(base, this.rx);
-                yield this.bus.readInt(ptr);
-            }
-            case Indirect_Y -> {
-                var base = this.bus.readUSByte(this.pc);
-                var ptr = this.bus.readInt(base);
-                yield ptr + this.ry;
-            }
-            default -> -1;
-        };
-    }
-
-    /**
      * 逻辑运算 或、与、异或
      */
     private void logic(CPUInstruction instruction, AddressMode addressMode) {
-        var address = this.getOperandAddr(addressMode);
+        var address = this.modeProvider.getAbsAddr(addressMode);
         var a = this.ra;
         var b = this.bus.readUSByte(address);
         var c = switch (instruction) {
@@ -153,7 +128,7 @@ public class CPU {
         var addr = 0;
         var operand = mode == AddressMode.Accumulator
                 ? this.ra
-                : this.bus.readUSByte(addr = this.getOperandAddr(mode));
+                : this.bus.readUSByte(addr = this.modeProvider.getAbsAddr(mode));
 
         this.status.update(CPUStatus.CF, (operand & 1) == 1);
         operand >>= 1;
@@ -173,7 +148,7 @@ public class CPU {
         if (updateRA) {
             value = this.ra;
         } else {
-            addr = this.getOperandAddr(mode);
+            addr = this.modeProvider.getAbsAddr(mode);
             value = this.bus.readUSByte(addr);
         }
         bit = value >> 7;
@@ -193,7 +168,7 @@ public class CPU {
         var value = this.ra;
         var rora = mode == AddressMode.Accumulator;
         if (!rora) {
-            addr = this.getOperandAddr(mode);
+            addr = this.modeProvider.getAbsAddr(mode);
             value = this.bus.readUSByte(addr);
         }
         var oBit = value & 1;
@@ -215,7 +190,7 @@ public class CPU {
         if (a) {
             b = this.ra;
         } else {
-            address = this.getOperandAddr(instruction6502.getAddressMode());
+            address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
             b = this.bus.readUSByte(address);
         }
         //更新进位标识
@@ -259,7 +234,7 @@ public class CPU {
         } else {
             a = this.ry;
         }
-        var address = this.getOperandAddr(instruction6502.getAddressMode());
+        var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
         var m = this.bus.readUSByte(address);
         var c = (a - m);
         //设置Carry Flag
@@ -271,7 +246,7 @@ public class CPU {
     private void inc(CPUInstruction instruction, AddressMode mode) {
         final int result;
         if (instruction == CPUInstruction.INC) {
-            var address = this.getOperandAddr(mode);
+            var address = this.modeProvider.getAbsAddr(mode);
             var m = this.bus.readUSByte(address);
             result = MathUtil.unsignedAdd(m, 1);
             this.bus.writeUSByte(address, result);
@@ -285,7 +260,7 @@ public class CPU {
 
 
     private void adc(AddressMode mode, boolean sbc) {
-        var addr = this.getOperandAddr(mode);
+        var addr = this.modeProvider.getAbsAddr(mode);
         var b = this.getBus().read(addr);
         if (sbc) {
             b = (byte) (-b - 1);
@@ -296,7 +271,7 @@ public class CPU {
         var result = sum & 0xff;
         this.status.update(CPUStatus.OF, (((b & 0xff ^ result) & (result ^ this.ra)) & 0x80) != 0);
         this.raUpdate(result);
-//        var address = this.getOperandAddr(mode);
+//        var address = this.getAbsoluteAddress(mode);
 //        var b = this.bus.readUSByte(address);
 //        var c = this.status.contain(CPUStatus.CF);
 //        var m = MathUtil.addition(this.ra, b, c);
@@ -308,7 +283,7 @@ public class CPU {
 
     private void sbc(AddressMode mode) {
         this.adc(mode, true);
-//        var addr = this.getOperandAddr(mode);
+//        var addr = this.getAbsoluteAddress(mode);
 //        var a = this.ra;
 //        var c = this.status.contain(CPUStatus.CF);
 //        var b = this.bus.readUSByte(addr);
@@ -327,7 +302,7 @@ public class CPU {
     }
 
     private void loadXY(Instruction6502 instruction6502) {
-        var address = this.getOperandAddr(instruction6502.getAddressMode());
+        var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
         var data = this.bus.readUSByte(address);
         if (instruction6502.getInstruction() == CPUInstruction.LDX) {
             this.rx = data;
@@ -353,7 +328,7 @@ public class CPU {
     }
 
     private void bit(Instruction6502 instruction6502) {
-        var address = this.getOperandAddr(instruction6502.getAddressMode());
+        var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
         var value = this.bus.readUSByte(address);
         this.status.update(CPUStatus.ZF, (this.ra & value) == 0);
         this.status.update(CPUStatus.NF, (value >> 7) == 1);
@@ -364,7 +339,7 @@ public class CPU {
         var instruction = instruction6502.getInstruction();
         var value = switch (instruction) {
             case DEC -> {
-                var address = getOperandAddr(instruction6502.getAddressMode());
+                var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
                 var b = MathUtil.unsignedSub(this.bus.readUSByte(address), 1);
                 this.bus.writeUSByte(address, b);
                 yield b;
@@ -391,24 +366,24 @@ public class CPU {
 
         this.status.set(CPUStatus.ID);
         this.bus.tick(interrupt.getCycle());
-
         this.pc = this.bus.readInt(interrupt.getVector());
     }
 
     public void execute() {
+        this.pageCross = 0;
         if (this.bus.pollPPUNMI()) {
             this.interrupt(CPUInterrupt.NMI);
         }
+        if (this.pc < 0x8000) {
+            throw new RuntimeException("Program counter pos happen error exception pos in 0x8000-0x10000 actual 0x" + Integer.toHexString(this.pc));
+        }
         var openCode = this.bus.read(this.pc);
         var pcState = (++this.pc);
-        final Instruction6502 instruction6502;
-        if (openCode == 0x00 || (instruction6502 = CPUInstruction.getInstance(openCode)) == null) {
-            if (openCode == 0x00) {
-                this.interrupt(CPUInterrupt.BRK);
-            }
+        if (openCode == 0x00) {
+            this.interrupt(CPUInterrupt.BRK);
             return;
         }
-
+        var instruction6502 = CPUInstruction.getInstance(openCode);
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 
@@ -416,16 +391,7 @@ public class CPU {
                 Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502));
 
         if (instruction == CPUInstruction.JMP) {
-            var addr = this.getOperandAddr(instruction6502.getAddressMode());
-            if (instruction6502.getAddressMode() == AddressMode.Indirect) {
-                addr = this.bus.readInt(addr);
-//                var lsb = addr & 0xff;
-//                var msb = addr >> 8 & 0xff;
-//                lsb = this.bus.readUSByte(lsb);
-//                msb = this.bus.readUSByte(msb);
-//                addr = (lsb | msb << 8);
-            }
-            this.pc = addr;
+            this.pc = this.modeProvider.getAbsAddr(mode);
         }
 
         if (instruction == CPUInstruction.RTI) {
@@ -446,7 +412,7 @@ public class CPU {
         }
 
         if (instruction == CPUInstruction.LDA) {
-            this.lda(instruction6502);
+            this.lda(mode);
         }
 
         //加减运算
@@ -490,17 +456,21 @@ public class CPU {
 
         //刷新累加寄存器值到内存
         if (instruction == CPUInstruction.STA) {
-            var addr = this.getOperandAddr(instruction6502.getAddressMode());
+            var addr = this.modeProvider.getAbsAddr(mode);
             this.bus.writeUSByte(addr, this.ra);
         }
 
         //刷新y寄存器值到内存
         if (instruction == CPUInstruction.STY) {
-            this.bus.writeUSByte(this.getOperandAddr(instruction6502.getAddressMode()), this.ry);
+            var addr = this.modeProvider.getAbsAddr(mode);
+            if (addr == 0x2006){
+                System.out.println("aaa");
+            }
+            this.bus.writeUSByte(this.modeProvider.getAbsAddr(mode), this.ry);
         }
         //刷新x寄存器值到内存中
         if (instruction == CPUInstruction.STX) {
-            this.bus.writeUSByte(this.getOperandAddr(instruction6502.getAddressMode()), this.rx);
+            this.bus.writeUSByte(this.modeProvider.getAbsAddr(mode), this.rx);
         }
 
         //清除进位标识
@@ -632,13 +602,13 @@ public class CPU {
 
         if (instruction == CPUInstruction.XAA) {
             this.raUpdate(this.rx);
-            var addr = this.getOperandAddr(mode);
+            var addr = this.modeProvider.getAbsAddr(mode);
             var b = this.bus.readUSByte(addr);
             this.raUpdate(b & this.ra);
         }
 
         if (instruction == CPUInstruction.ARR) {
-            var addr = this.getOperandAddr(mode);
+            var addr = this.modeProvider.getAbsAddr(mode);
             var b = this.bus.readUSByte(addr);
             this.raUpdate(b & this.ra);
             this.ror(AddressMode.Accumulator);
@@ -651,7 +621,7 @@ public class CPU {
         }
 
         if (instruction == CPUInstruction.DCP) {
-            var addr = this.getOperandAddr(mode);
+            var addr = this.modeProvider.getAbsAddr(mode);
             var value = this.bus.readUSByte(addr);
             value = MathUtil.unsignedSub(value, 1);
             this.bus.writeUSByte(addr, value);
@@ -662,7 +632,7 @@ public class CPU {
         }
 
         if (instruction == CPUInstruction.LAS) {
-            var addr = this.getOperandAddr(mode);
+            var addr = this.modeProvider.getAbsAddr(mode);
             var value = this.bus.readUSByte(addr);
             value = value & this.sp;
             this.rx = value;
@@ -671,7 +641,7 @@ public class CPU {
         }
 
         if (instruction == CPUInstruction.LAX) {
-            var addr = this.getOperandAddr(mode);
+            var addr = this.modeProvider.getAbsAddr(mode);
             var value = this.bus.readUSByte(addr);
             this.raUpdate(value);
             this.rx = value;
@@ -685,17 +655,20 @@ public class CPU {
         }
 
         if (instruction == CPUInstruction.SHX) {
-            var addr = this.getOperandAddr(instruction6502.getAddressMode());
-            var value = this.bus.readUSByte(addr + 1);
-            value = this.rx & value;
+            var addr = this.modeProvider.getAbsAddr(mode);
+            var value = this.rx & MathUtil.unsignedAdd((addr >> 8) & 0xff, 1);
             this.bus.writeInt(addr, value);
         }
 
-        if (instruction == CPUInstruction.NOP_S){
-            System.out.println("asa");
+        if (instruction == CPUInstruction.TAX || instruction == CPUInstruction.LXA) {
+            if (instruction == CPUInstruction.LXA) {
+                this.lda(mode);
+            }
+            this.rx = this.ra;
+            this.NZUpdate(this.rx);
         }
 
-        this.bus.tick(instruction6502.getCycle());
+        this.bus.tick(instruction6502.getCycle() + this.pageCross);
 
         //根据是否发生重定向来判断是否需要更改程序计数器的值
         if (this.pc == pcState) {
@@ -709,13 +682,13 @@ public class CPU {
     private String formatInstruction(Instruction6502 instruction6502) {
         var size = instruction6502.getBytes();
         var mode = instruction6502.getAddressMode();
-        if (size == 1 || mode == null || mode == AddressMode.NoneAddressing) {
+        if (size == 1 || mode == null || mode == AddressMode.Implied) {
             return "";
         }
         var value = switch (mode) {
             case Accumulator -> this.ra;
-            case Immediate -> this.bus.readUSByte(this.getOperandAddr(mode));
-            default -> this.getOperandAddr(mode);
+            case Immediate -> this.bus.readUSByte(this.modeProvider.getAbsAddr(mode));
+            default -> this.modeProvider.getAbsAddr(mode);
         };
 
         final String str;

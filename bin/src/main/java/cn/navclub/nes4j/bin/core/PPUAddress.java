@@ -1,7 +1,5 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.util.ByteUtil;
-
 /**
  * <a href="https://www.nesdev.org/wiki/PPU_programmer_reference#PPUADDR">PPU address</a>
  */

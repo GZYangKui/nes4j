@@ -30,7 +30,7 @@ public class Instruction6502 {
     }
 
     public Instruction6502(byte openCode, int bytes, int cycle, CPUInstruction instruction) {
-        this(openCode, bytes, cycle, AddressMode.NoneAddressing);
+        this(openCode, bytes, cycle, AddressMode.Implied);
         this.instruction = instruction;
     }
 

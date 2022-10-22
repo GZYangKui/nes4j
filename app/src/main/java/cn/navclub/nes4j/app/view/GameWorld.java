@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.app.view;
 
 import cn.navclub.nes4j.app.FXResource;
+import cn.navclub.nes4j.app.util.UIUtil;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.JoyPad;
 import cn.navclub.nes4j.bin.core.NESFile;
@@ -20,6 +21,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import org.controlsfx.dialog.ExceptionDialog;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -80,10 +82,7 @@ public class GameWorld extends Stage {
                     .newBuilder()
                     .file(file)
                     .gameLoopCallback(this::gameLoopCallback)
-                    .errorHandler(t -> {
-                        t.printStackTrace();
-                        return true;
-                    })
+                    .errorHandler(t -> UIUtil.showError(t, null, it -> this.close()))
                     .build();
             this.instance.execute();
         }).whenComplete((r, t) -> {

@@ -7,15 +7,15 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 @Slf4j
 @Getter
 public class NES {
     //程序计数器重置地址
-    private static final int PC_RESET = 0xFFFC;
+    private static final int PC_RESET = 0xfffc;
     //程序栈重置地址
-    private static final int STACK_RESET = 0xFD;
+    private static final int STACK_RESET = 0xfd;
 
     private final Bus bus;
     private final CPU cpu;
@@ -23,7 +23,7 @@ public class NES {
     private final NESFile file;
     @Setter
     private volatile boolean stop;
-    private final Function<Throwable, Boolean> errorHandler;
+    private final Consumer<Throwable> errorHandler;
 
 
     private NES(NESBuilder builder) {
@@ -57,17 +57,17 @@ public class NES {
             try {
                 this.cpu.execute();
             } catch (Exception e) {
-                stop = (this.errorHandler == null);
-                if (!stop) {
-                    stop = this.errorHandler.apply(e);
+                if (this.errorHandler != null) {
+                    this.stop = true;
+                    this.errorHandler.accept(e);
+                } else {
+                    throw new RuntimeException(e);
                 }
-                log.error("Execute target nes rom happen error!", e);
             }
         }
     }
 
     public void test(int pcStart) {
-//        this.cpu.reset();
         this.cpu.setPc(pcStart);
         while (loop()) {
             this.cpu.execute();
@@ -89,7 +89,7 @@ public class NES {
         private byte[] buffer;
         private int pcReset;
         private int stackRest;
-        private Function<Throwable, Boolean> errorHandler;
+        private Consumer<Throwable> errorHandler;
         private BiConsumer<PPU, JoyPad> gameLoopCallback;
 
         public NESBuilder() {
@@ -127,7 +127,7 @@ public class NES {
             return this;
         }
 
-        public NESBuilder errorHandler(Function<Throwable, Boolean> callable) {
+        public NESBuilder errorHandler(Consumer<Throwable> callable) {
             this.errorHandler = callable;
             return this;
         }

@@ -8,6 +8,8 @@ import cn.navclub.nes4j.bin.enums.PStatus;
 import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Getter;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * <a href="https://www.nesdev.org/wiki/PPU_programmer_reference">PPU document</a>
  */
@@ -24,6 +26,7 @@ public class PPU implements ByteReadWriter {
     private final CTRegister control;
     private final PPUAddress addr;
     //Save sprite info total 64 each 4 byte.
+    @Getter
     private final byte[] oam;
     @Getter
     //https://www.nesdev.org/wiki/PPU_palettes
@@ -32,8 +35,8 @@ public class PPU implements ByteReadWriter {
     private int line;
     private int oamAddr;
     private byte readByteBuf;
-
-    private boolean nmiInterrupt;
+    //判断是否发生NMI中断
+    private final AtomicBoolean isNMI;
 
     private int cycles;
     //Mirrors
@@ -52,6 +55,7 @@ public class PPU implements ByteReadWriter {
         this.paletteTable = new byte[32];
         this.status = new SRegister();
         this.control = new CTRegister();
+        this.isNMI = new AtomicBoolean(false);
     }
 
     /**
@@ -59,8 +63,6 @@ public class PPU implements ByteReadWriter {
      */
     public void tick(int cycles) {
         this.cycles += cycles;
-        //图像渲染期间不不应该出现NMI?
-//        this.nmiInterrupt = false;
         //每条扫描线条耗时341个PPU时钟约113.667个CPU时钟
         if (this.cycles < 341) {
             return;
@@ -73,20 +75,20 @@ public class PPU implements ByteReadWriter {
         if (this.line < 241) {
             this.status.set(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT);
             if (this.control.generateVBlankNMI()) {
-                this.nmiInterrupt = true;
+                this.isNMI.set(true);
             }
         }
         if (this.line == 241) {
             this.status.set(PStatus.V_BLANK_OCCUR);
             this.status.clear(PStatus.SPRITE_ZERO_HIT);
             if (this.control.generateVBlankNMI()) {
-                this.nmiInterrupt = true;
+                this.isNMI.set(true);
             }
         }
         //一帧渲染完毕
         if (this.line >= 262) {
             this.line = 0;
-            this.nmiInterrupt = false;
+            this.isNMI.set(false);
             this.status.clear(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT);
         }
     }
@@ -166,15 +168,15 @@ public class PPU implements ByteReadWriter {
 
     public byte readStatus() {
         var b = this.status.getBits();
-        this.status.update(PStatus.V_BLANK_OCCUR, false);
+        this.status.clear(PStatus.V_BLANK_OCCUR);
         this.addr.reset();
         return b;
     }
 
     private int ramMirror(int addr) {
-        var mirrorRam = addr & 0b10111111111111;
+        var mirrorRam = addr & 0x2fff;
         var ramIndex = mirrorRam - 0x2000;
-        var nameTable = mirrorRam / 0x400;
+        var nameTable = ramIndex / 0x400;
 
         if ((mirrors == 1 && nameTable == 2) | (mirrors == 1 && nameTable == 3))
             return ramIndex - 0x800;
@@ -182,8 +184,7 @@ public class PPU implements ByteReadWriter {
             return ramIndex - 0x400;
         else if (mirrors == 0 && nameTable == 3)
             return ramIndex - 0x800;
-
-        return nameTable;
+        return ramIndex;
     }
 
     private boolean spriteHit(int cycle) {
@@ -208,12 +209,12 @@ public class PPU implements ByteReadWriter {
         var temp = this.control.generateVBlankNMI();
         this.control.update(b);
         if (!temp && this.control.generateVBlankNMI() && this.status.contain(PStatus.V_BLANK_OCCUR)) {
-            this.nmiInterrupt = true;
+            this.isNMI.set(true);
         }
     }
 
     public boolean isNMI() {
-        return this.nmiInterrupt;
+        return this.isNMI.getAndSet(false);
     }
 
     public void writeMask(byte b) {

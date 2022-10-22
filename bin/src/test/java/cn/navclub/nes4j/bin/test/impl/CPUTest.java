@@ -622,25 +622,6 @@ public class CPUTest extends BaseTest {
         Assertions.assertEquals(nes.getCpu().getPc(), PC_OFFSET + 0x02);
     }
 
-    @Test
-    void test_0xd0_bne_snippet() {
-        var cpu = this.createInstance(new byte[]{
-                //LDX
-                (byte) 0xa2, 0x08,
-                //DEX
-                (byte) 0xca,
-                //INY
-                (byte) 0xc8,
-                //CPX
-                (byte) 0xe0, 0x03,
-                //BNE
-                (byte) 0xd0, (byte) 0xfa,
-                //BRK
-                0x00
-        });
-    }
-
-
 //    @Test
 //    void test_0x60_rts() {
 //        var cpu = this.createInstance(new byte[]{

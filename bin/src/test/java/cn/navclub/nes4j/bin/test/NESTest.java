@@ -55,4 +55,17 @@ public class NESTest {
                 .build();
         nes.execute();
     }
+
+    @Test
+    void test_cpu_dummy_read(){
+        var frame = new Frame();
+        BiConsumer<PPU, JoyPad> gameLoopCallback = (ppu, joyPad) -> {
+            Render.render(ppu, frame);
+        };
+        var nes = NES.NESBuilder.newBuilder()
+                .gameLoopCallback(gameLoopCallback)
+                .file(new File("nes/cpu_dummy_reads.nes"))
+                .build();
+        nes.execute();
+    }
 }
