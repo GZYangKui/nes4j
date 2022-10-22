@@ -4,27 +4,24 @@ import cn.navclub.nes4j.bin.core.PPU;
 import cn.navclub.nes4j.bin.util.PatternTableUtil;
 
 public class Render {
-    private static final int[] SYS_2C02_PALETTE;
-    private static final int[] SYS_2C03_05_PALETTE;
+    private static final int[][] SYS_PALETTE;
 
     static {
-        var palette2C02Str = """
-                84  84  84    0  30 116    8  16 144   48   0 136   68   0 100   92   0  48   84   4   0   60  24   0   32  42   0    8  58   0    0  64   0    0  60   0    0  50  60    0   0   0
-                                
-                152 150 152    8  76 196   48  50 236   92  30 228  136  20 176  160  20 100  152  34  32  120  60   0   84  90   0   40 114   0    8 124   0    0 118  40    0 102 120    0   0   0
-                                
-                236 238 236   76 154 236  120 124 236  176  98 236  228  84 236  236  88 180  236 106 100  212 136  32  160 170   0  116 196   0   76 208  32   56 204 108   56 180 204   60  60  60
-                                
-                236 238 236  168 204 236  188 188 236  212 178 236  236 174 236  236 174 212  236 180 176  228 196 144  204 210 120  180 222 120  168 226 144  152 226 180  160 214 228  160 162 160
-                """;
-        var palette2C0305Str = """
-                333,014,006,326,403,503,510,420,320,120,031,040,022,000,000,000,
-                555,036,027,407,507,704,700,630,430,140,040,053,044,000,000,000,
-                777,357,447,637,707,737,740,750,660,360,070,276,077,000,000,000,
-                777,567,657,757,747,755,764,772,773,572,473,276,467,000,000,000,
-                """;
-        SYS_2C02_PALETTE = paletteStr2Arr(palette2C02Str, ' ');
-        SYS_2C03_05_PALETTE = paletteStr2Arr(palette2C0305Str, ',');
+        SYS_PALETTE = new int[][]{
+                {0x80, 0x80, 0x80}, {0x00, 0x3D, 0xA6}, {0x00, 0x12, 0xB0}, {0x44, 0x00, 0x96}, {0xA1, 0x00, 0x5E},
+                {0xC7, 0x00, 0x28}, {0xBA, 0x06, 0x00}, {0x8C, 0x17, 0x00}, {0x5C, 0x2F, 0x00}, {0x10, 0x45, 0x00},
+                {0x05, 0x4A, 0x00}, {0x00, 0x47, 0x2E}, {0x00, 0x41, 0x66}, {0x00, 0x00, 0x00}, {0x05, 0x05, 0x05},
+                {0x05, 0x05, 0x05}, {0xC7, 0xC7, 0xC7}, {0x00, 0x77, 0xFF}, {0x21, 0x55, 0xFF}, {0x82, 0x37, 0xFA},
+                {0xEB, 0x2F, 0xB5}, {0xFF, 0x29, 0x50}, {0xFF, 0x22, 0x00}, {0xD6, 0x32, 0x00}, {0xC4, 0x62, 0x00},
+                {0x35, 0x80, 0x00}, {0x05, 0x8F, 0x00}, {0x00, 0x8A, 0x55}, {0x00, 0x99, 0xCC}, {0x21, 0x21, 0x21},
+                {0x09, 0x09, 0x09}, {0x09, 0x09, 0x09}, {0xFF, 0xFF, 0xFF}, {0x0F, 0xD7, 0xFF}, {0x69, 0xA2, 0xFF},
+                {0xD4, 0x80, 0xFF}, {0xFF, 0x45, 0xF3}, {0xFF, 0x61, 0x8B}, {0xFF, 0x88, 0x33}, {0xFF, 0x9C, 0x12},
+                {0xFA, 0xBC, 0x20}, {0x9F, 0xE3, 0x0E}, {0x2B, 0xF0, 0x35}, {0x0C, 0xF0, 0xA4}, {0x05, 0xFB, 0xFF},
+                {0x5E, 0x5E, 0x5E}, {0x0D, 0x0D, 0x0D}, {0x0D, 0x0D, 0x0D}, {0xFF, 0xFF, 0xFF}, {0xA6, 0xFC, 0xFF},
+                {0xB3, 0xEC, 0xFF}, {0xDA, 0xAB, 0xEB}, {0xFF, 0xA8, 0xF9}, {0xFF, 0xAB, 0xB3}, {0xFF, 0xD2, 0xB0},
+                {0xFF, 0xEF, 0xA6}, {0xFF, 0xF7, 0x9C}, {0xD7, 0xE8, 0x95}, {0xA6, 0xED, 0xAF}, {0xA2, 0xF2, 0xDA},
+                {0x99, 0xFF, 0xFC}, {0xDD, 0xDD, 0xDD}, {0x11, 0x11, 0x11}, {0x11, 0x11, 0x11}
+        };
     }
 
     /**
@@ -74,10 +71,9 @@ public class Render {
                 var row = arr[h];
                 for (int k = 0; k < row.length; k++) {
                     var rgb = switch (k) {
-                        case 0 -> SYS_2C02_PALETTE[ppu.getPaletteTable()[0]];
-                        case 1 -> SYS_2C02_PALETTE[palette[1]];
-                        case 2 -> SYS_2C02_PALETTE[palette[2]];
-                        default -> SYS_2C02_PALETTE[SYS_2C02_PALETTE[3]];
+                        case 1 -> SYS_PALETTE[palette[1]];
+                        case 2 -> SYS_PALETTE[palette[2]];
+                        default -> SYS_PALETTE[palette[0]];
                     };
                     frame.updatePixel(x * 8 + k, y * 8 + h, rgb);
                 }

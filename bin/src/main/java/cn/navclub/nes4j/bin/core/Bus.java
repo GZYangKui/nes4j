@@ -64,11 +64,9 @@ public class Bus implements ByteReadWriter {
         final byte b;
         if (address == 0x2002) {
             b = this.ppu.readStatus();
-        }
-        else if (address == 0x2004) {
+        } else if (address == 0x2004) {
             b = this.ppu.readOam();
-        }
-        else if (address == 0x2007) {
+        } else if (address == 0x2007) {
             b = this.ppu.read(address);
         }
         //player1
@@ -87,8 +85,7 @@ public class Bus implements ByteReadWriter {
                 || address == 0x2001
                 || address == 0x2000) {
             b = 0;
-        }
-        else {
+        } else {
             b = this.buffer[address];
         }
         log.debug("From 0x{} read a byte 0x{}", Integer.toHexString(address), Integer.toHexString(b & 0xff));
@@ -133,8 +130,7 @@ public class Bus implements ByteReadWriter {
 
         //https://www.nesdev.org/wiki/PPU_programmer_reference#Scroll_($2005)_%3E%3E_write_x2
         else if (address == 0x2005) {
-            //todo write to scroll register
-
+            this.ppu.writeScroll(b);
         }
 
         //https://www.nesdev.org/wiki/PPU_programmer_reference#Address_($2006)_%3E%3E_write_x2

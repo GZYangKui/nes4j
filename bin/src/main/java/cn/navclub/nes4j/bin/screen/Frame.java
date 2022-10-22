@@ -21,12 +21,12 @@ public class Frame {
         this(256, 240);
     }
 
-    public void updatePixel(int x, int y, int rgb) {
+    public void updatePixel(int x, int y, int[] rgb) {
         var index = y * 3 * width + x * 3;
         if (index + 2 < this.pixels.length) {
-            this.pixels[index] = (byte) (rgb & 0xff);
-            this.pixels[index + 1] = (byte) ((rgb >> 8) & 0xff);
-            this.pixels[index + 2] = (byte) ((rgb >> 16) & 0xff);
+            this.pixels[index] = (byte) rgb[0];
+            this.pixels[index + 1] = (byte) rgb[1];
+            this.pixels[index + 2] = (byte) rgb[2];
         }
     }
 

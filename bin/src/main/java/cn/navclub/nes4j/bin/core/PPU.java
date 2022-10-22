@@ -41,6 +41,7 @@ public class PPU implements ByteReadWriter {
     private int cycles;
     //Mirrors
     private final int mirrors;
+    private final PPUScroll scroll;
 
     public PPU(byte[] ch, int mirrors) {
         this.ch = ch;
@@ -50,6 +51,7 @@ public class PPU implements ByteReadWriter {
         this.addr = new PPUAddress();
         this.oam = new byte[256];
         this.mirrors = mirrors;
+        this.scroll = new PPUScroll();
         this.vram = new byte[2048];
         this.mask = new MKRegister();
         this.paletteTable = new byte[32];
@@ -170,6 +172,7 @@ public class PPU implements ByteReadWriter {
         var b = this.status.getBits();
         this.status.clear(PStatus.V_BLANK_OCCUR);
         this.addr.reset();
+        this.scroll.reset();
         return b;
     }
 
@@ -211,6 +214,10 @@ public class PPU implements ByteReadWriter {
         if (!temp && this.control.generateVBlankNMI() && this.status.contain(PStatus.V_BLANK_OCCUR)) {
             this.isNMI.set(true);
         }
+    }
+
+    public void writeScroll(byte b) {
+        this.scroll.write(b & 0xff);
     }
 
     public boolean isNMI() {

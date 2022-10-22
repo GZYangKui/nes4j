@@ -4,24 +4,27 @@ import cn.navclub.nes4j.app.FXResource;
 import cn.navclub.nes4j.app.util.UIUtil;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.JoyPad;
-import cn.navclub.nes4j.bin.core.NESFile;
 import cn.navclub.nes4j.bin.core.PPU;
 import cn.navclub.nes4j.bin.screen.Frame;
 import cn.navclub.nes4j.bin.screen.Render;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import org.controlsfx.dialog.ExceptionDialog;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -33,11 +36,19 @@ public class GameWorld extends Stage {
     private final GraphicsContext ctx;
     private final BorderPane viewpoint;
     private NES instance;
+    //记录最后一帧时间戳
+    private long lastFrameTime;
+    //记录1s内帧数
+    private int frameCounter;
+    private StackPane stackPane;
+    private final Label frameLabel;
 
 
     public GameWorld(final File file) {
         this.frame = new Frame();
         this.canvas = new Canvas();
+        this.frameLabel = new Label();
+        this.stackPane = new StackPane();
         this.viewpoint = new BorderPane();
         this.ctx = canvas.getGraphicsContext2D();
 
@@ -51,12 +62,19 @@ public class GameWorld extends Stage {
         menuBar.getMenus().add(emulator);
         emulator.getItems().addAll(pausePlay, softRest, hardwareRest);
 
-        this.viewpoint.setTop(menuBar);
-        this.viewpoint.setCenter(canvas);
-        this.viewpoint.heightProperty().addListener(
-                (observable, oldValue, newValue) -> canvas.setHeight(newValue.doubleValue() - menuBar.getHeight()));
-        canvas.widthProperty().bind(viewpoint.widthProperty());
+        this.canvas.widthProperty().bind(this.stackPane.widthProperty());
+        this.canvas.heightProperty().bind(this.stackPane.heightProperty());
 
+        StackPane.setAlignment(this.frameLabel, Pos.TOP_RIGHT);
+
+        this.frameLabel.setTextFill(Color.RED);
+        this.frameLabel.setFont(Font.font(20));
+        this.frameLabel.setPadding(new Insets(10, 10, 0, 0));
+
+        this.stackPane.getChildren().addAll(this.canvas, this.frameLabel);
+
+        this.viewpoint.setTop(menuBar);
+        this.viewpoint.setCenter(this.stackPane);
 
         this.setWidth(900);
         this.setHeight(600);
@@ -112,9 +130,22 @@ public class GameWorld extends Stage {
         }
         frame.clear();
         Platform.runLater(() -> {
-            this.ctx.setFill(Color.BLACK);
-            this.ctx.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+            var width = this.canvas.getWidth();
+            var height = this.canvas.getHeight();
+            this.ctx.clearRect(0, 0, width, height);
+            this.ctx.fillRect(0, 0, width, height);
             this.ctx.drawImage(image, 0, 0);
+            var nanoTime = System.nanoTime();
+            if (this.lastFrameTime == 0) {
+                lastFrameTime = nanoTime;
+            }
+            if (nanoTime - this.lastFrameTime >= 1e9) {
+                this.lastFrameTime = 0;
+                this.frameLabel.setText("fps:" + frameCounter);
+                this.frameCounter = 0;
+            } else {
+                this.frameCounter++;
+            }
         });
     }
 }
