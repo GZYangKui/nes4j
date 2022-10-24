@@ -47,9 +47,9 @@ public class GameWorld extends Stage {
     public GameWorld(final File file) {
         this.frame = new Frame();
         this.canvas = new Canvas();
-        this.frameLabel = new Label();
         this.stackPane = new StackPane();
         this.viewpoint = new BorderPane();
+        this.frameLabel = new Label("fps:0");
         this.ctx = canvas.getGraphicsContext2D();
 
         var menuBar = new MenuBar();

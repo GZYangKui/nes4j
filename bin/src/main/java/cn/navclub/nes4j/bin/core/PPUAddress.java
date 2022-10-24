@@ -44,10 +44,10 @@ public class PPUAddress {
 
     @Override
     public String toString() {
-        return String.valueOf(this.toInt16());
+        return String.format("0x%s", Integer.toHexString(this.toInt16()));
     }
 
     private int toInt16() {
-        return (address[0] & 0xff) << 8 | address[1];
+        return (address[0] & 0xff) << 8 | (address[1] & 0xff);
     }
 }

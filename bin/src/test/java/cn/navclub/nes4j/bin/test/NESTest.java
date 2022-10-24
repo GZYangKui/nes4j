@@ -34,7 +34,7 @@ public class NESTest {
         };
 
         var nes = NES.NESBuilder.newBuilder()
-                .file(new File("nes/helloworld.nes"))
+                .file(new File("nes/hello2.nes"))
                 .gameLoopCallback(gameLoopCallback)
                 .build();
         nes.execute();

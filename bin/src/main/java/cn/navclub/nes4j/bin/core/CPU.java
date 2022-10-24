@@ -66,8 +66,8 @@ public class CPU {
     public void pushInt(int data) {
         var lsb = data & 0xff;
         var msb = (data >> 8) & 0xff;
-        this.pushByte((byte) lsb);
         this.pushByte((byte) msb);
+        this.pushByte((byte) lsb);
     }
 
     public byte popByte() {
@@ -76,8 +76,8 @@ public class CPU {
     }
 
     public int popInt() {
-        var msb = Byte.toUnsignedInt(this.popByte());
         var lsb = Byte.toUnsignedInt(this.popByte());
+        var msb = Byte.toUnsignedInt(this.popByte());
         return lsb | msb << 8;
     }
 
@@ -462,10 +462,6 @@ public class CPU {
 
         //刷新y寄存器值到内存
         if (instruction == CPUInstruction.STY) {
-            var addr = this.modeProvider.getAbsAddr(mode);
-            if (addr == 0x2006){
-                System.out.println("aaa");
-            }
             this.bus.writeUSByte(this.modeProvider.getAbsAddr(mode), this.ry);
         }
         //刷新x寄存器值到内存中

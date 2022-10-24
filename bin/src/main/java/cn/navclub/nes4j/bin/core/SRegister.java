@@ -64,7 +64,7 @@ public class SRegister {
      * 重置当前状态
      */
     public void reset() {
-        this.bits = 0;
+        this.bits = 0b100100;
     }
 
     /**

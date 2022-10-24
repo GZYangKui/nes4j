@@ -4,6 +4,7 @@ import cn.navclub.nes4j.bin.ByteReadWriter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 @Slf4j
@@ -15,6 +16,8 @@ public class Bus implements ByteReadWriter {
     private final byte[] buffer;
     private final JoyPad joyPad;
     private final BiConsumer<PPU, JoyPad> gameLoopCallback;
+    //记录当前ppu模块是否触发NMI
+    private final AtomicBoolean ppuIsNMI = new AtomicBoolean(false);
 
     public Bus(byte[] rpg, final PPU ppu, BiConsumer<PPU, JoyPad> gameLoopCallback) {
         this.ppu = ppu;
@@ -77,6 +80,14 @@ public class Bus implements ByteReadWriter {
         else if (address == 0x4017) {
             b = 0;
         }
+        //apu only write register
+        else if (address >= 0x4000 && address <= 0x4013) {
+            b = 0;
+        }
+        //Read from apu
+        else if (address == 0x4015) {
+            b = 0;
+        }
         //only write memory area
         else if (address == 0x2006
                 || address == 0x4014
@@ -93,7 +104,7 @@ public class Bus implements ByteReadWriter {
     }
 
     public boolean pollPPUNMI() {
-        return this.ppu.isNMI();
+        return this.ppuIsNMI.getAndSet(false);
     }
 
     /**
@@ -152,25 +163,29 @@ public class Bus implements ByteReadWriter {
             }
             this.ppu.writeOam(buffer);
         }
-
         //Write to standard controller
         else if (address == 0x4016) {
             this.joyPad.write(b);
-        } else {
+        } else if (address == 0x4017) {
+            //todo write to joypad2
+        }
+        //Write data to apu
+        else if (address >= 0x4000 && address <= 0x4015) {
+
+        }
+        //Write to cpu memory
+        else {
             this.buffer[address] = b;
         }
     }
 
-    /**
-     * 一个指令执行完毕触发当前函数
-     */
     public void tick(int cycle) {
-        var before = this.ppu.isNMI();
         //PPU时钟是CPU时钟的3倍
         this.ppu.tick(cycle * 3);
-        var after = this.ppu.isNMI();
-        if (!before && after && gameLoopCallback != null) {
+        var nmi = this.ppu.isNMI();
+        if (!this.ppuIsNMI.get() && nmi && gameLoopCallback != null) {
             this.gameLoopCallback.accept(this.ppu, this.joyPad);
         }
+        this.ppuIsNMI.set(nmi);
     }
 }

@@ -54,26 +54,26 @@ public class Render {
 
     public static void render(PPU ppu, Frame frame) {
         var ctr = ppu.getControl();
-        var index = ctr.patternNameAddr();
-        var nameTable = ctr.nameTableAddr();
+        var bank = ctr.bkNamePatternTable();
         //读取960个tile背景
         for (int i = 0; i < 960; i++) {
             var x = i % 32;
             var y = i / 32;
             var tile = new byte[16];
             var vram = ppu.getVram();
-            var palette = bgPalette(ppu, x, y);
             //获取tile编号
-            var numbered = vram[i] & 0xff;
-            System.arraycopy(ppu.getCh(), index + numbered * 16, tile, 0, 16);
+            var idx = vram[i] & 0xff;
+            var offset = bank + idx * 16;
+            System.arraycopy(ppu.getCh(), offset, tile, 0, 16);
             var arr = PatternTableUtil.tiles(tile);
             for (int h = 0; h < arr.length; h++) {
                 var row = arr[h];
                 for (int k = 0; k < row.length; k++) {
-                    var rgb = switch (k) {
-                        case 1 -> SYS_PALETTE[palette[1]];
-                        case 2 -> SYS_PALETTE[palette[2]];
-                        default -> SYS_PALETTE[palette[0]];
+                    var rgb = switch (row[k]) {
+                        case 1 -> SYS_PALETTE[0x23];
+                        case 2 -> SYS_PALETTE[0x27];
+                        case 3 -> SYS_PALETTE[0x30];
+                        default -> SYS_PALETTE[0x01];
                     };
                     frame.updatePixel(x * 8 + k, y * 8 + h, rgb);
                 }

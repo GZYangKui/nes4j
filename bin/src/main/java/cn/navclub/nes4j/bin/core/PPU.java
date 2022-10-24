@@ -65,21 +65,16 @@ public class PPU implements ByteReadWriter {
      */
     public void tick(int cycles) {
         this.cycles += cycles;
-        //每条扫描线条耗时341个PPU时钟约113.667个CPU时钟
         if (this.cycles < 341) {
             return;
         }
+        //每条扫描线条耗时341个PPU时钟约113.667个CPU时钟
         if (this.spriteHit(cycles)) {
             this.status.set(PStatus.SPRITE_ZERO_HIT);
         }
         this.line += 1;
-        this.cycles %= 341;
-        if (this.line < 241) {
-            this.status.set(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT);
-            if (this.control.generateVBlankNMI()) {
-                this.isNMI.set(true);
-            }
-        }
+        this.cycles -= 341;
+
         if (this.line == 241) {
             this.status.set(PStatus.V_BLANK_OCCUR);
             this.status.clear(PStatus.SPRITE_ZERO_HIT);
@@ -165,6 +160,9 @@ public class PPU implements ByteReadWriter {
         if (addr >= 0x3f00 && addr <= 0x3fff) {
             this.paletteTable[addr - 0x3f00] = b;
         }
+        if (this.addr.get() == 0x2000) {
+            System.out.println("aaa");
+        }
         this.inc();
     }
 
@@ -198,6 +196,9 @@ public class PPU implements ByteReadWriter {
 
     private void inc() {
         var value = this.addr.inc(this.control.VRamIncrement());
+        if (value == 0x2100) {
+            System.out.println("结束");
+        }
         if (value > 0x3fff) {
             this.addr.set(value & 0b11111111111111);
         }
