@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.app.view;
 
 import cn.navclub.nes4j.app.FXResource;
+import cn.navclub.nes4j.app.event.GameEventWrap;
 import cn.navclub.nes4j.app.util.UIUtil;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.JoyPad;
@@ -29,7 +30,10 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingDeque;
 
 public class GameWorld extends Stage {
     private final Frame frame;
@@ -43,17 +47,22 @@ public class GameWorld extends Stage {
     private int frameCounter;
     private final StackPane stackPane;
     private final Label frameLabel;
+    private final MenuBar menuBar;
+    //使用队列模式在GameLoop和UILoop之间共享事件
+    private final BlockingQueue<GameEventWrap> eventQueue;
 
 
     public GameWorld(final File file) {
         this.frame = new Frame();
         this.canvas = new Canvas();
+        this.menuBar = new MenuBar();
         this.stackPane = new StackPane();
         this.viewpoint = new BorderPane();
         this.frameLabel = new Label("fps:0");
         this.ctx = canvas.getGraphicsContext2D();
+        this.eventQueue = new LinkedBlockingDeque<>();
 
-        var menuBar = new MenuBar();
+
         var emulator = new Menu("Emulator");
 
         var pausePlay = new MenuItem("Pause/Play");
@@ -79,6 +88,7 @@ public class GameWorld extends Stage {
 
         this.setWidth(900);
         this.setHeight(600);
+        this.setResizable(false);
         this.setScene(new Scene(viewpoint));
         this.setTitle(file.getName().substring(0, file.getName().indexOf(".")));
         this.getScene().getStylesheets().add(FXResource.loadStyleSheet("common.css"));
@@ -95,29 +105,31 @@ public class GameWorld extends Stage {
 
         this.getScene().addEventHandler(KeyEvent.ANY, event -> {
             var code = event.getCode();
-            if (code == KeyCode.ESCAPE) {
-                this.instance.setStop(true);
-                this.close();
+            var eventType = event.getEventType();
+            if (!(eventType == KeyEvent.KEY_PRESSED || eventType == KeyEvent.KEY_RELEASED)) {
+                return;
             }
-            var pressed = event.getEventType() == KeyEvent.KEY_PRESSED;
-            var joypad = this.instance.getJoyPad();
-            if (code == KeyCode.A) {
-                joypad.updateBtnStatus(JoyPad.JoypadButton.BTN_A, pressed);
-            }
-            if (code == KeyCode.S) {
-                joypad.updateBtnStatus(JoyPad.JoypadButton.BTN_B, pressed);
-            }
-            if (code == KeyCode.DOWN) {
-                joypad.updateBtnStatus(JoyPad.JoypadButton.BTN_DN, pressed);
-            }
-            if (code == KeyCode.UP) {
-                joypad.updateBtnStatus(JoyPad.JoypadButton.BTN_UP, pressed);
-            }
-            if (code == KeyCode.SPACE) {
-                joypad.updateBtnStatus(JoyPad.JoypadButton.BTN_SE, pressed);
-            }
-            if (code == KeyCode.ENTER) {
-                joypad.updateBtnStatus(JoyPad.JoypadButton.BTN_ST, pressed);
+            try {
+                if (code == KeyCode.A) {
+                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_A));
+                }
+                if (code == KeyCode.S) {
+                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_B));
+                }
+                if (code == KeyCode.DOWN) {
+                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_DN));
+                }
+                if (code == KeyCode.UP) {
+                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_UP));
+                }
+                if (code == KeyCode.SPACE) {
+                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_SE));
+                }
+                if (code == KeyCode.ENTER) {
+                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_ST));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
 
@@ -145,29 +157,45 @@ public class GameWorld extends Stage {
 
     private void gameLoopCallback(PPU ppu, JoyPad joyPad) {
         Render.render(ppu, this.frame);
+        var wPixel = 3;
+        var hPixel = 3;
         var w = frame.getWidth();
         var h = frame.getHeight();
-        var image = new WritableImage(w, h);
-        var arr = new byte[3];
+        var image = new WritableImage(w * wPixel, h * hPixel);
+        var arr = new byte[3 * wPixel * hPixel];
         var writer = image.getPixelWriter();
         var format = PixelFormat.getByteRgbInstance();
         for (int i = 0; i < h; i++) {
             var offset = i * w * 3;
             for (int j = 0; j < w; j++) {
-                arr[0] = frame.getPixels()[offset];
-                arr[1] = frame.getPixels()[offset + 1];
-                arr[2] = frame.getPixels()[offset + 2];
-                writer.setPixels(j, i, 1, 1, format, ByteBuffer.wrap(arr), 0);
+                for (int k = 0; k < wPixel * hPixel; k++) {
+                    arr[k] = frame.getPixels()[offset];
+                    arr[k] = frame.getPixels()[offset + 1];
+                    arr[k] = frame.getPixels()[offset + 2];
+                }
+                writer.setPixels(j * wPixel, i * hPixel, wPixel, hPixel, format, ByteBuffer.wrap(arr), 0);
                 offset += 3;
             }
         }
+        var event = eventQueue.poll();
+        if (event != null) {
+            joyPad.updateBtnStatus(event.btn(), event.event() == KeyEvent.KEY_PRESSED);
+        }
         frame.clear();
         Platform.runLater(() -> {
+            //动态调整窗口大小
+            this.setWidth(image.getWidth());
+            this.setHeight(image.getHeight() + this.menuBar.getHeight());
+
+
             var width = this.canvas.getWidth();
             var height = this.canvas.getHeight();
+            this.centerOnScreen();
+
             this.ctx.clearRect(0, 0, width, height);
             this.ctx.fillRect(0, 0, width, height);
-            this.ctx.drawImage(image, 0, 0);
+            this.ctx.drawImage(image, image.getWidth() / 4, 0);
+
             var nanoTime = System.nanoTime();
             if (this.lastFrameTime == 0) {
                 lastFrameTime = nanoTime;

@@ -1,5 +1,7 @@
 package cn.navclub.nes4j.bin.core;
 
+import cn.navclub.nes4j.bin.util.ByteUtil;
+
 /**
  * <a href="https://www.nesdev.org/wiki/Standard_controller"> Standard controller</a>
  */
@@ -8,7 +10,6 @@ public class JoyPad {
     private byte bits;
     //Record if high strobe
     private boolean strobe;
-
 
     public void write(byte b) {
         this.strobe = (b & 1) == 1;
@@ -20,6 +21,9 @@ public class JoyPad {
     public byte read() {
         if (this.index > 7) {
             return 1;
+        }
+        if (((this.bits & 0xff) & 0b1000) != 0) {
+            System.out.println("选中按下");
         }
         var b = ((this.bits & 0xff) & (1 << this.index)) >> this.index;
         if (!this.strobe) {
@@ -34,6 +38,11 @@ public class JoyPad {
         } else {
             this.bits &= (0xff - (int) (Math.pow(2, action.ordinal())));
         }
+    }
+
+    @Override
+    public String toString() {
+        return ByteUtil.toBinStr(this.bits);
     }
 
     public enum JoypadButton {
