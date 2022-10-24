@@ -19,7 +19,8 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.AnchorPane;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -40,7 +41,7 @@ public class GameWorld extends Stage {
     private long lastFrameTime;
     //记录1s内帧数
     private int frameCounter;
-    private StackPane stackPane;
+    private final StackPane stackPane;
     private final Label frameLabel;
 
 
@@ -91,6 +92,35 @@ public class GameWorld extends Stage {
         });
 
         this.execute(file);
+
+        this.getScene().addEventHandler(KeyEvent.ANY, event -> {
+            var code = event.getCode();
+            if (code == KeyCode.ESCAPE) {
+                this.instance.setStop(true);
+                this.close();
+            }
+            var pressed = event.getEventType() == KeyEvent.KEY_PRESSED;
+            var joypad = this.instance.getJoyPad();
+            if (code == KeyCode.A) {
+                joypad.updateBtnStatus(JoyPad.JoypadButton.BTN_A, pressed);
+            }
+            if (code == KeyCode.S) {
+                joypad.updateBtnStatus(JoyPad.JoypadButton.BTN_B, pressed);
+            }
+            if (code == KeyCode.DOWN) {
+                joypad.updateBtnStatus(JoyPad.JoypadButton.BTN_DN, pressed);
+            }
+            if (code == KeyCode.UP) {
+                joypad.updateBtnStatus(JoyPad.JoypadButton.BTN_UP, pressed);
+            }
+            if (code == KeyCode.SPACE) {
+                joypad.updateBtnStatus(JoyPad.JoypadButton.BTN_SE, pressed);
+            }
+            if (code == KeyCode.ENTER) {
+                joypad.updateBtnStatus(JoyPad.JoypadButton.BTN_ST, pressed);
+            }
+        });
+
     }
 
 
@@ -100,7 +130,10 @@ public class GameWorld extends Stage {
                     .newBuilder()
                     .file(file)
                     .gameLoopCallback(this::gameLoopCallback)
-                    .errorHandler(t -> UIUtil.showError(t, null, it -> this.close()))
+                    .errorHandler(t -> {
+                        t.printStackTrace();
+                        UIUtil.showError(t, null, it -> this.close());
+                    })
                     .build();
             this.instance.execute();
         }).whenComplete((r, t) -> {

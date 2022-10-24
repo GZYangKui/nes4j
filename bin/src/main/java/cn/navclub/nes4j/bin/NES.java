@@ -21,6 +21,10 @@ public class NES {
     private final CPU cpu;
     private final PPU ppu;
     private final NESFile file;
+    @Getter
+    private final JoyPad joyPad;
+    @Getter
+    private final JoyPad joyPad1;
     @Setter
     private volatile boolean stop;
     private final Consumer<Throwable> errorHandler;
@@ -32,17 +36,21 @@ public class NES {
         } else {
             this.file = new NESFile(builder.file);
         }
+        this.joyPad = new JoyPad();
+        this.joyPad1 = new JoyPad();
         this.errorHandler = builder.errorHandler;
         this.ppu = new PPU(file.getCh(), file.getMirrors());
-        this.bus = new Bus(file.getRgb(), ppu, builder.gameLoopCallback);
+        this.bus = new Bus(file.getRgb(), ppu, builder.gameLoopCallback, joyPad, joyPad1);
         this.cpu = new CPU(this.bus, builder.stackRest, builder.pcReset);
     }
 
     public NES(byte[] rpg, byte[] ch, int pcReset, int stackReset) {
         this.file = null;
         this.errorHandler = null;
+        this.joyPad = new JoyPad();
+        this.joyPad1 = new JoyPad();
         this.ppu = new PPU(ch, 1);
-        this.bus = new Bus(rpg, ppu);
+        this.bus = new Bus(rpg, ppu, joyPad, joyPad1);
         this.cpu = new CPU(this.bus, stackReset, pcReset);
     }
 

@@ -1,7 +1,6 @@
 package cn.navclub.nes4j.bin.screen;
 
 import cn.navclub.nes4j.bin.core.PPU;
-import cn.navclub.nes4j.bin.util.PatternTableUtil;
 
 public class Render {
     private static final int[][] SYS_PALETTE;
@@ -28,21 +27,24 @@ public class Render {
      * <a href="https://www.nesdev.org/wiki/PPU_attribute_tables">PPU attribute tables</a>
      */
 
-    private static byte[] bgPalette(PPU ppu, int column, int row) {
-        var idx = row / 4 * 8 + column / 4;
-        var attrByte = ppu.getVram()[idx + 0x3c0];
-        var paletteIdx = 0;
+    private static byte[] bgPalette(PPU ppu, byte[] atrTable, int column, int row) {
+        var idx = 0;
+        var test = 3;
         var a = column % 4 / 2;
         var b = row % 4 / 2;
+        var attrByte = atrTable[row / 4 * 8 + column / 4] & 0xff;
         if (a == 0 && b == 0)
-            paletteIdx = attrByte & 0x11;
+            idx = attrByte & test;
         else if (a == 1 && b == 0)
-            paletteIdx = attrByte >> 2 & 0b11;
+            idx = attrByte >> 2 & test;
         else if (a == 0 && b == 1)
-            paletteIdx = attrByte >> 4 & 0b11;
+            idx = attrByte >> 4 & test;
         else if (a == 1 && b == 1)
-            paletteIdx = attrByte >> 6 & 0b11;
-        var offset = 1 + paletteIdx * 4;
+            idx = attrByte >> 6 & test;
+        else
+            throw new RuntimeException("Unknown background palette.");
+
+        var offset = 1 + idx * 4;
 
         return new byte[]{
                 ppu.getPaletteTable()[0],
@@ -53,55 +55,161 @@ public class Render {
     }
 
     public static void render(PPU ppu, Frame frame) {
+        var vram = ppu.getVram();
+        var mirror = ppu.getMirrors();
+
         var ctr = ppu.getControl();
-        var bank = ctr.bkNamePatternTable();
-        //读取960个tile背景
-        for (int i = 0; i < 960; i++) {
-            var x = i % 32;
-            var y = i / 32;
+        var nameTable = ctr.nameTableAddr();
+
+        var scrollX = ppu.getScroll().getX();
+        var scrollY = ppu.getScroll().getY();
+
+        var firstNameTable = new byte[0x400];
+        var secondNameTable = new byte[0x400];
+
+        if ((mirror == 1 && (nameTable == 0x2000 || nameTable == 0x2800))
+                || (mirror == 0 && (nameTable == 0x2000 || nameTable == 0x2400))) {
+            System.arraycopy(vram, 0, firstNameTable, 0, 0x400);
+            System.arraycopy(vram, 0x400, secondNameTable, 0, 0x400);
+        } else if ((mirror == 1 && (nameTable == 0x2400 || nameTable == 0x2c00))
+                || (mirror == 0 && (nameTable == 0x2800 || nameTable == 0x2c00))) {
+            System.arraycopy(vram, 0x400, firstNameTable, 0, 0x400);
+            System.arraycopy(vram, 0, secondNameTable, 0, 0x400);
+        } else {
+            throw new RuntimeException("Not support mirror type:" + mirror);
+        }
+
+        //Render background 960 tile
+        renderNameTable(ppu, frame, firstNameTable, new Rect(scrollX, scrollY, 256, 240), -scrollX, -scrollY);
+
+        if (scrollX > 0) {
+            renderNameTable(ppu,
+                    frame, secondNameTable, new Rect(0, 0, scrollX, 240), 256 - scrollX, 0);
+        } else if (scrollY > 0) {
+            renderNameTable(ppu,
+                    frame, secondNameTable, new Rect(0, 0, 256, scrollY), 0, 240 - scrollY);
+        }
+
+        var oam = ppu.getOam();
+        for (int i = 0; i < oam.length; ) {
+            var idx = oam[i + 1] & 0xff;
+            var tx = oam[i + 3] & 0xff;
+            var ty = oam[i] & 0xff;
+            var vFlip = (oam[i + 2] & 0xff) >> 7 == 1;
+            var hFlip = (oam[i + 2] & 0xff) >> 6 == 1;
+            var pIdx = (oam[i + 2] & 0xff) & 3;
+            var sp = spritePalette(ppu, pIdx);
+            var bank = ppu.getControl().spritePattern();
             var tile = new byte[16];
-            var vram = ppu.getVram();
-            //获取tile编号
-            var idx = vram[i] & 0xff;
-            var offset = bank + idx * 16;
-            System.arraycopy(ppu.getCh(), offset, tile, 0, 16);
-            var arr = PatternTableUtil.tiles(tile);
-            for (int h = 0; h < arr.length; h++) {
-                var row = arr[h];
-                for (int k = 0; k < row.length; k++) {
-                    var rgb = switch (row[k]) {
-                        case 1 -> SYS_PALETTE[0x23];
-                        case 2 -> SYS_PALETTE[0x27];
-                        case 3 -> SYS_PALETTE[0x30];
-                        default -> SYS_PALETTE[0x01];
+            System.arraycopy(ppu.getCh(), bank + idx * 16, tile, 0, 16);
+            for (int y = 0; y < 8; y++) {
+                var upper = tile[y] & 0xff;
+                var lower = tile[y + 8] & 0xff;
+                for (int x = 0; x < 8; x++) {
+                    var value = (1 & lower) << 1 | (1 & upper);
+                    upper >>= 1;
+                    lower >>= 1;
+                    var rgb = switch (value) {
+                        case 1 -> SYS_PALETTE[sp[1]];
+                        case 2 -> SYS_PALETTE[sp[2]];
+                        case 3 -> SYS_PALETTE[sp[3]];
+                        default -> new int[0];
                     };
-                    frame.updatePixel(x * 8 + k, y * 8 + h, rgb);
+                    if (rgb.length == 0) {
+                        continue;
+                    }
+
+                    if (!hFlip && !vFlip) {
+                        frame.updatePixel(tx + x, ty + y, rgb);
+                    }
+                    if (hFlip && !vFlip) {
+                        frame.updatePixel(tx + 7 - x, ty + y, rgb);
+                    }
+                    if (!hFlip && vFlip) {
+                        frame.updatePixel(tx + x, ty + 7 - y, rgb);
+                    }
+                    if (hFlip && vFlip) {
+                        frame.updatePixel(tx + 7 - x, ty + 7 - y, rgb);
+                    }
                 }
             }
+            i += 4;
         }
     }
 
-    private static int[] paletteStr2Arr(String paletteStr, char skip) {
-        var append = false;
-        var index = 0;
-        var counter = 0;
-        var chr = new byte[3];
-        var target = new int[512];
-        var arr = paletteStr.getBytes();
-        for (byte b : arr) {
-            append = (b != skip && b != '\n');
-            if (!append) {
-                if (index != 0) {
-                    var str = new String(chr, 0, index);
-                    target[counter++] = Integer.parseInt(str);
-                }
-                index = 0;
-                continue;
-            }
-            chr[index++] = b;
-        }
-        var dst = new int[counter];
-        System.arraycopy(target, 0, dst, 0, counter);
-        return dst;
+    private static byte[] spritePalette(PPU ppu, int idx) {
+        var offset = 3 + idx * 4;
+        return new byte[]{
+                0,
+                ppu.getPaletteTable()[offset],
+                ppu.getPaletteTable()[offset + 1],
+                ppu.getPaletteTable()[offset + 2]
+        };
     }
+
+    private static void renderNameTable(PPU ppu, Frame frame, byte[] nameTable, Rect viewPort, int shiftX, int shiftY) {
+        var ctr = ppu.getControl();
+        var bank = ctr.bkNamePatternTable();
+        var attrTable = new byte[64];
+        System.arraycopy(nameTable, 0x3c0, attrTable, 0, 64);
+
+        //渲染背景960个tile
+        for (int i = 0; i < 0x3c0; i++) {
+            var row = i / 32;
+            var column = i % 32;
+            var tileIdx = nameTable[i];
+            var tile = new byte[16];
+            var offset = bank + tileIdx * 16;
+            System.arraycopy(ppu.getCh(), offset, tile, 0, 16);
+            var palette = bgPalette(ppu, attrTable, column, row);
+            for (int y = 0; y < 8; y++) {
+                var upper = tile[y] & 0xff;
+                var lower = tile[y + 8] & 0xff;
+                for (int x = 0; x < 8; x++) {
+                    var value = ((1 & lower) << 1) | (1 & upper);
+                    upper >>= 1;
+                    lower >>= 1;
+                    var rgb = switch (value) {
+                        case 0 -> SYS_PALETTE[ppu.getPaletteTable()[0]];
+                        case 1 -> SYS_PALETTE[palette[1]];
+                        case 2 -> SYS_PALETTE[palette[2]];
+                        case 3 -> SYS_PALETTE[palette[3]];
+                        //throw exception?
+                        default -> new int[]{0, 0, 0};
+                    };
+                    var pixelX = column * 8 + x;
+                    var pixelY = row * 8 + y;
+
+                    //判断是否显示范围
+                    if (pixelX >= viewPort.tx() && pixelX < viewPort.bx() && pixelY >= viewPort.ty() && pixelY < viewPort.by()) {
+                        frame.updatePixel(shiftX + pixelX, shiftY + pixelY, rgb);
+                    }
+                }
+            }
+        }
+    }
+//
+//    private static int[] paletteStr2Arr(String paletteStr, char skip) {
+//        var append = false;
+//        var index = 0;
+//        var counter = 0;
+//        var chr = new byte[3];
+//        var target = new int[512];
+//        var arr = paletteStr.getBytes();
+//        for (byte b : arr) {
+//            append = (b != skip && b != '\n');
+//            if (!append) {
+//                if (index != 0) {
+//                    var str = new String(chr, 0, index);
+//                    target[counter++] = Integer.parseInt(str);
+//                }
+//                index = 0;
+//                continue;
+//            }
+//            chr[index++] = b;
+//        }
+//        var dst = new int[counter];
+//        System.arraycopy(target, 0, dst, 0, counter);
+//        return dst;
+//    }
 }

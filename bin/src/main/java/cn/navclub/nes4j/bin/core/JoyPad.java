@@ -1,7 +1,5 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.enums.ButtonAction;
-
 /**
  * <a href="https://www.nesdev.org/wiki/Standard_controller"> Standard controller</a>
  */
@@ -23,19 +21,38 @@ public class JoyPad {
         if (this.index > 7) {
             return 1;
         }
-        var b = this.bits & (1 << this.index) >> this.index;
+        var b = ((this.bits & 0xff) & (1 << this.index)) >> this.index;
         if (!this.strobe) {
             this.index++;
         }
         return (byte) b;
     }
 
-    public void updateBtnStatus(ButtonAction action, boolean press) {
+    public void updateBtnStatus(JoypadButton action, boolean press) {
         if (press) {
             this.bits |= (1 << action.ordinal());
         } else {
             this.bits &= (0xff - (int) (Math.pow(2, action.ordinal())));
         }
+    }
+
+    public enum JoypadButton {
+        //b
+        BTN_A,
+        //a
+        BTN_B,
+        //select
+        BTN_SE,
+        //start
+        BTN_ST,
+        //up
+        BTN_UP,
+        //down
+        BTN_DN,
+        //left
+        BTN_LF,
+        //right
+        BTN_RT
     }
 
 }

@@ -40,7 +40,9 @@ public class PPU implements ByteReadWriter {
 
     private int cycles;
     //Mirrors
+    @Getter
     private final int mirrors;
+    @Getter
     private final PPUScroll scroll;
 
     public PPU(byte[] ch, int mirrors) {

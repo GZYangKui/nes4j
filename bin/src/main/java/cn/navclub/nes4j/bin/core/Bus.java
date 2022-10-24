@@ -15,13 +15,15 @@ public class Bus implements ByteReadWriter {
     //Cpu memory mapper
     private final byte[] buffer;
     private final JoyPad joyPad;
+    private final JoyPad joyPad1;
     private final BiConsumer<PPU, JoyPad> gameLoopCallback;
     //记录当前ppu模块是否触发NMI
     private final AtomicBoolean ppuIsNMI = new AtomicBoolean(false);
 
-    public Bus(byte[] rpg, final PPU ppu, BiConsumer<PPU, JoyPad> gameLoopCallback) {
+    public Bus(byte[] rpg, final PPU ppu, BiConsumer<PPU, JoyPad> gameLoopCallback, JoyPad joyPad, JoyPad joyPad1) {
         this.ppu = ppu;
-        this.joyPad = new JoyPad();
+        this.joyPad = joyPad;
+        this.joyPad1 = joyPad1;
         this.rpgSize = rpg.length;
         this.buffer = new byte[0x10000];
         //复制rpg-rom到内存映射中
@@ -30,8 +32,8 @@ public class Bus implements ByteReadWriter {
 
     }
 
-    public Bus(byte[] rpg, final PPU ppu) {
-        this(rpg, ppu, null);
+    public Bus(byte[] rpg, final PPU ppu, JoyPad joyPad, JoyPad joyPad1) {
+        this(rpg, ppu, null, joyPad, joyPad1);
     }
 
     /**
@@ -78,7 +80,7 @@ public class Bus implements ByteReadWriter {
         }
         //player2
         else if (address == 0x4017) {
-            b = 0;
+            b = this.joyPad1.read();
         }
         //apu only write register
         else if (address >= 0x4000 && address <= 0x4013) {
@@ -167,7 +169,7 @@ public class Bus implements ByteReadWriter {
         else if (address == 0x4016) {
             this.joyPad.write(b);
         } else if (address == 0x4017) {
-            //todo write to joypad2
+            this.joyPad1.write(b);
         }
         //Write data to apu
         else if (address >= 0x4000 && address <= 0x4015) {
