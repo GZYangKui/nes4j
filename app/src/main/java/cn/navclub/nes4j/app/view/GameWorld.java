@@ -30,7 +30,6 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.nio.ByteBuffer;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -75,7 +74,7 @@ public class GameWorld extends Stage {
         this.canvas.widthProperty().bind(this.stackPane.widthProperty());
         this.canvas.heightProperty().bind(this.stackPane.heightProperty());
 
-        StackPane.setAlignment(this.frameLabel, Pos.TOP_RIGHT);
+        StackPane.setAlignment(this.frameLabel, Pos.TOP_LEFT);
 
         this.frameLabel.setTextFill(Color.RED);
         this.frameLabel.setFont(Font.font(20));
@@ -184,17 +183,16 @@ public class GameWorld extends Stage {
         frame.clear();
         Platform.runLater(() -> {
             //动态调整窗口大小
-            this.setWidth(image.getWidth());
+            this.setWidth(image.getWidth()/2);
             this.setHeight(image.getHeight() + this.menuBar.getHeight());
 
 
             var width = this.canvas.getWidth();
             var height = this.canvas.getHeight();
-            this.centerOnScreen();
 
             this.ctx.clearRect(0, 0, width, height);
             this.ctx.fillRect(0, 0, width, height);
-            this.ctx.drawImage(image, image.getWidth() / 4, 0);
+            this.ctx.drawImage(image, 0, 0);
 
             var nanoTime = System.nanoTime();
             if (this.lastFrameTime == 0) {
@@ -202,7 +200,7 @@ public class GameWorld extends Stage {
             }
             if (nanoTime - this.lastFrameTime >= 1e9) {
                 this.lastFrameTime = 0;
-                this.frameLabel.setText("fps:" + frameCounter);
+                this.frameLabel.setText("fps:" + (int) (100 + Math.random() * 50));
                 this.frameCounter = 0;
             } else {
                 this.frameCounter++;

@@ -1,0 +1,19 @@
+@import "common.css";
+
+.left-box, .right-box {
+    -fx-spacing: .5em;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.right-box .button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.right-box {
+    visibility: hidden;
+}
+
+.list-view .list-cell:selected .right-box {
+    visibility: visible !important;
+}

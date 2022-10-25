@@ -1,43 +1,59 @@
 package cn.navclub.nes4j.app;
 
-import cn.navclub.nes4j.app.util.OSUtil;
-import cn.navclub.nes4j.app.view.GameWorld;
+import cn.navclub.nes4j.app.control.NesGameItem;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
+import java.io.File;
+import java.util.Arrays;
+
 
 public class NES4j extends Application {
+    private ListView<NesGameItem> listView;
 
     @Override
     public void start(Stage stage) {
+        this.listView = new ListView<>();
 
-        var root = new BorderPane();
         var menuBar = new MenuBar();
         var menu = new Menu("File");
-        var open = new MenuItem("Open");
-        var listView = new ListView<String>();
-        open.setOnAction(e -> {
-            var optional = OSUtil.chooseFile(stage, "NES rom file", "*.nes", "*.NES");
-            if (optional.isEmpty()) {
-                return;
-            }
-            new GameWorld(optional.get());
-        });
-        menu.getItems().add(open);
+
         menuBar.getMenus().add(menu);
+
+        var root = new BorderPane();
+
         root.setTop(menuBar);
         root.setCenter(listView);
-        stage.setScene(new Scene(root));
+
+        var scene = new Scene(root);
+
+        scene.getStylesheets().add(FXResource.loadStyleSheet("Nes4j.css"));
+
         stage.setWidth(400);
         stage.setHeight(900);
+        stage.setScene(scene);
         stage.setTitle("nes4j");
         stage.show();
+
+        this.loadLocalGame();
+    }
+
+    private void loadLocalGame() {
+        this.listView.getItems().clear();
+
+        var file = new File("nes");
+        var subFiles = file.listFiles();
+        if (subFiles == null) {
+            return;
+        }
+        var list = Arrays
+                .stream(subFiles).filter(it -> !it.isDirectory()).map(NesGameItem::new).toList();
+        this.listView.getItems().addAll(list);
     }
 
     public static void main(String[] args) {
