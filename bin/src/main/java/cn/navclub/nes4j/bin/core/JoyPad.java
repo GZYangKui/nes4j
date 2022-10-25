@@ -22,9 +22,6 @@ public class JoyPad {
         if (this.index > 7) {
             return 1;
         }
-        if (((this.bits & 0xff) & 0b1000) != 0) {
-            System.out.println("选中按下");
-        }
         var b = ((this.bits & 0xff) & (1 << this.index)) >> this.index;
         if (!this.strobe) {
             this.index++;

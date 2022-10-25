@@ -168,10 +168,10 @@ public class GameWorld extends Stage {
         for (int i = 0; i < h; i++) {
             var offset = i * w * 3;
             for (int j = 0; j < w; j++) {
-                for (int k = 0; k < wPixel * hPixel; k++) {
+                for (int k = 0; k < wPixel * hPixel; k = k + 3) {
                     arr[k] = frame.getPixels()[offset];
-                    arr[k] = frame.getPixels()[offset + 1];
-                    arr[k] = frame.getPixels()[offset + 2];
+                    arr[k + 1] = frame.getPixels()[offset + 1];
+                    arr[k + 2] = frame.getPixels()[offset + 2];
                 }
                 writer.setPixels(j * wPixel, i * hPixel, wPixel, hPixel, format, ByteBuffer.wrap(arr), 0);
                 offset += 3;

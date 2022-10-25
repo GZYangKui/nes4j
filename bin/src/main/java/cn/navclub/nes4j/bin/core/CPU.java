@@ -86,6 +86,9 @@ public class CPU {
      */
     private void lda(AddressMode mode) {
         var address = this.modeProvider.getAbsAddr(mode);
+        if (address == 18885){
+            System.out.println("aaaa");
+        }
         var value = this.bus.readUSByte(address);
         this.raUpdate(value);
     }
@@ -377,18 +380,20 @@ public class CPU {
         if (this.pc < 0x8000) {
             throw new RuntimeException("Program counter pos happen error exception pos in 0x8000-0x10000 actual 0x" + Integer.toHexString(this.pc));
         }
+
         var openCode = this.bus.read(this.pc);
         var pcState = (++this.pc);
+
         if (openCode == 0x00) {
-            this.interrupt(CPUInterrupt.BRK);
             return;
         }
+
         var instruction6502 = CPUInstruction.getInstance(openCode);
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 
-        log.info("({}){}(0x{}) {}", pcState - 1, instruction,
-                Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502));
+        log.info("({}){}(0x{}) {} {}", pcState - 1, instruction,
+                Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502), status.bits & 0xff);
 
         if (instruction == CPUInstruction.JMP) {
             this.pc = this.modeProvider.getAbsAddr(mode);
@@ -396,7 +401,8 @@ public class CPU {
 
         if (instruction == CPUInstruction.RTI) {
             this.status.setBits(this.popByte());
-            this.status.clear(CPUStatus.BK, CPUStatus.BK2);
+            this.status.clear(CPUStatus.BK);
+            this.status.set(CPUStatus.BK2);
             this.pc = this.popInt();
         }
         if (instruction == CPUInstruction.JSR) {

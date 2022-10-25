@@ -91,7 +91,8 @@ public class Render {
         }
 
         var oam = ppu.getOam();
-        for (int i = 0; i < oam.length; ) {
+        var length = oam.length;
+        for (int i = length - 4; i >= 0; i = i - 4) {
             var idx = oam[i + 1] & 0xff;
             var tx = oam[i + 3] & 0xff;
             var ty = oam[i] & 0xff;
@@ -105,7 +106,7 @@ public class Render {
             for (int y = 0; y < 8; y++) {
                 var upper = tile[y] & 0xff;
                 var lower = tile[y + 8] & 0xff;
-                for (int x = 0; x < 8; x++) {
+                for (int x = 7; x >= 0; x--) {
                     var value = (1 & lower) << 1 | (1 & upper);
                     upper >>= 1;
                     lower >>= 1;
@@ -133,7 +134,6 @@ public class Render {
                     }
                 }
             }
-            i += 4;
         }
     }
 
