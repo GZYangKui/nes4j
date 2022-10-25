@@ -86,9 +86,6 @@ public class CPU {
      */
     private void lda(AddressMode mode) {
         var address = this.modeProvider.getAbsAddr(mode);
-        if (address == 18885){
-            System.out.println("aaaa");
-        }
         var value = this.bus.readUSByte(address);
         this.raUpdate(value);
     }
@@ -323,7 +320,7 @@ public class CPU {
         this.bus.tick(1);
         var b = this.bus.read(this.pc);
         var jump = this.pc + 1 + b;
-        if ((this.pc + 1 & 0xff00) != (jump & 0xff00)) {
+        if (((this.pc + 1) & 0xff00) != (jump & 0xff00)) {
             this.bus.tick(1);
         }
 
@@ -412,9 +409,6 @@ public class CPU {
 
         if (instruction == CPUInstruction.RTS) {
             this.pc = this.popInt() + 1;
-        }
-        if (instruction == CPUInstruction.BRK) {
-            this.interrupt(CPUInterrupt.BRK);
         }
 
         if (instruction == CPUInstruction.LDA) {

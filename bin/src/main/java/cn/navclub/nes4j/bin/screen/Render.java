@@ -90,6 +90,7 @@ public class Render {
                     frame, secondNameTable, new Rect(0, 0, 256, scrollY), 0, 240 - scrollY);
         }
 
+
         var oam = ppu.getOam();
         var length = oam.length;
         for (int i = length - 4; i >= 0; i = i - 4) {
@@ -165,7 +166,7 @@ public class Render {
             for (int y = 0; y < 8; y++) {
                 var upper = tile[y] & 0xff;
                 var lower = tile[y + 8] & 0xff;
-                for (int x = 0; x < 8; x++) {
+                for (int x = 7; x >= 0; x--) {
                     var value = ((1 & lower) << 1) | (1 & upper);
                     upper >>= 1;
                     lower >>= 1;
@@ -188,28 +189,4 @@ public class Render {
             }
         }
     }
-//
-//    private static int[] paletteStr2Arr(String paletteStr, char skip) {
-//        var append = false;
-//        var index = 0;
-//        var counter = 0;
-//        var chr = new byte[3];
-//        var target = new int[512];
-//        var arr = paletteStr.getBytes();
-//        for (byte b : arr) {
-//            append = (b != skip && b != '\n');
-//            if (!append) {
-//                if (index != 0) {
-//                    var str = new String(chr, 0, index);
-//                    target[counter++] = Integer.parseInt(str);
-//                }
-//                index = 0;
-//                continue;
-//            }
-//            chr[index++] = b;
-//        }
-//        var dst = new int[counter];
-//        System.arraycopy(target, 0, dst, 0, counter);
-//        return dst;
-//    }
 }

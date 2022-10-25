@@ -20,7 +20,7 @@ public class NESTest {
         };
 
         var nes = NES.NESBuilder.newBuilder()
-                .file(new File("nes/Super_Mario_Bros(J).nes"))
+                .file(new File("nes/snow_bros.nes"))
                 .gameLoopCallback(gameLoopCallback)
                 .build();
         nes.execute();
