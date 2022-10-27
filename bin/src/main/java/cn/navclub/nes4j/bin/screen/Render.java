@@ -54,6 +54,7 @@ public class Render {
         };
     }
 
+
     public static void render(PPU ppu, Frame frame) {
         var vram = ppu.getVram();
         var mirror = ppu.getMirrors();
@@ -149,18 +150,19 @@ public class Render {
     }
 
     private static void renderNameTable(PPU ppu, Frame frame, byte[] nameTable, Rect viewPort, int shiftX, int shiftY) {
-        var ctr = ppu.getControl();
-        var bank = ctr.bkNamePatternTable();
+
         var attrTable = new byte[64];
-        System.arraycopy(nameTable, 0x3c0, attrTable, 0, 64);
+        System.arraycopy(nameTable, 0x3c0, attrTable, 0, attrTable.length);
+
+        var bank = ppu.getControl().bkNamePatternTable();
 
         //渲染背景960个tile
         for (int i = 0; i < 0x3c0; i++) {
             var row = i / 32;
             var column = i % 32;
-            var tileIdx = nameTable[i];
+            var idx = nameTable[i] & 0xff;
             var tile = new byte[16];
-            var offset = bank + tileIdx * 16;
+            var offset = bank + idx * 16;
             System.arraycopy(ppu.getCh(), offset, tile, 0, 16);
             var palette = bgPalette(ppu, attrTable, column, row);
             for (int y = 0; y < 8; y++) {

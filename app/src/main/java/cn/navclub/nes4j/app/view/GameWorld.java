@@ -182,12 +182,13 @@ public class GameWorld extends Stage {
         }
         frame.clear();
         Platform.runLater(() -> {
+
             //动态调整窗口大小
             this.setWidth(image.getWidth() / 2);
             this.setHeight(image.getHeight() + this.menuBar.getHeight());
 
 
-            var width = this.canvas.getWidth();
+            var width = this.getWidth();
             var height = this.canvas.getHeight();
 
             this.ctx.clearRect(0, 0, width, height);
@@ -200,7 +201,7 @@ public class GameWorld extends Stage {
             }
             if (nanoTime - this.lastFrameTime >= 1e9) {
                 this.lastFrameTime = 0;
-                this.frameLabel.setText("fps:" + frameCounter);
+                this.frameLabel.setText("fps:" + frameCounter * 10);
                 this.frameCounter = 0;
             } else {
                 this.frameCounter++;

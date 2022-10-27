@@ -269,34 +269,11 @@ public class CPU {
         var result = sum & 0xff;
         this.status.update(CPUStatus.OF, (((b & 0xff ^ result) & (result ^ this.ra)) & 0x80) != 0);
         this.raUpdate(result);
-//        var address = this.getAbsoluteAddress(mode);
-//        var b = this.bus.readUSByte(address);
-//        var c = this.status.contain(CPUStatus.CF);
-//        var m = MathUtil.addition(this.ra, b, c);
-//        this.status.update(CPUStatus.CF, m.carry());
-//        this.status.update(CPUStatus.OF, m.overflow());
-//        this.raUpdate(m.result());
     }
 
 
     private void sbc(AddressMode mode) {
         this.adc(mode, true);
-//        var addr = this.getAbsoluteAddress(mode);
-//        var a = this.ra;
-//        var c = this.status.contain(CPUStatus.CF);
-//        var b = this.bus.readUSByte(addr);
-//        final MathUtil.Mathematics m;
-//        if (ByteUtil.negative(b) && ByteUtil.negative(a)) {
-//            b = ByteUtil.origin(b);
-//            m = MathUtil.subtract(a, b, c);
-//        } else if (ByteUtil.negative(b) && !ByteUtil.negative(a)) {
-//            m = MathUtil.addition(a, ByteUtil.origin(b), c);
-//        } else {
-//            m = MathUtil.subtract(a, b, c);
-//        }
-//        this.status.update(CPUStatus.CF, m.carry());
-//        this.status.update(CPUStatus.OF, m.overflow());
-//        this.raUpdate(m.result());
     }
 
     private void loadXY(Instruction6502 instruction6502) {

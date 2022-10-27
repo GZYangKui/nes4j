@@ -74,8 +74,9 @@ public class PPU implements ByteReadWriter {
         if (this.spriteHit(cycles)) {
             this.status.set(PStatus.SPRITE_ZERO_HIT);
         }
+
         this.line += 1;
-        this.cycles -= 341;
+        this.cycles = this.cycles - 341;
 
         if (this.line == 241) {
             this.status.set(PStatus.V_BLANK_OCCUR);
