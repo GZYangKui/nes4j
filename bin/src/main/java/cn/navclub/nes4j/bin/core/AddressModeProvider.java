@@ -2,6 +2,8 @@ package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.enums.AddressMode;
 import cn.navclub.nes4j.bin.util.MathUtil;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * <a href="http://www.emulator101.com/6502-addressing-modes.html">6502 address mode</a>
@@ -9,6 +11,8 @@ import cn.navclub.nes4j.bin.util.MathUtil;
 public class AddressModeProvider {
     private final CPU cpu;
     private final Bus bus;
+    @Getter
+    private int cycle;
 
     public AddressModeProvider(CPU cpu, Bus bus) {
         this.cpu = cpu;
@@ -59,13 +63,22 @@ public class AddressModeProvider {
         };
     }
 
+    public void cycle(int value, boolean append) {
+        if (append) {
+            this.cycle += value;
+        } else {
+            this.cycle = value;
+        }
+    }
+
     /**
      * 判断当前寻址模式下获取到数据是否跨页
      */
     private void pageCross(int base, int addr) {
         var pageCross = ((base & 0xff00) != (addr & 0xff00));
-        if (pageCross) {
-            this.bus.tick(1);
+        if (!pageCross) {
+            return;
         }
+        this.cycle(1, true);
     }
 }

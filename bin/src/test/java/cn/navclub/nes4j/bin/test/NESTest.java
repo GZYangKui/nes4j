@@ -64,7 +64,7 @@ public class NESTest {
         };
         var nes = NES.NESBuilder.newBuilder()
                 .gameLoopCallback(gameLoopCallback)
-                .file(new File("nes/cpu_dummy_reads.nes"))
+                .file(new File("nes/cpu_dummy_writes_oam.nes"))
                 .build();
         nes.execute();
     }

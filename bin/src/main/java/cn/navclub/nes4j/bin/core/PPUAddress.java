@@ -14,6 +14,9 @@ public class PPUAddress {
     }
 
     public void set(int data) {
+        if (data > 0x3fff) {
+            data = data & 0b11111111111111;
+        }
         this.address[0] = (byte) (data >> 8);
         this.address[1] = (byte) data;
     }
@@ -28,10 +31,8 @@ public class PPUAddress {
         return this.toInt16();
     }
 
-    public int inc(int b) {
-        var addr = this.toInt16() + b;
-        this.set(addr);
-        return addr;
+    public void inc(int b) {
+        this.set(this.toInt16() + b);
     }
 
     public void reset() {

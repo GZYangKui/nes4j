@@ -124,9 +124,11 @@ public class PPU implements ByteReadWriter {
         var addr = this.addr.get();
         this.inc();
         var temp = this.readByteBuf;
+
         if (addr >= 0 && addr <= 0x1fff) {
             this.readByteBuf = this.ch[addr];
         }
+
         if (addr >= 0x2000 && addr <= 0x2fff) {
             this.readByteBuf = this.vram[ramMirror(addr)];
         }
@@ -162,9 +164,6 @@ public class PPU implements ByteReadWriter {
         if (addr >= 0x3f00 && addr <= 0x3fff) {
             this.paletteTable[addr - 0x3f00] = b;
         }
-        if (this.addr.get() == 0x2000) {
-            System.out.println("aaa");
-        }
         this.inc();
     }
 
@@ -193,17 +192,11 @@ public class PPU implements ByteReadWriter {
     private boolean spriteHit(int cycle) {
         var y = this.oam[0] & 0xff;
         var x = this.oam[3] & 0xff;
-        return y + 5 == this.line && x <= cycle && this.mask.contain(MaskFlag.SHOW_SPRITES);
+        return y == this.line && x <= cycle && this.mask.contain(MaskFlag.SHOW_SPRITES);
     }
 
     private void inc() {
-        var value = this.addr.inc(this.control.VRamIncrement());
-        if (value == 0x2100) {
-            System.out.println("结束");
-        }
-        if (value > 0x3fff) {
-            this.addr.set(value & 0b11111111111111);
-        }
+        this.addr.inc(this.control.VRamIncrement());
     }
 
     public int getAddrVal() {

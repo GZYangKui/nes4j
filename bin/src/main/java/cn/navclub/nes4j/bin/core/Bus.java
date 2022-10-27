@@ -172,7 +172,7 @@ public class Bus implements ByteReadWriter {
             this.joyPad1.write(b);
         }
         //Write data to apu
-        else if ((address >= 0x4000 && address<=0x4013) || address == 0x4015) {
+        else if ((address >= 0x4000 && address <= 0x4013) || address == 0x4015) {
             //to do write to ppu
 
         }
@@ -182,7 +182,10 @@ public class Bus implements ByteReadWriter {
         }
     }
 
+    private int cycle;
+
     public void tick(int cycle) {
+        this.cycle += cycle;
         //PPU时钟是CPU时钟的3倍
         this.ppu.tick(cycle * 3);
         var nmi = this.ppu.isNMI();

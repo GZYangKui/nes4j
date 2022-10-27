@@ -25,8 +25,6 @@ public class CPU {
     private int pc;
     private int pcReset;
     private int stackReset;
-    //记录当前是否跨页
-    private int pageCross;
 
     //栈指针寄存器,始终指向栈顶
     private int sp;
@@ -317,11 +315,12 @@ public class CPU {
         if (!condition) {
             return;
         }
-        this.bus.tick(1);
+        this.modeProvider.cycle(1, true);
+
         var b = this.bus.read(this.pc);
         var jump = this.pc + 1 + b;
         if (((this.pc + 1) & 0xff00) != (jump & 0xff00)) {
-            this.bus.tick(1);
+            this.modeProvider.cycle(1, true);
         }
 
         this.pc = jump;
@@ -346,6 +345,9 @@ public class CPU {
             }
             case DEX -> {
                 this.rx = MathUtil.unsignedSub(this.rx, 1);
+                if (this.rx == 48) {
+                    System.out.println("aaa");
+                }
                 yield this.rx;
             }
             default -> {
@@ -369,13 +371,13 @@ public class CPU {
         this.pc = this.bus.readInt(interrupt.getVector());
     }
 
+    private int counter;
+
     public void execute() {
-        this.pageCross = 0;
+        this.modeProvider.cycle(0, false);
+
         if (this.bus.pollPPUNMI()) {
             this.interrupt(CPUInterrupt.NMI);
-        }
-        if (this.pc < 0x8000) {
-            throw new RuntimeException("Program counter pos happen error exception pos in 0x8000-0x10000 actual 0x" + Integer.toHexString(this.pc));
         }
 
         var openCode = this.bus.read(this.pc);
@@ -664,7 +666,8 @@ public class CPU {
             this.NZUpdate(this.rx);
         }
 
-        this.bus.tick(instruction6502.getCycle() + this.pageCross);
+        //判断指令是否产生额外CPU时钟
+        this.bus.tick(instruction6502.getCycle() + this.modeProvider.getCycle());
 
         //根据是否发生重定向来判断是否需要更改程序计数器的值
         if (this.pc == pcState) {
