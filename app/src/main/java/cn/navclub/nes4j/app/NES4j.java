@@ -52,7 +52,11 @@ public class NES4j extends Application {
             return;
         }
         var list = Arrays
-                .stream(subFiles).filter(it -> !it.isDirectory()).map(NesGameItem::new).toList();
+                .stream(subFiles)
+                .filter(it -> !it.isDirectory() && it.getName().endsWith(".nes"))
+                .map(NesGameItem::new)
+                .toList();
+
         this.listView.getItems().addAll(list);
     }
 

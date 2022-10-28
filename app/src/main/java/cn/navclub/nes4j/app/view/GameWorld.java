@@ -201,7 +201,7 @@ public class GameWorld extends Stage {
             }
             if (nanoTime - this.lastFrameTime >= 1e9) {
                 this.lastFrameTime = 0;
-                this.frameLabel.setText("fps:" + frameCounter * 10);
+                this.frameLabel.setText("fps:" + frameCounter);
                 this.frameCounter = 0;
             } else {
                 this.frameCounter++;
