@@ -486,6 +486,7 @@ public class CPUTest extends BaseTest {
         });
         var cpu = nes.getCpu();
         var status = cpu.getStatus();
+
         status.setBits((byte) 0b11000001);
         cpu.setPc(0x8010);
         cpu.pushInt(cpu.getPc());
@@ -496,7 +497,7 @@ public class CPUTest extends BaseTest {
 
         nes.test(PC_OFFSET);
 
-        Assertions.assertEquals(status.getBits() & 0xff, 0b11000001);
+        Assertions.assertEquals(status.getBits() & 0xff, 0b11100001);
         Assertions.assertEquals(cpu.getPc(), 0x8010);
     }
 

@@ -63,7 +63,7 @@ public class NES {
         this.cpu.reset();
         while (!stop) {
             try {
-                this.cpu.execute();
+                this.cpu.next();
             } catch (Exception e) {
                 if (this.errorHandler != null) {
                     this.stop = true;
@@ -78,7 +78,7 @@ public class NES {
     public void test(int pcStart) {
         this.cpu.setPc(pcStart);
         while (loop()) {
-            this.cpu.execute();
+            this.cpu.next();
         }
     }
 

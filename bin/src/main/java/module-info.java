@@ -1,6 +1,6 @@
 module cn.navclub.nes4j.bin {
-    requires org.slf4j;
     requires static lombok;
+    requires org.slf4j;
 
     exports cn.navclub.nes4j.bin;
     exports cn.navclub.nes4j.bin.core;

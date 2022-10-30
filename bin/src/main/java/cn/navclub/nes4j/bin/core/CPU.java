@@ -208,7 +208,9 @@ public class CPU {
         if (instruction == CPUInstruction.PHA) {
             this.pushByte((byte) this.ra);
         } else {
-            this.pushByte(this.status.getBits());
+            var flags = this.status._clone();
+            flags.set(CPUStatus.BK, CPUStatus.BK2);
+            this.pushByte(flags.getBits());
         }
     }
 
@@ -219,6 +221,8 @@ public class CPU {
             this.raUpdate(value);
         } else {
             this.status.setBits(value);
+            this.status.set(CPUStatus.BK2);
+            this.status.clear(CPUStatus.BK);
         }
     }
 
@@ -234,11 +238,10 @@ public class CPU {
         }
         var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
         var m = this.bus.readUSByte(address);
-        var c = (a - m);
         //设置Carry Flag
         this.status.update(CPUStatus.CF, a >= m);
         //更新cpu状态
-        this.NZUpdate(c);
+        this.NZUpdate(MathUtil.unsignedSub(a, m));
     }
 
     private void inc(CPUInstruction instruction, AddressMode mode) {
@@ -292,12 +295,12 @@ public class CPU {
         if (!condition) {
             return;
         }
-        this.modeProvider.cycle(1, true);
+        this.bus.tick(1);
 
         var b = this.bus.read(this.pc);
         var jump = this.pc + 1 + b;
         if (((this.pc + 1) & 0xff00) != (jump & 0xff00)) {
-            this.modeProvider.cycle(1, true);
+            this.bus.tick(1);
         }
 
         this.pc = jump;
@@ -322,9 +325,6 @@ public class CPU {
             }
             case DEX -> {
                 this.rx = MathUtil.unsignedSub(this.rx, 1);
-                if (this.rx == 48) {
-                    System.out.println("aaa");
-                }
                 yield this.rx;
             }
             default -> {
@@ -337,9 +337,12 @@ public class CPU {
 
     public void interrupt(CPUInterrupt interrupt) {
         this.pushInt(this.pc);
+
         var flag = this.status._clone();
 
-        flag.clear(CPUStatus.BK, CPUStatus.BK2);
+        //https://www.nesdev.org/wiki/Status_flags#The_B_flag
+        flag.set(CPUStatus.BK2);
+        flag.update(CPUStatus.BK, interrupt == CPUInterrupt.BRK);
 
         this.pushByte(flag.getBits());
 
@@ -350,8 +353,7 @@ public class CPU {
 
     private int counter;
 
-    public void execute() {
-        this.modeProvider.cycle(0, false);
+    public void next() {
 
         if (this.bus.pollPPUNMI()) {
             this.interrupt(CPUInterrupt.NMI);
@@ -361,15 +363,19 @@ public class CPU {
         var pcState = (++this.pc);
 
         if (openCode == 0x00) {
-            return;
+            //中断禁用->忽略中断
+            if (this.status.contain(CPUStatus.ID)) {
+                return;
+            }
+            this.interrupt(CPUInterrupt.BRK);
         }
 
         var instruction6502 = CPUInstruction.getInstance(openCode);
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 
-        log.info("({}){}(0x{}) {} {}", pcState - 1, instruction,
-                Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502), status.bits & 0xff);
+        log.info("({}){}(0x{}) {}", pcState - 1, instruction,
+                Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502));
 
         if (instruction == CPUInstruction.JMP) {
             this.pc = this.modeProvider.getAbsAddr(mode);
@@ -377,8 +383,10 @@ public class CPU {
 
         if (instruction == CPUInstruction.RTI) {
             this.status.setBits(this.popByte());
+
             this.status.clear(CPUStatus.BK);
             this.status.set(CPUStatus.BK2);
+
             this.pc = this.popInt();
         }
         if (instruction == CPUInstruction.JSR) {
@@ -443,6 +451,7 @@ public class CPU {
         if (instruction == CPUInstruction.STY) {
             this.bus.writeUSByte(this.modeProvider.getAbsAddr(mode), this.ry);
         }
+
         //刷新x寄存器值到内存中
         if (instruction == CPUInstruction.STX) {
             this.bus.writeUSByte(this.modeProvider.getAbsAddr(mode), this.rx);
@@ -643,8 +652,8 @@ public class CPU {
             this.NZUpdate(this.rx);
         }
 
-        //判断指令是否产生额外CPU时钟
-        this.bus.tick(instruction6502.getCycle() + this.modeProvider.getCycle());
+
+        this.bus.tick(instruction6502.getCycle());
 
         //根据是否发生重定向来判断是否需要更改程序计数器的值
         if (this.pc == pcState) {

@@ -11,8 +11,6 @@ import lombok.Setter;
 public class AddressModeProvider {
     private final CPU cpu;
     private final Bus bus;
-    @Getter
-    private int cycle;
 
     public AddressModeProvider(CPU cpu, Bus bus) {
         this.cpu = cpu;
@@ -63,13 +61,6 @@ public class AddressModeProvider {
         };
     }
 
-    public void cycle(int value, boolean append) {
-        if (append) {
-            this.cycle += value;
-        } else {
-            this.cycle = value;
-        }
-    }
 
     /**
      * 判断当前寻址模式下获取到数据是否跨页
@@ -79,6 +70,6 @@ public class AddressModeProvider {
         if (!pageCross) {
             return;
         }
-        this.cycle(1, true);
+        this.bus.tick(1);
     }
 }

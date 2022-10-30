@@ -12,10 +12,15 @@ import java.io.File;
 import java.util.function.BiConsumer;
 
 public class NESTest {
+    private int counter;
     @Test
     void testNesFile() {
         var frame = new Frame();
         BiConsumer<PPU, JoyPad> gameLoopCallback = (ppu, joyPad) -> {
+            counter++;
+            if (counter==27){
+                System.out.println("stop");
+            }
             Render.render(ppu, frame);
         };
 

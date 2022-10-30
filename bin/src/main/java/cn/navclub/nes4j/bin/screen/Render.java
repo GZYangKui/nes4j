@@ -54,7 +54,6 @@ public class Render {
         };
     }
 
-
     public static void render(PPU ppu, Frame frame) {
         var vram = ppu.getVram();
         var mirror = ppu.getMirrors();

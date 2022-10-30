@@ -21,14 +21,19 @@ public class PPUAddress {
         this.address[1] = (byte) data;
     }
 
-    public int update(byte b) {
+    public void update(byte b) {
         if (this.latch) {
             this.address[0] = b;
         } else {
             this.address[1] = b;
         }
+
+        var addr = this.get();
+        if (addr > 0x3fff) {
+            this.set(addr);
+        }
+
         this.latch = !latch;
-        return this.toInt16();
     }
 
     public void inc(int b) {
@@ -42,6 +47,7 @@ public class PPUAddress {
     public int get() {
         return this.toInt16();
     }
+
 
     @Override
     public String toString() {

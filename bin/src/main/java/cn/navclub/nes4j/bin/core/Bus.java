@@ -9,11 +9,15 @@ import java.util.function.BiConsumer;
 
 @Slf4j
 public class Bus implements ByteReadWriter {
+    private static final int RPG_ROM = 0x8000;
+    private static final int RPG_ROM_END = 0xFFFF;
+    private static final int RAM_MIRROR_END = 0x1fff;
+
     private final PPU ppu;
+    private final byte[] ram;
+    private final byte[] rpg;
     @Getter
     private final int rpgSize;
-    //Cpu memory mapper
-    private final byte[] buffer;
     private final JoyPad joyPad;
     private final JoyPad joyPad1;
     private final BiConsumer<PPU, JoyPad> gameLoopCallback;
@@ -25,9 +29,9 @@ public class Bus implements ByteReadWriter {
         this.joyPad = joyPad;
         this.joyPad1 = joyPad1;
         this.rpgSize = rpg.length;
-        this.buffer = new byte[0x10000];
-        //复制rpg-rom到内存映射中
-        System.arraycopy(rpg, 0, this.buffer, 0x8000, rpgSize);
+        this.ram = new byte[2048];
+        this.rpg = new byte[32 * 1024];
+        System.arraycopy(rpg, 0, this.rpg, 0, rpgSize);
         this.gameLoopCallback = gameLoopCallback;
 
     }
@@ -44,15 +48,19 @@ public class Bus implements ByteReadWriter {
         if (0x800 <= address && address <= 0x1fff) {
             address &= 0b11111111111;
         }
-        //RGB-ROM mapper
-        if (address >= 0xc000 && rpgSize == 0x4000) {
-            address &= 0b1011_1111_1111_1111;
-        }
         //IO_Mirrors mapper
         if (address >= 0x2008 && address <= 0x3fff) {
             address &= 0b10000000000111;
         }
         return address;
+    }
+
+    private byte readRPGData(int address) {
+        address -= 0x8000;
+        if (rpgSize == 0x4000 && address >= 0x4000) {
+            address %= 0x4000;
+        }
+        return this.rpg[address];
     }
 
 
@@ -65,13 +73,18 @@ public class Bus implements ByteReadWriter {
 
     @Override
     public byte read(int address) {
-        address = this.map(address);
         final byte b;
-        if (address == 0x2002) {
+        address = this.map(address);
+        if (address >= 0 && address <= RAM_MIRROR_END) {
+            b = this.ram[address];
+        }
+        else if (address == 0x2002) {
             b = this.ppu.readStatus();
-        } else if (address == 0x2004) {
+        }
+        else if (address == 0x2004) {
             b = this.ppu.readOam();
-        } else if (address == 0x2007) {
+        }
+        else if (address == 0x2007) {
             b = this.ppu.read(address);
         }
         //player1
@@ -98,8 +111,14 @@ public class Bus implements ByteReadWriter {
                 || address == 0x2001
                 || address == 0x2000) {
             b = 0;
-        } else {
-            b = this.buffer[address];
+        }
+        //Read rpg-rom data
+        else if (address >= RPG_ROM && address <= RPG_ROM_END) {
+            b = this.readRPGData(address);
+        }
+        //Default return 0
+        else {
+            b = 0;
         }
         log.debug("From 0x{} read a byte 0x{}", Integer.toHexString(address), Integer.toHexString(b & 0xff));
         return b;
@@ -117,8 +136,13 @@ public class Bus implements ByteReadWriter {
 
         log.debug("Write byte {} to target address 0x{}", b, Integer.toHexString(address));
 
+
+        if (address >= 0 && address <= RAM_MIRROR_END) {
+            this.ram[address] = b;
+        }
+
         //https://www.nesdev.org/wiki/PPU_programmer_reference#Controller_($2000)_%3E_write
-        if (address == 0x2000) {
+        else if (address == 0x2000) {
             this.ppu.writeCtr(b);
         }
 
@@ -128,7 +152,7 @@ public class Bus implements ByteReadWriter {
         }
         //https://www.nesdev.org/wiki/PPU_programmer_reference#Status_($2002)_%3C_read
         else if (address == 0x2002) {
-
+            throw new RuntimeException("Attempt write only read ppu register.");
         }
 
         //https://www.nesdev.org/wiki/PPU_programmer_reference#OAM_address_($2003)_%3E_write
@@ -168,17 +192,21 @@ public class Bus implements ByteReadWriter {
         //Write to standard controller
         else if (address == 0x4016) {
             this.joyPad.write(b);
-        } else if (address == 0x4017) {
+        }
+
+        //Write to thirty standard controller
+        else if (address == 0x4017) {
             this.joyPad1.write(b);
         }
+
         //Write data to apu
         else if ((address >= 0x4000 && address <= 0x4013) || address == 0x4015) {
-            //to do write to ppu
 
         }
+
         //Write to cpu memory
-        else {
-            this.buffer[address] = b;
+        else if (address >= RPG_ROM && address <= RPG_ROM_END) {
+            throw new RuntimeException("RPG-ROM belong only memory area.");
         }
     }
 

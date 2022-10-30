@@ -8,11 +8,12 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.util.Arrays;
 
-
+@Slf4j
 public class NES4j extends Application {
     private ListView<NesGameItem> listView;
 
