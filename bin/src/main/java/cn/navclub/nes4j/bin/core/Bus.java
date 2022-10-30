@@ -120,7 +120,6 @@ public class Bus implements ByteReadWriter {
         else {
             b = 0;
         }
-        log.debug("From 0x{} read a byte 0x{}", Integer.toHexString(address), Integer.toHexString(b & 0xff));
         return b;
     }
 
@@ -133,8 +132,6 @@ public class Bus implements ByteReadWriter {
      */
     public void write(int address, byte b) {
         address = this.map(address);
-
-        log.debug("Write byte {} to target address 0x{}", b, Integer.toHexString(address));
 
 
         if (address >= 0 && address <= RAM_MIRROR_END) {

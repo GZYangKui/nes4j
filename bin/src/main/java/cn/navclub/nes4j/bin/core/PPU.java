@@ -79,7 +79,7 @@ public class PPU implements ByteReadWriter {
         }
 
         //每条扫描线条耗时341个PPU时钟约113.667个CPU时钟
-        if (this.spriteHit(cycles)) {
+        if (this.spriteHit(this.cycles)) {
             this.status.set(PStatus.SPRITE_ZERO_HIT);
         }
 
@@ -197,8 +197,8 @@ public class PPU implements ByteReadWriter {
     }
 
     private boolean spriteHit(int cycle) {
-        var y = this.oam[0] & 0xff;
         var x = this.oam[3] & 0xff;
+        var y = this.oam[0] & 0xff;
         return y + 5 == this.scanLine && x <= cycle && this.mask.contain(MaskFlag.SHOW_SPRITES);
     }
 

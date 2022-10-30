@@ -17,7 +17,6 @@ public class Frame {
     }
 
     public Frame() {
-        //width=32*8 height=30*8
         this(256 * 2, 240);
     }
 

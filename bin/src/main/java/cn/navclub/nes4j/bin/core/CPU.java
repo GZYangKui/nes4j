@@ -351,7 +351,6 @@ public class CPU {
         this.pc = this.bus.readInt(interrupt.getVector());
     }
 
-    private int counter;
 
     public void next() {
 
