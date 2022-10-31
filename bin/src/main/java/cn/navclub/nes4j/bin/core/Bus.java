@@ -77,14 +77,11 @@ public class Bus implements ByteReadWriter {
         address = this.map(address);
         if (address >= 0 && address <= RAM_MIRROR_END) {
             b = this.ram[address];
-        }
-        else if (address == 0x2002) {
+        } else if (address == 0x2002) {
             b = this.ppu.readStatus();
-        }
-        else if (address == 0x2004) {
+        } else if (address == 0x2004) {
             b = this.ppu.readOam();
-        }
-        else if (address == 0x2007) {
+        } else if (address == 0x2007) {
             b = this.ppu.read(address);
         }
         //player1
@@ -93,7 +90,8 @@ public class Bus implements ByteReadWriter {
         }
         //player2
         else if (address == 0x4017) {
-            b = this.joyPad1.read();
+//            b = this.joyPad1.read();
+            b = 0;
         }
         //apu only write register
         else if (address >= 0x4000 && address <= 0x4013) {
@@ -193,7 +191,7 @@ public class Bus implements ByteReadWriter {
 
         //Write to thirty standard controller
         else if (address == 0x4017) {
-            this.joyPad1.write(b);
+            //todo write joypad2
         }
 
         //Write data to apu

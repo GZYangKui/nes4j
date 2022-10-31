@@ -127,6 +127,12 @@ public class GameWorld extends Stage {
                 if (code == KeyCode.ENTER) {
                     this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_ST));
                 }
+                if (code == KeyCode.LEFT) {
+                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_LF));
+                }
+                if (code == KeyCode.RIGHT) {
+                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_RT));
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }

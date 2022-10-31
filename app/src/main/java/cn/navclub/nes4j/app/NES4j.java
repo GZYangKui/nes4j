@@ -39,6 +39,8 @@ public class NES4j extends Application {
         stage.setHeight(900);
         stage.setScene(scene);
         stage.setTitle("nes4j");
+        stage.setResizable(false);
+        stage.getIcons().add(FXResource.loadImage("icon.png"));
         stage.show();
 
         this.loadLocalGame();

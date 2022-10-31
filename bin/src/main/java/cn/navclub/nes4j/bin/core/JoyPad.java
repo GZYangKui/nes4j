@@ -43,21 +43,21 @@ public class JoyPad {
     }
 
     public enum JoypadButton {
-        //b
+        //A
         BTN_A,
-        //a
+        //B
         BTN_B,
-        //select
+        //Select
         BTN_SE,
-        //start
+        //Start
         BTN_ST,
-        //up
+        //UP
         BTN_UP,
-        //down
+        //Down
         BTN_DN,
-        //left
+        //Left
         BTN_LF,
-        //right
+        //Right
         BTN_RT
     }
 
