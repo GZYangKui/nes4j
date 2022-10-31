@@ -640,7 +640,7 @@ public class CPU {
         if (instruction == CPUInstruction.SHX) {
             var addr = this.modeProvider.getAbsAddr(mode);
             var value = this.rx & MathUtil.unsignedAdd((addr >> 8) & 0xff, 1);
-            this.bus.writeInt(addr, value);
+            this.bus.writeUSByte(addr, value);
         }
 
         if (instruction == CPUInstruction.TAX || instruction == CPUInstruction.LXA) {
