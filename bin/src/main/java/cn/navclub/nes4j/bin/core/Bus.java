@@ -18,7 +18,9 @@ public class Bus implements ByteReadWriter {
     private final byte[] rpg;
     @Getter
     private final int rpgSize;
+    //player1
     private final JoyPad joyPad;
+    //player2
     private final JoyPad joyPad1;
     private final BiConsumer<PPU, JoyPad> gameLoopCallback;
     //记录当前ppu模块是否触发NMI

@@ -176,7 +176,7 @@ public class CPU {
         if (rora) {
             this.raUpdate(value);
         } else {
-            this.bus.writeInt(addr, value);
+            this.bus.writeUSByte(addr, value);
             this.NZUpdate(value);
         }
     }
@@ -375,7 +375,7 @@ public class CPU {
 
 //        log.info("({}){}(0x{}) {}", pcState - 1, instruction,
 //                Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502));
-
+//
         if (instruction == CPUInstruction.JMP) {
             this.pc = this.modeProvider.getAbsAddr(mode);
         }
@@ -649,6 +649,12 @@ public class CPU {
             }
             this.rx = this.ra;
             this.NZUpdate(this.rx);
+        }
+
+        if (instruction == CPUInstruction.SAX) {
+            var data = this.ra & this.rx;
+            var addr = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
+            this.bus.writeUSByte(addr, data);
         }
 
 

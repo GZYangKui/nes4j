@@ -564,6 +564,13 @@ public enum CPUInstruction {
             Instruction6502.create(ByteUtil.overflow(0x53), 2, 8, Indirect_Y)
     }),
 
+    SAX(new Instruction6502[]{
+            Instruction6502.create((byte) 0x87, 2, 3, ZeroPage),
+            Instruction6502.create((byte) 0x97, 2, 4, ZeroPage_Y),
+            Instruction6502.create((byte) 0x8f, 3, 4, Absolute),
+            Instruction6502.create((byte) 0x83, 2, 6, Indirect_X),
+    }),
+
 
     NOP_S(new Instruction6502[]{
             Instruction6502.create(ByteUtil.overflow(0x1A), 1, 2, Implied),
