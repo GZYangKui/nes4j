@@ -14,6 +14,7 @@ public class Bus implements ByteReadWriter {
     private static final int RAM_MIRROR_END = 0x1fff;
 
     private final PPU ppu;
+    private final APU apu;
     private final byte[] ram;
     private final byte[] rpg;
     @Getter
@@ -28,6 +29,7 @@ public class Bus implements ByteReadWriter {
 
     public Bus(byte[] rpg, final PPU ppu, BiConsumer<PPU, JoyPad> gameLoopCallback, JoyPad joyPad, JoyPad joyPad1) {
         this.ppu = ppu;
+        this.apu = new APU();
         this.joyPad = joyPad;
         this.joyPad1 = joyPad1;
         this.rpgSize = rpg.length;
@@ -101,7 +103,7 @@ public class Bus implements ByteReadWriter {
         }
         //Read from apu
         else if (address == 0x4015) {
-            b = 0;
+            return this.apu.read(0x4015);
         }
         //only write memory area
         else if (address == 0x2006
@@ -198,7 +200,7 @@ public class Bus implements ByteReadWriter {
 
         //Write data to apu
         else if ((address >= 0x4000 && address <= 0x4013) || address == 0x4015) {
-
+            this.apu.write(address, b);
         }
 
         //Write to cpu memory
@@ -211,6 +213,8 @@ public class Bus implements ByteReadWriter {
 
     public void tick(int cycle) {
         this.cycle += cycle;
+        //APU时钟是CPU时钟两倍
+        this.apu.tick(cycle * 2);
         //PPU时钟是CPU时钟的3倍
         this.ppu.tick(cycle * 3);
         var nmi = this.ppu.isNMI();

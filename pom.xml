@@ -15,7 +15,7 @@
         <slf4j.version>2.0.3</slf4j.version>
         <junit.version>5.9.0</junit.version>
         <lombok.version>1.18.24</lombok.version>
-        <logback.version>1.4.0</logback.version>
+        <logback.version>1.4.4</logback.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
@@ -77,5 +77,14 @@
                 </configuration>
             </plugin>
         </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.3.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 </project>

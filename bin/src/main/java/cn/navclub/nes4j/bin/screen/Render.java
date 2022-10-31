@@ -54,12 +54,7 @@ public class Render {
         };
     }
 
-    private static int counter;
-
     public static void render(PPU ppu, Frame frame) {
-        if (counter++==26){
-            System.out.println("debug");
-        }
         var vram = ppu.getVram();
         var mirror = ppu.getMirrors();
 
@@ -102,13 +97,18 @@ public class Render {
             var idx = oam[i + 1] & 0xff;
             var tx = oam[i + 3] & 0xff;
             var ty = oam[i] & 0xff;
-            var vFlip = (oam[i + 2] & 0xff) >> 7 == 1;
-            var hFlip = (oam[i + 2] & 0xff) >> 6 == 1;
+
+            var vFlip = ((oam[i + 2] & 0xff) >> 7 & 1) == 1;
+            var hFlip = ((oam[i + 2] & 0xff) >> 6 & 1) == 1;
+
             var pIdx = (oam[i + 2] & 0xff) & 0b11;
+
             var sp = spritePalette(ppu, pIdx);
             var bank = ppu.getControl().spritePattern();
+
             var tile = new byte[16];
             System.arraycopy(ppu.getCh(), bank + idx * 16, tile, 0, 16);
+
             for (int y = 0; y < 8; y++) {
                 var upper = tile[y] & 0xff;
                 var lower = tile[y + 8] & 0xff;
