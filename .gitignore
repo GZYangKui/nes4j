@@ -1,2 +1,4 @@
 .idea
 target
+cmake-build-debug
+native

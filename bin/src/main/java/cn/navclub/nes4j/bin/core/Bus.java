@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.ByteReadWriter;
+import cn.navclub.nes4j.bin.NESystemComponent;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 @Slf4j
-public class Bus implements ByteReadWriter {
+public class Bus implements NESystemComponent {
     private static final int RPG_ROM = 0x8000;
     private static final int RPG_ROM_END = 0xFFFF;
     private static final int RAM_MIRROR_END = 0x1fff;
@@ -209,13 +209,47 @@ public class Bus implements ByteReadWriter {
         }
     }
 
+    /**
+     * 向指定位置写入无符号字节
+     */
+    public void writeUSByte(int address, int value) {
+        this.write(address, (byte) value);
+    }
+
+    /**
+     * 向目标地址写入双字节
+     */
+    public void writeInt(int address, int value) {
+        var lsb = (byte) (value & 0xff);
+        var msb = (byte) (value >> 8 & 0xff);
+        this.write(address, lsb);
+        this.write(address + 1, msb);
+    }
+
+    /**
+     * 读无符号字节
+     */
+    public int readUSByte(int address) {
+        return this.read(address) & 0xff;
+    }
+
+    /**
+     * 以小端序形式读取数据
+     */
+    public int readInt(int address) {
+        var lsb = this.read(address);
+        var msb = this.read(address + 1);
+        return (lsb & 0xff) | ((msb & 0xff) << 8);
+    }
+
     private int cycle;
 
+    @Override
     public void tick(int cycle) {
         this.cycle += cycle;
-        //APU时钟是CPU时钟两倍
-        this.apu.tick(cycle * 2);
-        //PPU时钟是CPU时钟的3倍
+        //同步APU时钟
+        this.apu.tick(cycle);
+        //同步PPU时钟
         this.ppu.tick(cycle * 3);
         var nmi = this.ppu.isNMI();
         if (!this.ppuIsNMI.get() && nmi && gameLoopCallback != null) {

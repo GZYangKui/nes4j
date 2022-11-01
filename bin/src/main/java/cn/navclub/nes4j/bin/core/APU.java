@@ -1,12 +1,12 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.ByteReadWriter;
+import cn.navclub.nes4j.bin.NESystemComponent;
 import cn.navclub.nes4j.bin.apu.Channel;
 
 /**
  * <a href="https://www.nesdev.org/wiki/APU">APU Document</a>
  */
-public class APU implements ByteReadWriter {
+public class APU implements NESystemComponent {
     private final SRegister status;
     private final Channel pulse0;
     private final Channel pulse1;
@@ -55,6 +55,7 @@ public class APU implements ByteReadWriter {
         return this.status.bits;
     }
 
+    @Override
     public void tick(int cycle) {
 
     }

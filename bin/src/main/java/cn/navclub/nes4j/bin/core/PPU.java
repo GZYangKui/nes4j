@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.ByteReadWriter;
+import cn.navclub.nes4j.bin.NESystemComponent;
 import cn.navclub.nes4j.bin.core.impl.CTRegister;
 import cn.navclub.nes4j.bin.core.impl.MKRegister;
 import cn.navclub.nes4j.bin.enums.MaskFlag;
@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * <a href="https://www.nesdev.org/wiki/PPU_programmer_reference">PPU document</a>
  */
-public class PPU implements ByteReadWriter {
+public class PPU implements NESystemComponent {
 
     @Getter
     private final byte[] ch;
@@ -70,6 +70,7 @@ public class PPU implements ByteReadWriter {
     /**
      * <a hrep="https://www.nesdev.org/wiki/PPU_rendering">PPU Render</a>
      */
+    @Override
     public void tick(int cycles) {
         this.cycles += cycles;
 
