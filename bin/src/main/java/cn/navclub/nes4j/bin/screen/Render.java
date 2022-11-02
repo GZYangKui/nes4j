@@ -1,12 +1,13 @@
 package cn.navclub.nes4j.bin.screen;
 
 import cn.navclub.nes4j.bin.core.PPU;
+import lombok.Getter;
 
 public class Render {
-    private static final int[][] SYS_PALETTE;
+    private static final int[][] DEF_SYS_PALETTE;
 
     static {
-        SYS_PALETTE = new int[][]{
+        DEF_SYS_PALETTE = new int[][]{
                 {0x80, 0x80, 0x80}, {0x00, 0x3D, 0xA6}, {0x00, 0x12, 0xB0}, {0x44, 0x00, 0x96}, {0xA1, 0x00, 0x5E},
                 {0xC7, 0x00, 0x28}, {0xBA, 0x06, 0x00}, {0x8C, 0x17, 0x00}, {0x5C, 0x2F, 0x00}, {0x10, 0x45, 0x00},
                 {0x05, 0x4A, 0x00}, {0x00, 0x47, 0x2E}, {0x00, 0x41, 0x66}, {0x00, 0x00, 0x00}, {0x05, 0x05, 0x05},
@@ -23,11 +24,18 @@ public class Render {
         };
     }
 
+    @Getter
+    private final int[][] sysPalette;
+
+    public Render() {
+        this.sysPalette = DEF_SYS_PALETTE;
+    }
+
     /**
      * <a href="https://www.nesdev.org/wiki/PPU_attribute_tables">PPU attribute tables</a>
      */
 
-    private static byte[] bgPalette(PPU ppu, byte[] atrTable, int column, int row) {
+    public byte[] bgPalette(PPU ppu, byte[] atrTable, int column, int row) {
         var idx = 0;
         var test = 3;
         var a = column % 4 / 2;
@@ -54,7 +62,7 @@ public class Render {
         };
     }
 
-    public static void render(PPU ppu, Frame frame) {
+    public void render(PPU ppu, Frame frame) {
         var vram = ppu.getVram();
         var mirror = ppu.getMirrors();
 
@@ -117,9 +125,9 @@ public class Render {
                     upper >>= 1;
                     lower >>= 1;
                     var rgb = switch (value) {
-                        case 1 -> SYS_PALETTE[sp[1]];
-                        case 2 -> SYS_PALETTE[sp[2]];
-                        case 3 -> SYS_PALETTE[sp[3]];
+                        case 1 -> sysPalette[sp[1]];
+                        case 2 -> sysPalette[sp[2]];
+                        case 3 -> sysPalette[sp[3]];
                         default -> new int[0];
                     };
                     if (rgb.length == 0) {
@@ -153,7 +161,7 @@ public class Render {
         };
     }
 
-    private static void renderNameTable(PPU ppu, Frame frame, byte[] nameTable, Rect viewPort, int shiftX, int shiftY) {
+    private void renderNameTable(PPU ppu, Frame frame, byte[] nameTable, Rect viewPort, int shiftX, int shiftY) {
 
         var attrTable = new byte[64];
         System.arraycopy(nameTable, 0x3c0, attrTable, 0, attrTable.length);
@@ -177,10 +185,10 @@ public class Render {
                     upper >>= 1;
                     lower >>= 1;
                     var rgb = switch (value) {
-                        case 0 -> SYS_PALETTE[ppu.getPaletteTable()[0]];
-                        case 1 -> SYS_PALETTE[palette[1]];
-                        case 2 -> SYS_PALETTE[palette[2]];
-                        case 3 -> SYS_PALETTE[palette[3]];
+                        case 0 -> sysPalette[ppu.getPaletteTable()[0]];
+                        case 1 -> sysPalette[palette[1]];
+                        case 2 -> sysPalette[palette[2]];
+                        case 3 -> sysPalette[palette[3]];
                         //throw exception?
                         default -> new int[]{0, 0, 0};
                     };

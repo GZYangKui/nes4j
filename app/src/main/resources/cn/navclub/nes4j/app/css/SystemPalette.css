@@ -1,0 +1,7 @@
+@import "common.css";
+
+VBox {
+    -fx-spacing: 1em;
+    -fx-alignment: CENTER-LEFT;
+    -fx-padding: .5em;
+}

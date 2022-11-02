@@ -1,3 +1,8 @@
+.root {
+    -nes4j-background-color: #fff;
+}
+
+
 ScrollPane {
     -fx-background-insets: 0;
 }

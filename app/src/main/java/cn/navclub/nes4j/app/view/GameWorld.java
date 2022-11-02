@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.app.view;
 
 import cn.navclub.nes4j.app.FXResource;
+import cn.navclub.nes4j.app.dialog.DPalette;
 import cn.navclub.nes4j.app.event.GameEventWrap;
 import cn.navclub.nes4j.app.util.UIUtil;
 import cn.navclub.nes4j.bin.NES;
@@ -9,15 +10,13 @@ import cn.navclub.nes4j.bin.core.PPU;
 import cn.navclub.nes4j.bin.screen.Frame;
 import cn.navclub.nes4j.bin.screen.Render;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Label;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
+import javafx.scene.control.*;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
@@ -42,6 +41,7 @@ public class GameWorld extends Stage {
     private NES instance;
     //记录最后一帧时间戳
     private long lastFrameTime;
+    private final Render render;
     //记录1s内帧数
     private int frameCounter;
     private final StackPane stackPane;
@@ -53,6 +53,7 @@ public class GameWorld extends Stage {
 
     public GameWorld(final File file) {
         this.frame = new Frame();
+        this.render = new Render();
         this.canvas = new Canvas();
         this.menuBar = new MenuBar();
         this.stackPane = new StackPane();
@@ -62,14 +63,21 @@ public class GameWorld extends Stage {
         this.eventQueue = new LinkedBlockingDeque<>();
 
 
+        var view = new Menu("View");
         var emulator = new Menu("Emulator");
 
-        var pausePlay = new MenuItem("Pause/Play");
         var softRest = new MenuItem("Rest(Soft)");
+        var pausePlay = new MenuItem("Pause/Play");
+        var palette = new MenuItem("System Palette");
         var hardwareRest = new MenuItem("Reset(Hardware)");
 
-        menuBar.getMenus().add(emulator);
+
+        palette.setOnAction(this::systemPalette);
+
+        view.getItems().addAll(palette);
         emulator.getItems().addAll(pausePlay, softRest, hardwareRest);
+
+        menuBar.getMenus().addAll(emulator, view);
 
         this.canvas.widthProperty().bind(this.stackPane.widthProperty());
         this.canvas.heightProperty().bind(this.stackPane.heightProperty());
@@ -140,6 +148,15 @@ public class GameWorld extends Stage {
 
     }
 
+    private void systemPalette(ActionEvent event) {
+        var dialog = new DPalette(this.render.getSysPalette());
+        var buttonType = dialog.showAndWait().orElse(null);
+        //Restore system palette
+        if (buttonType == null || buttonType == ButtonType.CANCEL) {
+            dialog.restore(this.render.getSysPalette());
+        }
+    }
+
 
     private void execute(File file) {
         CompletableFuture.runAsync(() -> {
@@ -161,7 +178,8 @@ public class GameWorld extends Stage {
     }
 
     private void gameLoopCallback(PPU ppu, JoyPad joyPad) {
-        Render.render(ppu, this.frame);
+        this.render.render(ppu, this.frame);
+
         var wPixel = 3;
         var hPixel = 3;
         var w = frame.getWidth();
