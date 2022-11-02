@@ -12,11 +12,16 @@ public class Bus implements NESystemComponent {
     private static final int RPG_ROM = 0x8000;
     private static final int RPG_ROM_END = 0xFFFF;
     private static final int RAM_MIRROR_END = 0x1fff;
+    private static final int RPG_UNIT = 16 * 1024;
+
 
     private final PPU ppu;
     private final APU apu;
     private final byte[] ram;
-    private final byte[] rpg;
+    //bank0 0x8000-0xBFFF
+    private final byte[] rpg0;
+    //bank2 0xC000-0xFFFF
+    private final byte[] rpg1;
     @Getter
     private final int rpgSize;
     //player1
@@ -33,9 +38,15 @@ public class Bus implements NESystemComponent {
         this.joyPad = joyPad;
         this.joyPad1 = joyPad1;
         this.rpgSize = rpg.length;
+
         this.ram = new byte[2048];
-        this.rpg = new byte[32 * 1024];
-        System.arraycopy(rpg, 0, this.rpg, 0, rpgSize);
+
+        this.rpg0 = new byte[RPG_UNIT];
+        this.rpg1 = new byte[RPG_UNIT];
+
+        System.arraycopy(rpg, 0, this.rpg0, 0, RPG_UNIT);
+        System.arraycopy(rpg, (this.rpgSize / RPG_UNIT - 1) * RPG_UNIT, this.rpg1, 0, RPG_UNIT);
+
         this.gameLoopCallback = gameLoopCallback;
 
     }
@@ -64,7 +75,9 @@ public class Bus implements NESystemComponent {
         if (rpgSize == 0x4000 && address >= 0x4000) {
             address %= 0x4000;
         }
-        return this.rpg[address];
+        var second = address >= RPG_UNIT;
+        address %= RPG_UNIT;
+        return second ? this.rpg1[address] : this.rpg0[address];
     }
 
 

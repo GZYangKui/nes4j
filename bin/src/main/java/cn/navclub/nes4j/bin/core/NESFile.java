@@ -17,9 +17,11 @@ public class NESFile {
     private final int chSize;
     private final int flag6;
     private final int flag7;
+    private final int flag8;
     //0->horizontal 1->vertical
     private final int mirrors;
 
+    private final int mapper;
     private final byte[] rgb;
     private final byte[] ch;
     private final byte[] train;
@@ -35,7 +37,15 @@ public class NESFile {
         this.chSize = this.calChSize();
         this.flag6 = Byte.toUnsignedInt(headers[6]);
         this.flag7 = Byte.toUnsignedInt(headers[7]);
+        this.flag8 = Byte.toUnsignedInt(headers[8]);
         this.mirrors = (flag6 & 1) != 0 ? 1 : 0;
+
+        var mapper = (this.flag7 & 0b1111_0000) | ((this.flag6 & 0b1111_0000) >> 4);
+        //NES2.0包含12位
+        if (this.format == NESFormat.NES_20) {
+            mapper |= ((this.flag8 & 0b0000_1111) << 8);
+        }
+        this.mapper = mapper;
 
         var trainSize = this.trainAreaSize();
 
