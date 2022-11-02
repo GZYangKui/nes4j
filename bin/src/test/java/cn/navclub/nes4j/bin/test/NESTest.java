@@ -13,15 +13,17 @@ import java.util.function.BiConsumer;
 
 public class NESTest {
     private int counter;
+
     @Test
     void testNesFile() {
         var frame = new Frame();
+        var render = new Render();
         BiConsumer<PPU, JoyPad> gameLoopCallback = (ppu, joyPad) -> {
             counter++;
-            if (counter==27){
+            if (counter == 27) {
                 System.out.println("stop");
             }
-            Render.render(ppu, frame);
+            render.render(ppu, frame);
         };
 
         var nes = NES.NESBuilder.newBuilder()
@@ -34,8 +36,9 @@ public class NESTest {
     @Test
     void test_hello_world() {
         var frame = new Frame();
+        var render = new Render();
         BiConsumer<PPU, JoyPad> gameLoopCallback = (ppu, joyPad) -> {
-            Render.render(ppu, frame);
+            render.render(ppu, frame);
         };
 
         var nes = NES.NESBuilder.newBuilder()
@@ -62,10 +65,11 @@ public class NESTest {
     }
 
     @Test
-    void test_cpu_dummy_read(){
+    void test_cpu_dummy_read() {
         var frame = new Frame();
+        var render = new Render();
         BiConsumer<PPU, JoyPad> gameLoopCallback = (ppu, joyPad) -> {
-            Render.render(ppu, frame);
+            render.render(ppu, frame);
         };
         var nes = NES.NESBuilder.newBuilder()
                 .gameLoopCallback(gameLoopCallback)

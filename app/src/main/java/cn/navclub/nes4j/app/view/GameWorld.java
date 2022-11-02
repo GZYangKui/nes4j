@@ -37,14 +37,12 @@ public class GameWorld extends Stage {
     private final Frame frame;
     private final Canvas canvas;
     private final GraphicsContext ctx;
-    private final BorderPane viewpoint;
     private NES instance;
     //记录最后一帧时间戳
     private long lastFrameTime;
     private final Render render;
     //记录1s内帧数
     private int frameCounter;
-    private final StackPane stackPane;
     private final Label frameLabel;
     private final MenuBar menuBar;
     //使用队列模式在GameLoop和UILoop之间共享事件
@@ -56,8 +54,6 @@ public class GameWorld extends Stage {
         this.render = new Render();
         this.canvas = new Canvas();
         this.menuBar = new MenuBar();
-        this.stackPane = new StackPane();
-        this.viewpoint = new BorderPane();
         this.frameLabel = new Label("fps:0");
         this.ctx = canvas.getGraphicsContext2D();
         this.eventQueue = new LinkedBlockingDeque<>();
@@ -79,8 +75,10 @@ public class GameWorld extends Stage {
 
         menuBar.getMenus().addAll(emulator, view);
 
-        this.canvas.widthProperty().bind(this.stackPane.widthProperty());
-        this.canvas.heightProperty().bind(this.stackPane.heightProperty());
+        var stackPane = new StackPane();
+
+        this.canvas.widthProperty().bind(stackPane.widthProperty());
+        this.canvas.heightProperty().bind(stackPane.heightProperty());
 
         StackPane.setAlignment(this.frameLabel, Pos.TOP_LEFT);
 
@@ -88,10 +86,12 @@ public class GameWorld extends Stage {
         this.frameLabel.setFont(Font.font(20));
         this.frameLabel.setPadding(new Insets(10, 10, 0, 0));
 
-        this.stackPane.getChildren().addAll(this.canvas, this.frameLabel);
+        stackPane.getChildren().addAll(this.canvas, this.frameLabel);
 
-        this.viewpoint.setTop(menuBar);
-        this.viewpoint.setCenter(this.stackPane);
+        var viewpoint = new BorderPane();
+
+        viewpoint.setTop(menuBar);
+        viewpoint.setCenter(stackPane);
 
         this.setWidth(900);
         this.setHeight(600);

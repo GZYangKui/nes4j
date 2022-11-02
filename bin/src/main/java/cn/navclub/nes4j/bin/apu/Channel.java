@@ -1,48 +1,31 @@
 package cn.navclub.nes4j.bin.apu;
 
-import cn.navclub.nes4j.bin.util.ByteUtil;
+import cn.navclub.nes4j.bin.CycleDriver;
+import cn.navclub.nes4j.bin.enums.ChannelType;
 
 /**
- * APU Channel
+ *
+ * 音频通道
+ *
  */
-public class Channel {
-    private final byte[] buffer;
+public class Channel implements CycleDriver {
     private final ChannelType type;
+    private final ChannelTimer timer;
+
 
     public Channel(ChannelType type) {
         this.type = type;
-        this.buffer = new byte[4];
+        this.timer = new ChannelTimer();
     }
 
     public void update(int address, byte b) {
-        var pos = address % type.offset;
-        this.buffer[pos] = b;
+        var pos = address % type.getOffset();
     }
+
 
     @Override
-    public String toString() {
-        var sb = new StringBuilder();
-        var len = this.buffer.length;
-        for (int i = 0; i < len; i++) {
-            sb.append(ByteUtil.toBinStr(this.buffer[i]));
-            if (i != len - 1) {
-                sb.append("\r\n");
-            }
-        }
-        return sb.toString();
-    }
-
-    public enum ChannelType {
-        PULSE(0x4000),
-        PULSE1(0x4004),
-        TRIANGLE(0x4008),
-        NOISE(0x400c),
-        DMC(0x4010);
-
-        private final int offset;
-
-        ChannelType(int offset) {
-            this.offset = offset;
-        }
+    public void tick(int cycle) {
+        //驱动定时器时钟
+        this.timer.tick((int) Math.round(cycle * this.type.getMultiple()));
     }
 }

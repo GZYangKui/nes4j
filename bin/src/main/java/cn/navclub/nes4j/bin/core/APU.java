@@ -2,6 +2,7 @@ package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.NESystemComponent;
 import cn.navclub.nes4j.bin.apu.Channel;
+import cn.navclub.nes4j.bin.enums.ChannelType;
 
 /**
  * <a href="https://www.nesdev.org/wiki/APU">APU Document</a>
@@ -17,11 +18,11 @@ public class APU implements NESystemComponent {
     public APU() {
         this.status = new SRegister();
 
-        this.dmc = new Channel(Channel.ChannelType.DMC);
-        this.noise = new Channel(Channel.ChannelType.NOISE);
-        this.pulse0 = new Channel(Channel.ChannelType.PULSE);
-        this.pulse1 = new Channel(Channel.ChannelType.PULSE1);
-        this.triangle = new Channel(Channel.ChannelType.TRIANGLE);
+        this.dmc = new Channel(ChannelType.DMC);
+        this.noise = new Channel(ChannelType.NOISE);
+        this.pulse0 = new Channel(ChannelType.PULSE);
+        this.pulse1 = new Channel(ChannelType.PULSE1);
+        this.triangle = new Channel(ChannelType.TRIANGLE);
     }
 
     @Override
@@ -57,6 +58,10 @@ public class APU implements NESystemComponent {
 
     @Override
     public void tick(int cycle) {
-
+        this.dmc.tick(cycle);
+        this.noise.tick(cycle);
+        this.pulse0.tick(cycle);
+        this.pulse1.tick(cycle);
+        this.triangle.tick(cycle);
     }
 }
