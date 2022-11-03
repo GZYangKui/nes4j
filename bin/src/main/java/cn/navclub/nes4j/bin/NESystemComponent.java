@@ -1,5 +1,7 @@
 package cn.navclub.nes4j.bin;
 
+import cn.navclub.nes4j.bin.function.CycleDriver;
+
 /**
  *
  * NES系统核心组件功能抽象

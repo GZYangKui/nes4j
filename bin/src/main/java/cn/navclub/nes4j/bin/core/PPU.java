@@ -37,6 +37,7 @@ public class PPU implements NESystemComponent {
     private int scanLine;
     private byte readByteBuf;
     //判断是否发生NMI中断
+    @Getter
     private final AtomicBoolean isNMI;
 
     private int cycles;
@@ -47,20 +48,23 @@ public class PPU implements NESystemComponent {
     private final PPUScroll scroll;
 
     public PPU(byte[] ch, int mirrors) {
-        this.ch = ch;
+
         this.oamAddr = 0;
         this.scanLine = 0;
         this.readByteBuf = 0;
         this.addr = new PPUAddress();
         this.oam = new byte[256];
         this.mirrors = mirrors;
-        this.scroll = new PPUScroll();
         this.vram = new byte[2048];
         this.mask = new MKRegister();
+        this.ch = new byte[8 * 1024];
+        this.scroll = new PPUScroll();
         this.paletteTable = new byte[32];
         this.status = new SRegister();
         this.control = new CTRegister();
         this.isNMI = new AtomicBoolean(false);
+
+        System.arraycopy(ch, 0, this.ch, 0, Math.min(this.ch.length, ch.length));
     }
 
     public PPU(int mirrors) {
@@ -159,6 +163,10 @@ public class PPU implements NESystemComponent {
     public void write(int address, byte b) {
         var addr = this.addr.get();
 
+        if (addr >= 0x00 && addr <= 0x1fff) {
+            this.ch[addr] = b;
+        }
+
         if (addr >= 0x2000 && addr <= 0x2fff) {
             this.vram[this.ramMirror(addr)] = b;
         }
@@ -172,6 +180,7 @@ public class PPU implements NESystemComponent {
         if (addr >= 0x3f00 && addr <= 0x3fff) {
             this.paletteTable[addr - 0x3f00] = b;
         }
+
         this.inc();
     }
 
@@ -222,10 +231,6 @@ public class PPU implements NESystemComponent {
 
     public void writeScroll(byte b) {
         this.scroll.write(b & 0xff);
-    }
-
-    public boolean isNMI() {
-        return this.isNMI.getAndSet(false);
     }
 
     public void writeMask(byte b) {

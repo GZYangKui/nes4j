@@ -2,6 +2,7 @@ package cn.navclub.nes4j.bin.core;
 
 
 import cn.navclub.nes4j.bin.enums.NESFormat;
+import cn.navclub.nes4j.bin.enums.NMapper;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import cn.navclub.nes4j.bin.util.IOUtil;
 import lombok.Data;
@@ -11,7 +12,7 @@ import java.io.File;
 @Data
 public class NESFile {
     private final static int HEADER_SIZE = 16;
-    private final byte[] headers;
+
     private final NESFormat format;
     private final int rgbSize;
     private final int chSize;
@@ -20,32 +21,39 @@ public class NESFile {
     private final int flag8;
     //0->horizontal 1->vertical
     private final int mirrors;
-
-    private final int mapper;
     private final byte[] rgb;
     private final byte[] ch;
     private final byte[] train;
+    private final NMapper mapper;
     private final byte[] cellaneous;
 
     public NESFile(byte[] buffer) {
-        this.headers = new byte[HEADER_SIZE];
+        var headers = new byte[HEADER_SIZE];
         //从原始数据中复制Header数据
         System.arraycopy(buffer, 0, headers, 0, HEADER_SIZE);
 
-        this.format = this.parseFormat();
-        this.rgbSize = this.calRgbSize();
-        this.chSize = this.calChSize();
+        this.format = this.parseFormat(headers);
+
+        this.chSize = this.calChSize(headers);
+        this.rgbSize = this.calRgbSize(headers);
+
         this.flag6 = Byte.toUnsignedInt(headers[6]);
         this.flag7 = Byte.toUnsignedInt(headers[7]);
         this.flag8 = Byte.toUnsignedInt(headers[8]);
         this.mirrors = (flag6 & 1) != 0 ? 1 : 0;
 
         var mapper = (this.flag7 & 0b1111_0000) | ((this.flag6 & 0b1111_0000) >> 4);
+
         //NES2.0包含12位
         if (this.format == NESFormat.NES_20) {
             mapper |= ((this.flag8 & 0b0000_1111) << 8);
         }
-        this.mapper = mapper;
+
+        if (mapper >= NMapper.values().length) {
+            this.mapper = NMapper.UNKNOWN;
+        } else {
+            this.mapper = NMapper.values()[mapper];
+        }
 
         var trainSize = this.trainAreaSize();
 
@@ -77,12 +85,12 @@ public class NESFile {
         this(IOUtil.readFileAllByte(file));
     }
 
-    private int calChSize() {
-        var lsb = this.headers[5];
+    private int calChSize(byte[] headers) {
+        var lsb = headers[5];
         var size = lsb & 0xff;
         var scale = 8 * 1024;
         if (this.format == NESFormat.NES_20) {
-            var msb = (this.headers[9]) >>> 4;
+            var msb = (headers[9]) >>> 4;
             size = (lsb | msb << 8);
             if (msb > 0x0e) {
                 scale = 0;
@@ -94,12 +102,12 @@ public class NESFile {
     /**
      * 计算RGB-ROM大小
      */
-    private int calRgbSize() {
-        var lsb = this.headers[4];
+    private int calRgbSize(byte[] headers) {
+        var lsb = headers[4];
         var size = (lsb & 0xff);
         var scale = 16 * 1024;
         if (this.format == NESFormat.NES_20) {
-            var msb = this.headers[9] & 0x0f;
+            var msb = headers[9] & 0x0f;
             size = ByteUtil.toInt(new byte[]{lsb, ByteUtil.overflow(msb), 0, 0});
             if (msb > 0x0e) {
                 scale = 0;
@@ -111,7 +119,7 @@ public class NESFile {
     /**
      * 判断当前文件是INES格式还是NES_2.0格式
      */
-    private NESFormat parseFormat() {
+    private NESFormat parseFormat(byte[] headers) {
         if (!(headers[0] == 'N' && headers[1] == 'E' && headers[2] == 'S' && headers[3] == 0X1A)) {
             throw new RuntimeException("Only support ines and nes_2.0 binary format.");
         }

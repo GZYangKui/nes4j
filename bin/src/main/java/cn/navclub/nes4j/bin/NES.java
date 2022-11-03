@@ -1,12 +1,12 @@
 package cn.navclub.nes4j.bin;
 
 import cn.navclub.nes4j.bin.core.*;
+import cn.navclub.nes4j.bin.function.TCallback;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -40,7 +40,7 @@ public class NES {
         this.joyPad1 = new JoyPad();
         this.errorHandler = builder.errorHandler;
         this.ppu = new PPU(file.getCh(), file.getMirrors());
-        this.bus = new Bus(file.getRgb(), ppu, builder.gameLoopCallback, joyPad, joyPad1);
+        this.bus = new Bus(file.getMapper(), file.getRgb(), ppu, builder.gameLoopCallback, joyPad, joyPad1);
         this.cpu = new CPU(this.bus, builder.stackRest, builder.pcReset);
     }
 
@@ -98,7 +98,7 @@ public class NES {
         private int pcReset;
         private int stackRest;
         private Consumer<Throwable> errorHandler;
-        private BiConsumer<PPU, JoyPad> gameLoopCallback;
+        private TCallback<PPU, JoyPad, JoyPad> gameLoopCallback;
 
         public NESBuilder() {
             this.pcReset = PC_RESET;
@@ -130,7 +130,7 @@ public class NES {
             return this;
         }
 
-        public NESBuilder gameLoopCallback(BiConsumer<PPU, JoyPad> gameLoopCallback) {
+        public NESBuilder gameLoopCallback(TCallback<PPU, JoyPad, JoyPad> gameLoopCallback) {
             this.gameLoopCallback = gameLoopCallback;
             return this;
         }

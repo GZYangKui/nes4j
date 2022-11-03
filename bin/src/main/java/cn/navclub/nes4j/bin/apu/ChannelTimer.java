@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.apu;
 
-import cn.navclub.nes4j.bin.CycleDriver;
+import cn.navclub.nes4j.bin.function.CycleDriver;
 import cn.navclub.nes4j.bin.apu.impl.PSequencer;
 import lombok.Setter;
 

@@ -1,11 +1,11 @@
 package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.NESystemComponent;
+import cn.navclub.nes4j.bin.enums.NMapper;
+import cn.navclub.nes4j.bin.function.TCallback;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
 
 @Slf4j
 public class Bus implements NESystemComponent {
@@ -18,41 +18,41 @@ public class Bus implements NESystemComponent {
     private final PPU ppu;
     private final APU apu;
     private final byte[] ram;
-    //bank0 0x8000-0xBFFF
-    private final byte[] rpg0;
-    //bank2 0xC000-0xFFFF
-    private final byte[] rpg1;
+    private final byte[] rpg;
+    private final byte[] rpgRom;
     @Getter
     private final int rpgSize;
     //player1
     private final JoyPad joyPad;
     //player2
     private final JoyPad joyPad1;
-    private final BiConsumer<PPU, JoyPad> gameLoopCallback;
-    //记录当前ppu模块是否触发NMI
-    private final AtomicBoolean ppuIsNMI = new AtomicBoolean(false);
+    //cartridge mapper
+    private final NMapper mapper;
+    private final TCallback<PPU, JoyPad, JoyPad> gameLoopCallback;
 
-    public Bus(byte[] rpg, final PPU ppu, BiConsumer<PPU, JoyPad> gameLoopCallback, JoyPad joyPad, JoyPad joyPad1) {
+    public Bus(NMapper mapper, byte[] rpg, final PPU ppu, TCallback<PPU, JoyPad, JoyPad> gameLoopCallback, JoyPad joyPad, JoyPad joyPad1) {
         this.ppu = ppu;
+        this.rpgRom = rpg;
+        this.mapper = mapper;
         this.apu = new APU();
         this.joyPad = joyPad;
         this.joyPad1 = joyPad1;
         this.rpgSize = rpg.length;
 
         this.ram = new byte[2048];
+        this.rpg = new byte[RPG_UNIT * 2];
 
-        this.rpg0 = new byte[RPG_UNIT];
-        this.rpg1 = new byte[RPG_UNIT];
-
-        System.arraycopy(rpg, 0, this.rpg0, 0, RPG_UNIT);
-        System.arraycopy(rpg, (this.rpgSize / RPG_UNIT - 1) * RPG_UNIT, this.rpg1, 0, RPG_UNIT);
+        if (mapper == NMapper.NROM) {
+            System.arraycopy(rpg, 0, this.rpg, 0, RPG_UNIT);
+        }
+        System.arraycopy(rpg, (this.rpgSize / RPG_UNIT - 1) * RPG_UNIT, this.rpg, RPG_UNIT, RPG_UNIT);
 
         this.gameLoopCallback = gameLoopCallback;
 
     }
 
     public Bus(byte[] rpg, final PPU ppu, JoyPad joyPad, JoyPad joyPad1) {
-        this(rpg, ppu, null, joyPad, joyPad1);
+        this(NMapper.NROM, rpg, ppu, null, joyPad, joyPad1);
     }
 
     /**
@@ -75,9 +75,7 @@ public class Bus implements NESystemComponent {
         if (rpgSize == 0x4000 && address >= 0x4000) {
             address %= 0x4000;
         }
-        var second = address >= RPG_UNIT;
-        address %= RPG_UNIT;
-        return second ? this.rpg1[address] : this.rpg0[address];
+        return this.rpg[address];
     }
 
 
@@ -139,7 +137,7 @@ public class Bus implements NESystemComponent {
     }
 
     public boolean pollPPUNMI() {
-        return this.ppuIsNMI.getAndSet(false);
+        return this.ppu.getIsNMI().getAndSet(false);
     }
 
     /**
@@ -218,8 +216,14 @@ public class Bus implements NESystemComponent {
 
         //Write to cpu memory
         else if (address >= RPG_ROM && address <= RPG_ROM_END) {
-            throw new RuntimeException("RPG-ROM belong only memory area.");
+            if (this.mapper == NMapper.NROM)
+                throw new RuntimeException("RPG-ROM belong only memory area.");
+            else if (this.mapper == NMapper.UX_ROM)
+                System.arraycopy(this.rpgRom, b * RPG_UNIT, this.rpg, 0, RPG_UNIT);
+            else
+                throw new RuntimeException("un-support mapper:" + this.mapper + "");
         }
+
     }
 
     /**
@@ -260,14 +264,15 @@ public class Bus implements NESystemComponent {
     @Override
     public void tick(int cycle) {
         this.cycle += cycle;
+        var nmi = this.ppu.getIsNMI();
+        var before = nmi.get();
         //同步APU时钟
         this.apu.tick(cycle);
         //同步PPU时钟
         this.ppu.tick(cycle * 3);
-        var nmi = this.ppu.isNMI();
-        if (!this.ppuIsNMI.get() && nmi && gameLoopCallback != null) {
-            this.gameLoopCallback.accept(this.ppu, this.joyPad);
+        var after = nmi.get();
+        if (!before && after && gameLoopCallback != null) {
+            this.gameLoopCallback.accept(this.ppu, this.joyPad, this.joyPad1);
         }
-        this.ppuIsNMI.set(nmi);
     }
 }
