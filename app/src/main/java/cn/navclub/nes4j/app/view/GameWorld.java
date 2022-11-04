@@ -7,7 +7,6 @@ import cn.navclub.nes4j.app.util.UIUtil;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.JoyPad;
 import cn.navclub.nes4j.bin.core.PPU;
-import cn.navclub.nes4j.bin.function.TCallback;
 import cn.navclub.nes4j.bin.screen.Frame;
 import cn.navclub.nes4j.bin.screen.Render;
 import javafx.application.Platform;
@@ -146,7 +145,6 @@ public class GameWorld extends Stage {
                 e.printStackTrace();
             }
         });
-
     }
 
     private void systemPalette(ActionEvent event) {

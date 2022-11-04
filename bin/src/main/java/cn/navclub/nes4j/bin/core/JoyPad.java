@@ -58,7 +58,21 @@ public class JoyPad {
         //Left
         BTN_LF,
         //Right
-        BTN_RT
+        BTN_RT;
+
+        @Override
+        public String toString() {
+            return switch (this) {
+                case BTN_A -> "A";
+                case BTN_B -> "B";
+                case BTN_DN -> "Down";
+                case BTN_LF -> "Left";
+                case BTN_RT -> "Right";
+                case BTN_SE -> "Select";
+                case BTN_ST -> "Start";
+                case BTN_UP -> "Up";
+            };
+        }
     }
 
 }

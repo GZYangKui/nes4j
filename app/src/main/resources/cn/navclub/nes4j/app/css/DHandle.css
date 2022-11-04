@@ -1,0 +1,31 @@
+@import "common.css";
+
+.box, .content {
+    -fx-spacing: 2em;
+    -fx-alignment: CENTER;
+}
+
+
+.right-box {
+    -fx-hgap: .5em;
+}
+
+.top-btn {
+    -fx-graphic: url('../img/handler/up.png');
+}
+
+.left-btn {
+    -fx-graphic: url('../img/handler/left.png');
+}
+
+.right-btn {
+    -fx-graphic: url('../img/handler/right.png');
+}
+
+.bottom-btn {
+    -fx-graphic: url('../img/handler/down.png');
+}
+
+.center-box HBox {
+    -fx-spacing: .5em;
+}
