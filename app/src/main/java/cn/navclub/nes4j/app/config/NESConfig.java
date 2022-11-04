@@ -7,9 +7,6 @@ import cn.navclub.nes4j.bin.core.JoyPad;
 import javafx.scene.input.KeyCode;
 import lombok.Setter;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -18,6 +15,7 @@ public class NESConfig {
     private static final KeyMapper[] DEFAULT_KEY_MAPPER = {
             new KeyMapper(JoyPad.JoypadButton.BTN_A, KeyCode.A),
             new KeyMapper(JoyPad.JoypadButton.BTN_B, KeyCode.S),
+            new KeyMapper(JoyPad.JoypadButton.BTN_UP, KeyCode.UP),
             new KeyMapper(JoyPad.JoypadButton.BTN_DN, KeyCode.DOWN),
             new KeyMapper(JoyPad.JoypadButton.BTN_SE, KeyCode.SPACE),
             new KeyMapper(JoyPad.JoypadButton.BTN_ST, KeyCode.ENTER),
