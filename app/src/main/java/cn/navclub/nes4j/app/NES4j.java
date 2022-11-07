@@ -114,6 +114,5 @@ public class NES4j extends Application {
             config = new NESConfig();
         }
         config.setPath(path);
-        config.save();
     }
 }

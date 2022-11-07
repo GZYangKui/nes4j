@@ -65,7 +65,7 @@ public class ByteUtil {
     }
 
     public static byte fixBit(byte b, int i, byte ifPresent, byte ifAbsent) {
-        return (b & (1 << i)) != 0 ? ifPresent : 0;
+        return (b & (1 << i)) != 0 ? ifPresent : ifAbsent;
     }
 
     public static int toInt16(byte[] arr) {

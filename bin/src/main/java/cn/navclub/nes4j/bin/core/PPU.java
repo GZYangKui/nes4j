@@ -4,9 +4,11 @@ import cn.navclub.nes4j.bin.NESystemComponent;
 import cn.navclub.nes4j.bin.core.impl.CTRegister;
 import cn.navclub.nes4j.bin.core.impl.MKRegister;
 import cn.navclub.nes4j.bin.enums.MaskFlag;
+import cn.navclub.nes4j.bin.enums.NameMirror;
 import cn.navclub.nes4j.bin.enums.PStatus;
 import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -43,19 +45,20 @@ public class PPU implements NESystemComponent {
     private int cycles;
     //Mirrors
     @Getter
-    private final int mirrors;
+    @Setter
+    private NameMirror mirrors;
     @Getter
     private final PPUScroll scroll;
 
-    public PPU(byte[] ch, int mirrors) {
+    public PPU(byte[] ch, NameMirror mirrors) {
 
         this.oamAddr = 0;
         this.scanLine = 0;
         this.readByteBuf = 0;
-        this.addr = new PPUAddress();
-        this.oam = new byte[256];
         this.mirrors = mirrors;
+        this.oam = new byte[256];
         this.vram = new byte[2048];
+        this.addr = new PPUAddress();
         this.mask = new MKRegister();
         this.ch = new byte[8 * 1024];
         this.scroll = new PPUScroll();
@@ -67,7 +70,7 @@ public class PPU implements NESystemComponent {
         System.arraycopy(ch, 0, this.ch, 0, Math.min(this.ch.length, ch.length));
     }
 
-    public PPU(int mirrors) {
+    public PPU(NameMirror mirrors) {
         this(new byte[2048], mirrors);
     }
 
@@ -197,18 +200,18 @@ public class PPU implements NESystemComponent {
         var ramIndex = mirrorRam - 0x2000;
         var nameTable = ramIndex / 0x400;
 
-        if ((mirrors == 1 && (nameTable == 2 || nameTable == 3)))
+        if ((mirrors == NameMirror.VERTICAL && (nameTable == 2 || nameTable == 3)))
             ramIndex -= 0x800;
-        else if (mirrors == 0 && (nameTable == 2 || nameTable == 1))
+        else if (mirrors == NameMirror.HORIZONTAL && (nameTable == 2 || nameTable == 1))
             ramIndex -= 0x400;
-        else if (mirrors == 0 && nameTable == 3)
+        else if (mirrors == NameMirror.HORIZONTAL && nameTable == 3)
             ramIndex -= 0x800;
         return ramIndex;
     }
 
     private boolean spriteHit(int cycle) {
-        var x = this.oam[3] & 0xff;
-        var y = this.oam[0] & 0xff;
+        var x = Byte.toUnsignedInt(this.oam[3]);
+        var y = Byte.toUnsignedInt(this.oam[0]);
         return y + 5 == this.scanLine && x <= cycle && this.mask.contain(MaskFlag.SHOW_SPRITES);
     }
 
@@ -230,7 +233,7 @@ public class PPU implements NESystemComponent {
     }
 
     public void writeScroll(byte b) {
-        this.scroll.write(b & 0xff);
+        this.scroll.write(Byte.toUnsignedInt(b));
     }
 
     public void writeMask(byte b) {

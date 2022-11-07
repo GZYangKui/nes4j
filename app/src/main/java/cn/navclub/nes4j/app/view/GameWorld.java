@@ -1,8 +1,10 @@
 package cn.navclub.nes4j.app.view;
 
 import cn.navclub.nes4j.app.FXResource;
+import cn.navclub.nes4j.app.NES4j;
 import cn.navclub.nes4j.app.dialog.DPalette;
 import cn.navclub.nes4j.app.event.GameEventWrap;
+import cn.navclub.nes4j.app.model.KeyMapper;
 import cn.navclub.nes4j.app.util.UIUtil;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.JoyPad;
@@ -116,33 +118,14 @@ public class GameWorld extends Stage {
             if (!(eventType == KeyEvent.KEY_PRESSED || eventType == KeyEvent.KEY_RELEASED)) {
                 return;
             }
-            try {
-                if (code == KeyCode.A) {
-                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_A));
+            for (KeyMapper keyMapper : NES4j.config.getMapper()) {
+                if (keyMapper.getKeyCode() == code) {
+                    try {
+                        this.eventQueue.put(new GameEventWrap(eventType, keyMapper.getButton()));
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
-                if (code == KeyCode.S) {
-                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_B));
-                }
-                if (code == KeyCode.DOWN) {
-                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_DN));
-                }
-                if (code == KeyCode.UP) {
-                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_UP));
-                }
-                if (code == KeyCode.SPACE) {
-                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_SE));
-                }
-                if (code == KeyCode.ENTER) {
-                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_ST));
-                }
-                if (code == KeyCode.LEFT) {
-                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_LF));
-                }
-                if (code == KeyCode.RIGHT) {
-                    this.eventQueue.put(new GameEventWrap(eventType, JoyPad.JoypadButton.BTN_RT));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         });
     }

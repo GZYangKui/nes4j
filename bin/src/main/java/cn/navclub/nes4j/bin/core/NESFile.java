@@ -3,6 +3,7 @@ package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.enums.NESFormat;
 import cn.navclub.nes4j.bin.enums.NMapper;
+import cn.navclub.nes4j.bin.enums.NameMirror;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import cn.navclub.nes4j.bin.util.IOUtil;
 import lombok.Data;
@@ -19,13 +20,12 @@ public class NESFile {
     private final int flag6;
     private final int flag7;
     private final int flag8;
-    //0->horizontal 1->vertical
-    private final int mirrors;
     private final byte[] rgb;
     private final byte[] ch;
     private final byte[] train;
     private final NMapper mapper;
     private final byte[] cellaneous;
+    private final NameMirror mirrors;
 
     public NESFile(byte[] buffer) {
         var headers = new byte[HEADER_SIZE];
@@ -40,7 +40,7 @@ public class NESFile {
         this.flag6 = Byte.toUnsignedInt(headers[6]);
         this.flag7 = Byte.toUnsignedInt(headers[7]);
         this.flag8 = Byte.toUnsignedInt(headers[8]);
-        this.mirrors = (flag6 & 1) != 0 ? 1 : 0;
+        this.mirrors = NameMirror.values()[flag6 & 1];
 
         var mapper = (this.flag7 & 0b1111_0000) | ((this.flag6 & 0b1111_0000) >> 4);
 

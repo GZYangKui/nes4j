@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.screen;
 
 import cn.navclub.nes4j.bin.core.PPU;
+import cn.navclub.nes4j.bin.enums.NameMirror;
 import lombok.Getter;
 
 public class Render {
@@ -75,41 +76,42 @@ public class Render {
         var firstNameTable = new byte[0x400];
         var secondNameTable = new byte[0x400];
 
-        if ((mirror == 1 && (nameTable == 0x2000 || nameTable == 0x2800))
-                || (mirror == 0 && (nameTable == 0x2000 || nameTable == 0x2400))) {
+        if ((mirror == NameMirror.VERTICAL && (nameTable == 0x2000 || nameTable == 0x2800))
+                || (mirror == NameMirror.HORIZONTAL && (nameTable == 0x2000 || nameTable == 0x2400))) {
             System.arraycopy(vram, 0, firstNameTable, 0, 0x400);
             System.arraycopy(vram, 0x400, secondNameTable, 0, 0x400);
-        } else if ((mirror == 1 && (nameTable == 0x2400 || nameTable == 0x2c00))
-                || (mirror == 0 && (nameTable == 0x2800 || nameTable == 0x2c00))) {
+        } else if ((mirror == NameMirror.VERTICAL && (nameTable == 0x2400 || nameTable == 0x2c00))
+                || (mirror == NameMirror.HORIZONTAL && (nameTable == 0x2800 || nameTable == 0x2c00))) {
             System.arraycopy(vram, 0x400, firstNameTable, 0, 0x400);
             System.arraycopy(vram, 0, secondNameTable, 0, 0x400);
         } else {
             throw new RuntimeException("Not support mirror type:" + mirror);
         }
 
-        //Render background 960 tile
-        renderNameTable(ppu, frame, firstNameTable, new Rect(scrollX, scrollY, 256, 240), -scrollX, -scrollY);
+
+        //Render first screen background
+        renderNameTable(ppu, frame, firstNameTable, new Camera(scrollX, scrollY, 256, 240), -scrollX, -scrollY);
 
         if (scrollX > 0) {
             renderNameTable(ppu,
-                    frame, secondNameTable, new Rect(0, 0, scrollX, 240), 256 - scrollX, 0);
+                    frame, secondNameTable, new Camera(0, 0, scrollX, 240), 256 - scrollX, 0);
         } else if (scrollY > 0) {
             renderNameTable(ppu,
-                    frame, secondNameTable, new Rect(0, 0, 256, scrollY), 0, 240 - scrollY);
+                    frame, secondNameTable, new Camera(0, 0, 256, scrollY), 0, 240 - scrollY);
         }
 
 
         var oam = ppu.getOam();
         var length = oam.length;
         for (int i = length - 4; i >= 0; i = i - 4) {
-            var idx = oam[i + 1] & 0xff;
-            var tx = oam[i + 3] & 0xff;
-            var ty = oam[i] & 0xff;
+            var idx = Byte.toUnsignedInt(oam[i + 1]);
+            var tx = Byte.toUnsignedInt(oam[i + 3]);
+            var ty = Byte.toUnsignedInt(oam[i]);
 
-            var vFlip = ((oam[i + 2] & 0xff) >> 7 & 1) == 1;
-            var hFlip = ((oam[i + 2] & 0xff) >> 6 & 1) == 1;
+            var vFlip = ((Byte.toUnsignedInt(oam[i + 2])) >> 7 & 1) == 1;
+            var hFlip = ((Byte.toUnsignedInt(oam[i + 2])) >> 6 & 1) == 1;
 
-            var pIdx = (oam[i + 2] & 0xff) & 0b11;
+            var pIdx = (Byte.toUnsignedInt(oam[i + 2])) & 0b11;
 
             var sp = spritePalette(ppu, pIdx);
             var bank = ppu.getControl().spritePattern();
@@ -118,8 +120,8 @@ public class Render {
             System.arraycopy(ppu.getCh(), bank + idx * 16, tile, 0, 16);
 
             for (int y = 0; y < 8; y++) {
-                var upper = tile[y] & 0xff;
-                var lower = tile[y + 8] & 0xff;
+                var upper = Byte.toUnsignedInt(tile[y]);
+                var lower = Byte.toUnsignedInt(tile[y + 8]);
                 for (int x = 7; x >= 0; x--) {
                     var value = (1 & lower) << 1 | (1 & upper);
                     upper >>= 1;
@@ -161,7 +163,7 @@ public class Render {
         };
     }
 
-    private void renderNameTable(PPU ppu, Frame frame, byte[] nameTable, Rect viewPort, int shiftX, int shiftY) {
+    private void renderNameTable(PPU ppu, Frame frame, byte[] nameTable, Camera camera, int sx, int sy) {
 
         var attrTable = new byte[64];
         System.arraycopy(nameTable, 0x3c0, attrTable, 0, attrTable.length);
@@ -178,8 +180,8 @@ public class Render {
             System.arraycopy(ppu.getCh(), offset, tile, 0, 16);
             var palette = bgPalette(ppu, attrTable, column, row);
             for (int y = 0; y < 8; y++) {
-                var upper = tile[y] & 0xff;
-                var lower = tile[y + 8] & 0xff;
+                var upper = Byte.toUnsignedInt(tile[y]);
+                var lower = Byte.toUnsignedInt(tile[y + 8]);
                 for (int x = 7; x >= 0; x--) {
                     var value = ((1 & lower) << 1) | (1 & upper);
                     upper >>= 1;
@@ -192,12 +194,13 @@ public class Render {
                         //throw exception?
                         default -> new int[]{0, 0, 0};
                     };
-                    var pixelX = column * 8 + x;
-                    var pixelY = row * 8 + y;
+
+                    var py = row * 8 + y;
+                    var px = column * 8 + x;
 
                     //判断是否显示范围
-                    if (pixelX >= viewPort.tx() && pixelX < viewPort.bx() && pixelY >= viewPort.ty() && pixelY < viewPort.by()) {
-                        frame.updatePixel(shiftX + pixelX, shiftY + pixelY, rgb);
+                    if (px >= camera.x0() && px < camera.x1() && py >= camera.y0() && py < camera.y1()) {
+                        frame.updatePixel(sx + px, sy + py, rgb);
                     }
                 }
             }

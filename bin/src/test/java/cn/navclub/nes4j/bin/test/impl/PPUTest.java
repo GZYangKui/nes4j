@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.test.impl;
 
 import cn.navclub.nes4j.bin.core.PPU;
+import cn.navclub.nes4j.bin.enums.NameMirror;
 import cn.navclub.nes4j.bin.enums.PStatus;
 import cn.navclub.nes4j.bin.test.BaseTest;
 import cn.navclub.nes4j.bin.util.ByteUtil;
@@ -12,7 +13,7 @@ import java.util.Arrays;
 public class PPUTest extends BaseTest {
     @Test
     void test_vram_write() {
-        var ppu = new PPU(0);
+        var ppu = new PPU(NameMirror.HORIZONTAL);
         ppu.writeAddr((byte) 0x23);
         ppu.writeAddr((byte) 0x05);
         ppu.write(0, (byte) 0x66);
@@ -22,7 +23,7 @@ public class PPUTest extends BaseTest {
 
     @Test
     void test_ppu_vram_reads() {
-        var ppu = new PPU(0);
+        var ppu = new PPU(NameMirror.HORIZONTAL);
         ppu.writeCtr((byte) 0);
         ppu.getVram()[0x0305] = 0x66;
 
@@ -37,7 +38,7 @@ public class PPUTest extends BaseTest {
 
     @Test
     void test_ppu_vram_reads_cross_page() {
-        var ppu = new PPU(0);
+        var ppu = new PPU(NameMirror.HORIZONTAL);
         ppu.writeCtr((byte) 0);
         ppu.getVram()[0x01ff] = 0x66;
         ppu.getVram()[0x0200] = 0x77;
@@ -53,7 +54,7 @@ public class PPUTest extends BaseTest {
 
     @Test
     void test_ppu_vram_reads_step_32() {
-        var ppu = new PPU(0);
+        var ppu = new PPU(NameMirror.HORIZONTAL);
         ppu.writeCtr((byte) 0b100);
         ppu.getVram()[0x01ff] = 0x66;
         ppu.getVram()[0x01ff + 32] = 0x77;
@@ -73,7 +74,7 @@ public class PPUTest extends BaseTest {
     //   [0x2800 B ] [0x2C00 b ]
     @Test
     void test_vram_horizontal_mirror() {
-        var ppu = new PPU(0);
+        var ppu = new PPU(NameMirror.HORIZONTAL);
         ppu.writeAddr((byte) 0x24);
         ppu.writeAddr((byte) 0x05);
 
@@ -104,7 +105,7 @@ public class PPUTest extends BaseTest {
 
     @Test
     void test_vram_vertical_mirror() {
-        var ppu = new PPU(1);
+        var ppu = new PPU(NameMirror.HORIZONTAL);
 
         ppu.writeAddr((byte) 0x20);
         ppu.writeAddr((byte) 0x05);
@@ -132,7 +133,7 @@ public class PPUTest extends BaseTest {
 
     @Test
     void test_read_status_resets_latch() {
-        var ppu = new PPU(0);
+        var ppu = new PPU(NameMirror.HORIZONTAL);
         ppu.getVram()[0x0305] = 0x66;
 
         //latch
@@ -159,7 +160,7 @@ public class PPUTest extends BaseTest {
 
     @Test
     void test_ppu_vram_mirroring() {
-        var ppu = new PPU(0);
+        var ppu = new PPU(NameMirror.HORIZONTAL);
         ppu.writeCtr((byte) 0);
         ppu.getVram()[0x0305] = 0x66;
 
@@ -173,7 +174,7 @@ public class PPUTest extends BaseTest {
 
     @Test
     void test_read_status_resets_vblank() {
-        var ppu = new PPU(0);
+        var ppu = new PPU(NameMirror.HORIZONTAL);
         ppu.getStatus().set(PStatus.V_BLANK_OCCUR);
 
         var status = ppu.readStatus() & 0xff;
@@ -184,7 +185,7 @@ public class PPUTest extends BaseTest {
 
     @Test
     void test_oam_read_write() {
-        var ppu = new PPU(0);
+        var ppu = new PPU(NameMirror.HORIZONTAL);
 
         ppu.writeOamAddr((byte) 0x10);
         ppu.writeOamByte((byte) 0x66);
@@ -199,7 +200,7 @@ public class PPUTest extends BaseTest {
 
     @Test
     void test_oam_dma() {
-        var ppu = new PPU(0);
+        var ppu = new PPU(NameMirror.HORIZONTAL);
 
         var data = new byte[256];
         Arrays.fill(data, (byte) 0x66);

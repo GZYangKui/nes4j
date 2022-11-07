@@ -45,7 +45,7 @@ public class Bus implements NESystemComponent {
         if (mapper == NMapper.NROM) {
             System.arraycopy(rpg, 0, this.rpg, 0, RPG_UNIT);
         }
-        System.arraycopy(rpg, (this.rpgSize / RPG_UNIT - 1) * RPG_UNIT, this.rpg, RPG_UNIT, RPG_UNIT);
+        System.arraycopy(rpg, ((this.rpgSize / RPG_UNIT) - 1) * RPG_UNIT, this.rpg, RPG_UNIT, RPG_UNIT);
 
         this.gameLoopCallback = gameLoopCallback;
 
@@ -219,7 +219,7 @@ public class Bus implements NESystemComponent {
             if (this.mapper == NMapper.NROM)
                 throw new RuntimeException("RPG-ROM belong only memory area.");
             else if (this.mapper == NMapper.UX_ROM)
-                System.arraycopy(this.rpgRom, b * RPG_UNIT, this.rpg, 0, RPG_UNIT);
+                System.arraycopy(this.rpgRom, Byte.toUnsignedInt(b) * RPG_UNIT, this.rpg, 0, RPG_UNIT);
             else
                 throw new RuntimeException("un-support mapper:" + this.mapper + "");
         }

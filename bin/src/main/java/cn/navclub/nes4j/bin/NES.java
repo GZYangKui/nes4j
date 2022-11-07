@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin;
 
 import cn.navclub.nes4j.bin.core.*;
+import cn.navclub.nes4j.bin.enums.NameMirror;
 import cn.navclub.nes4j.bin.function.TCallback;
 import lombok.Getter;
 import lombok.Setter;
@@ -49,7 +50,7 @@ public class NES {
         this.errorHandler = null;
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
-        this.ppu = new PPU(ch, 1);
+        this.ppu = new PPU(ch, NameMirror.VERTICAL);
         this.bus = new Bus(rpg, ppu, joyPad, joyPad1);
         this.cpu = new CPU(this.bus, stackReset, pcReset);
     }
