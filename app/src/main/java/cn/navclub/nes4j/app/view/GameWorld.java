@@ -1,7 +1,7 @@
 package cn.navclub.nes4j.app.view;
 
 import cn.navclub.nes4j.app.FXResource;
-import cn.navclub.nes4j.app.NES4j;
+import cn.navclub.nes4j.app.NES4J;
 import cn.navclub.nes4j.app.dialog.DPalette;
 import cn.navclub.nes4j.app.event.GameEventWrap;
 import cn.navclub.nes4j.app.model.KeyMapper;
@@ -11,6 +11,7 @@ import cn.navclub.nes4j.bin.core.JoyPad;
 import cn.navclub.nes4j.bin.core.PPU;
 import cn.navclub.nes4j.bin.screen.Frame;
 import cn.navclub.nes4j.bin.screen.Render;
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -21,7 +22,6 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
@@ -39,41 +39,40 @@ public class GameWorld extends Stage {
     private final Frame frame;
     private final Canvas canvas;
     private final GraphicsContext ctx;
-    private NES instance;
-    //记录最后一帧时间戳
-    private long lastFrameTime;
     private final Render render;
-    //记录1s内帧数
-    private int frameCounter;
     private final Label frameLabel;
     private final MenuBar menuBar;
+    private final AnimationTimer fpsTimer;
     //使用队列模式在GameLoop和UILoop之间共享事件
     private final BlockingQueue<GameEventWrap> eventQueue;
 
+    private NES instance;
+    //记录最后一帧时间戳
+    private long lastFrameTime;
+    //记录1s内帧数
+    private int frameCounter;
 
     public GameWorld(final File file) {
         this.frame = new Frame();
         this.render = new Render();
         this.canvas = new Canvas();
         this.menuBar = new MenuBar();
-        this.frameLabel = new Label("fps:0");
+        this.frameLabel = new Label();
+        this.fpsTimer = this.createFPSTimer();
         this.ctx = canvas.getGraphicsContext2D();
         this.eventQueue = new LinkedBlockingDeque<>();
 
+        var view = new Menu(NES4J.localeValue("nes4j.view"));
+        var emulator = new Menu(NES4J.localeValue("nes4j.emulator"));
 
-        var view = new Menu("View");
-        var emulator = new Menu("Emulator");
-
-        var softRest = new MenuItem("Rest(Soft)");
-        var pausePlay = new MenuItem("Pause/Play");
-        var palette = new MenuItem("System Palette");
-        var hardwareRest = new MenuItem("Reset(Hardware)");
-
+        var softRest = new MenuItem(NES4J.localeValue("nes4j.reset"));
+        var pausePlay = new MenuItem(NES4J.localeValue("nes4j.pplay"));
+        var palette = new MenuItem(NES4J.localeValue("nes4j.palette"));
 
         palette.setOnAction(this::systemPalette);
 
         view.getItems().addAll(palette);
-        emulator.getItems().addAll(pausePlay, softRest, hardwareRest);
+        emulator.getItems().addAll(pausePlay, softRest);
 
         menuBar.getMenus().addAll(emulator, view);
 
@@ -111,6 +110,7 @@ public class GameWorld extends Stage {
         });
 
         this.execute(file);
+        this.fpsTimer.start();
 
         this.getScene().addEventHandler(KeyEvent.ANY, event -> {
             var code = event.getCode();
@@ -118,7 +118,7 @@ public class GameWorld extends Stage {
             if (!(eventType == KeyEvent.KEY_PRESSED || eventType == KeyEvent.KEY_RELEASED)) {
                 return;
             }
-            for (KeyMapper keyMapper : NES4j.config.getMapper()) {
+            for (KeyMapper keyMapper : NES4J.config.getMapper()) {
                 if (keyMapper.getKeyCode() == code) {
                     try {
                         this.eventQueue.put(new GameEventWrap(eventType, keyMapper.getButton()));
@@ -128,6 +128,27 @@ public class GameWorld extends Stage {
                 }
             }
         });
+
+        //停止帧数计数器
+        this.setOnCloseRequest(event -> this.fpsTimer.stop());
+    }
+
+    private AnimationTimer createFPSTimer() {
+        return new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                var that = GameWorld.this;
+                var nanoTime = System.nanoTime();
+                if (that.lastFrameTime == 0) {
+                    lastFrameTime = nanoTime;
+                }
+                if ((nanoTime - that.lastFrameTime) >= 1e9) {
+                    that.lastFrameTime = 0;
+                    that.frameLabel.setText("fps:" + frameCounter);
+                    that.frameCounter = 0;
+                }
+            }
+        };
     }
 
     private void systemPalette(ActionEvent event) {
@@ -190,10 +211,8 @@ public class GameWorld extends Stage {
         frame.clear();
         Platform.runLater(() -> {
 
-            //动态调整窗口大小
             this.setWidth(image.getWidth() / 2);
             this.setHeight(image.getHeight() + this.menuBar.getHeight());
-
 
             var width = this.getWidth();
             var height = this.canvas.getHeight();
@@ -202,17 +221,7 @@ public class GameWorld extends Stage {
             this.ctx.fillRect(0, 0, width, height);
             this.ctx.drawImage(image, 0, 0);
 
-            var nanoTime = System.nanoTime();
-            if (this.lastFrameTime == 0) {
-                lastFrameTime = nanoTime;
-            }
-            if (nanoTime - this.lastFrameTime >= 1e9) {
-                this.lastFrameTime = 0;
-                this.frameLabel.setText("fps:" + frameCounter);
-                this.frameCounter = 0;
-            } else {
-                this.frameCounter++;
-            }
+            this.frameCounter++;
         });
     }
 }

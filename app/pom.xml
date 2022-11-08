@@ -90,7 +90,7 @@
 <!--                            <transformers>-->
 <!--                                <transformer-->
 <!--                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">-->
-<!--                                    <mainClass>cn.navclub.nes4j.app.NES4j</mainClass>-->
+<!--                                    <mainClass>cn.navclub.nes4j.app.NES4J</mainClass>-->
 <!--                                </transformer>-->
 <!--                            </transformers>-->
 <!--                        </configuration>-->

@@ -19,24 +19,34 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.ResourceBundle;
 
 @Slf4j
-public class NES4j extends Application {
+public class NES4J extends Application {
+    public static final ResourceBundle RESOURCE_BUNDLE;
     private static final String DEFAULT_CONFIG_PATH = "config/config.json";
+
+    public static NESConfig config;
+
+
+    static {
+        System.setProperty("java.util.PropertyResourceBundle.encoding", "UTF-8");
+        RESOURCE_BUNDLE = ResourceBundle.getBundle("cn.navclub.nes4j.app.language.nes4j");
+    }
 
     private ListView<NesGameItem> listView;
 
-    public static NESConfig config;
 
     @Override
     public void start(Stage stage) {
         this.listView = new ListView<>();
 
         var menuBar = new MenuBar();
-        var menu = new Menu("File");
-        var game = new Menu("Game");
 
-        var input = new MenuItem("Handle");
+        var menu = new Menu(localeValue("nes4j.file", true));
+        var game = new Menu(localeValue("nes4j.game", true));
+
+        var input = new MenuItem(localeValue("nes4j.handle", true));
         input.setOnAction(event -> {
             var handle = new DHandle(config.getMapper());
             var optional = handle.showAndWait();
@@ -87,15 +97,14 @@ public class NES4j extends Application {
     }
 
     public static void main(String[] args) throws Exception {
-        loadLocalConfig(args);
-
+        config = loadLocalConfig(args);
         launch(args);
     }
 
     /**
      * 加载本地配置文件
      */
-    private static void loadLocalConfig(String[] args) throws Exception {
+    private static NESConfig loadLocalConfig(String[] args) throws Exception {
         var map = StrUtil.args2Map(args);
         var pathStr = map.get("--config");
         if (!StrUtil.isBlank(pathStr)) {
@@ -107,6 +116,7 @@ public class NES4j extends Application {
             pathStr = DEFAULT_CONFIG_PATH;
         }
         var path = Path.of(pathStr);
+        final NESConfig config;
         if (Files.exists(path)) {
             var jsonStr = Files.readString(path);
             config = JsonUtil.parse(jsonStr, NESConfig.class);
@@ -114,5 +124,23 @@ public class NES4j extends Application {
             config = new NESConfig();
         }
         config.setPath(path);
+        return config;
+    }
+
+    public static String localeValue(String key) {
+        return localeValue(key, false);
+    }
+
+    public static String localeValue(String key, boolean titleCase) {
+        var value = RESOURCE_BUNDLE.getString(key);
+        if (titleCase) {
+            var arr = value.getBytes();
+            var tb = arr[0];
+            if (tb >= 97 && tb <= 122) {
+                arr[0] = (byte) (tb - 32);
+            }
+            value = new String(arr);
+        }
+        return value;
     }
 }
