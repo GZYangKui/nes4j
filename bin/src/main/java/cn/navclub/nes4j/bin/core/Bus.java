@@ -204,13 +204,8 @@ public class Bus implements NESystemComponent {
             this.joyPad.write(b);
         }
 
-        //Write to thirty standard controller
-        else if (address == 0x4017) {
-            //todo write joypad2
-        }
-
         //Write data to apu
-        else if ((address >= 0x4000 && address <= 0x4013) || address == 0x4015) {
+        else if ((address >= 0x4000 && address <= 0x4013) || address == 0x4015 || address == 0x4017) {
             this.apu.write(address, b);
         }
 

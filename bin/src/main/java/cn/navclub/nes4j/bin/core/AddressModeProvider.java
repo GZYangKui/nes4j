@@ -63,9 +63,11 @@ public class AddressModeProvider {
 
 
     /**
+     *
      * 判断当前寻址模式下获取到数据是否跨页
+     *
      */
-    private void pageCross(int base, int addr) {
+    public void pageCross(int base, int addr) {
         var pageCross = ((base & 0xff00) != (addr & 0xff00));
         if (!pageCross) {
             return;

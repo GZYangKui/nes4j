@@ -2,6 +2,7 @@ package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.NESystemComponent;
 import cn.navclub.nes4j.bin.apu.Channel;
+import cn.navclub.nes4j.bin.apu.FrameCounter;
 import cn.navclub.nes4j.bin.enums.ChannelType;
 
 /**
@@ -14,10 +15,11 @@ public class APU implements NESystemComponent {
     private final Channel triangle;
     private final Channel noise;
     private final Channel dmc;
+    private final FrameCounter frameCounter;
 
     public APU() {
         this.status = new SRegister();
-
+        this.frameCounter = new FrameCounter();
         this.dmc = new Channel(ChannelType.DMC);
         this.noise = new Channel(ChannelType.NOISE);
         this.pulse0 = new Channel(ChannelType.PULSE);
@@ -49,6 +51,9 @@ public class APU implements NESystemComponent {
         if (address >= 0x4010 && address <= 0x4013) {
             this.dmc.update(address, b);
         }
+        if (address == 0x4017) {
+            this.frameCounter.write(address, b);
+        }
     }
 
     @Override
@@ -58,10 +63,6 @@ public class APU implements NESystemComponent {
 
     @Override
     public void tick(int cycle) {
-        this.dmc.tick(cycle);
-        this.noise.tick(cycle);
-        this.pulse0.tick(cycle);
-        this.pulse1.tick(cycle);
-        this.triangle.tick(cycle);
+        this.frameCounter.tick(cycle);
     }
 }

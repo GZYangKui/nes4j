@@ -1,9 +1,49 @@
 package cn.navclub.nes4j.bin.apu;
 
+import cn.navclub.nes4j.bin.NESystemComponent;
+import cn.navclub.nes4j.bin.enums.MSequencer;
+import lombok.extern.slf4j.Slf4j;
+
 /**
- *
- * 帧计数器
- *
+ * <a href="https://www.nesdev.org/wiki/APU_Frame_Counter">Frame Counter</a>
  */
-public class FrameCounter {
+@Slf4j
+public class FrameCounter implements NESystemComponent {
+    //0->4 1->5
+    private MSequencer mode;
+    //Interrupt markup
+    private boolean interrupt;
+    //2*CPU cycle=APU cycle
+    private int cycle;
+    private int cursor;
+
+    public FrameCounter() {
+        this.mode = MSequencer.FOUR_STEP_SEQ;
+    }
+
+    @Override
+    public void write(int address, byte b) {
+        //Interrupt inhibit flag. If set, the frame interrupt flag is cleared, otherwise it is unaffected.
+        if ((b & 0x40) != 0) {
+            this.interrupt = false;
+        }
+        //Sequencer mode: 0 selects 4-step sequence, 1 selects 5-step sequence.
+        this.mode = (b & 0x80) == 0 ? MSequencer.FOUR_STEP_SEQ : MSequencer.FIVE_STEP_SEQ;
+    }
+
+    @Override
+    public byte read(int address) {
+        return 0;
+    }
+
+    @Override
+    public void tick(int cycle) {
+        this.cycle += cycle;
+        var arr = this.mode.getSteps();
+
+        if (this.cycle >= arr[this.cursor]) {
+            this.cycle -= arr[this.cursor++];
+            this.cursor %= 4;
+        }
+    }
 }

@@ -9,8 +9,8 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 
-@Slf4j
 @Data
+@Slf4j
 public class CPU {
     //栈开始位置
     public static final int STACK = 0x0100;
@@ -299,9 +299,10 @@ public class CPU {
 
         var b = this.bus.read(this.pc);
         var jump = this.pc + 1 + b;
-        if (((this.pc + 1) & 0xff00) != (jump & 0xff00)) {
-            this.bus.tick(1);
-        }
+        var base = this.pc + 1;
+
+        //判断跳转是否跨页
+        this.modeProvider.pageCross(base, jump);
 
         this.pc = jump;
     }
