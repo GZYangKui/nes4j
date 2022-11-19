@@ -355,8 +355,14 @@ public class CPU {
 
     public void next() {
 
+        //PPU NMI Interrupt
         if (this.bus.pollPPUNMI()) {
             this.interrupt(CPUInterrupt.NMI);
+        }
+
+        //APU IRQ Interrupt
+        if (this.bus.pollAPUIRQ() && !this.status.contain(CPUStatus.ID)) {
+            this.interrupt(CPUInterrupt.IRQ);
         }
 
         var openCode = this.bus.read(this.pc);

@@ -140,6 +140,11 @@ public class Bus implements NESystemComponent {
         return this.ppu.getIsNMI().getAndSet(false);
     }
 
+
+    public boolean pollAPUIRQ() {
+        return this.apu.interrupt();
+    }
+
     /**
      * 向内存中写入一字节数据
      */
@@ -254,11 +259,9 @@ public class Bus implements NESystemComponent {
         return (lsb & 0xff) | ((msb & 0xff) << 8);
     }
 
-    private int cycle;
 
     @Override
     public void tick(int cycle) {
-        this.cycle += cycle;
         var nmi = this.ppu.getIsNMI();
         var before = nmi.get();
         //同步APU时钟
