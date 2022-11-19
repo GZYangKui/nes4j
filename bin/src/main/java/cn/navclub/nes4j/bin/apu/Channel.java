@@ -28,4 +28,13 @@ public abstract class Channel implements NESystemComponent {
     public void tick(int cycle) {
 
     }
+
+    /**
+     *
+     *  当前通道输出
+     *
+     */
+    public int output() {
+        return 0;
+    }
 }

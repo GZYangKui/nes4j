@@ -9,7 +9,7 @@ public class Envelope implements CycleDriver {
     private final Divider divider;
     private final Channel channel;
 
-    private int volumn;
+    private int volume;
     private int counter;
     private boolean loop;
     private boolean disable;
@@ -21,10 +21,10 @@ public class Envelope implements CycleDriver {
     }
 
     public void update(byte b) {
-        this.volumn = b & 0x0f;
+        this.volume = b & 0x0f;
         this.loop = (b & 0x20) != 0;
         this.disable = (b & 0x10) != 0;
-        this.divider.setPeriod(volumn + 1);
+        this.divider.setPeriod(volume + 1);
     }
 
     @Override
@@ -50,9 +50,9 @@ public class Envelope implements CycleDriver {
     /**
      * 获取音量
      */
-    public int volumn() {
+    public int getVolume() {
         if (this.disable) {
-            return this.volumn;
+            return this.volume;
         }
         return this.counter;
     }
