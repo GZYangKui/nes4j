@@ -39,6 +39,17 @@ public class APU implements NESystemComponent {
 
     @Override
     public void write(int address, byte b) {
+        //
+        //When $4015 is written to, the channels' length counter enable flags are set,
+        //the DMC is possibly started or stopped, and the DMC's IRQ occurred flag is
+        //cleared.
+        //
+        //    ---d nt21   DMC, noise, triangle, square 2, square 1
+        //
+        //If d is set and the DMC's DMA reader has no more sample bytes to fetch, the DMC
+        //sample is restarted. If d is clear then the DMA reader's sample bytes remaining
+        //is set to 0.
+        //
         if (address == 0x4015) {
             this.status.setBits(b);
         }
@@ -73,7 +84,35 @@ public class APU implements NESystemComponent {
         if (address != 0x4015) {
             throw new RuntimeException("Write-only register not only read operation.");
         }
-        return this.status.bits;
+        //
+        //When $4015 is read, the status of the channels' length counters and bytes
+        //remaining in the current DMC sample, and interrupt flags are returned.
+        //Afterwards the Frame Sequencer's frame interrupt flag is cleared.
+        //    if-d nt21
+        //
+        //    IRQ from DMC
+        //    frame interrupt
+        //    DMC sample bytes remaining > 0
+        //    triangle length counter > 0
+        //    square 2 length counter > 0
+        //    square 1 length counter > 0
+        //
+        var value = 0;
+        var c0 = pulse.getLengthCounter().getCounter();
+        var c1 = pulse1.getLengthCounter().getCounter();
+        var c3 = triangle.getLengthCounter().getCounter();
+        var interrupt = this.frameCounter.isInterrupt();
+
+        value |= (c0 > 0 ? 0x01 : 0x00);
+        value |= (c1 > 0 ? 0x02 : 0x00);
+        value |= (c3 > 0 ? 0x04 : 0x00);
+        value |= 0x10;
+        value |= interrupt ? 0x40 : 0x00;
+        value |= 0x80;
+
+        this.frameCounter.setInterrupt(false);
+
+        return (byte) value;
     }
 
     @Override
@@ -131,7 +170,7 @@ public class APU implements NESystemComponent {
     private native boolean create();
 
     public boolean interrupt() {
-        return this.frameCounter.isInterrupt();
+        return this.frameCounter.interrupt();
     }
 
     public boolean readStatus(APUStatus status) {

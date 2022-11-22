@@ -3,6 +3,7 @@ package cn.navclub.nes4j.bin.apu;
 import cn.navclub.nes4j.bin.NESystemComponent;
 import cn.navclub.nes4j.bin.enums.MSequencer;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -16,6 +17,8 @@ public class FrameCounter implements NESystemComponent {
     //2*CPU cycle=APU cycle
     private int cycle;
     private int cursor;
+    @Setter
+    @Getter
     //Whether happen interrupt
     private boolean interrupt;
     //IEQ is disable
@@ -56,7 +59,7 @@ public class FrameCounter implements NESystemComponent {
         }
     }
 
-    public boolean isInterrupt() {
+    public boolean interrupt() {
         var is = !this.IRQDisable && this.interrupt;
         //Clear interrupt avoid repeat invoke interrupt
         if (is) {

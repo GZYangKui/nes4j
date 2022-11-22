@@ -13,6 +13,7 @@ public abstract class Channel implements NESystemComponent {
     @Getter
     protected boolean lock;
     protected final Sequencer sequencer;
+    @Getter
     protected final LengthCounter lengthCounter;
 
     public Channel(final APU apu, final Sequencer sequencer) {
