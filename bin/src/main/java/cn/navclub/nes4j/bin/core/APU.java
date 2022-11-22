@@ -18,20 +18,21 @@ public class APU implements NESystemComponent {
     private final Noise noise;
     private final Pulse pulse;
     private final Pulse pulse1;
-    private final double[] smaples;
+    private final double[] samples;
     private final SRegister status;
     private final Triangle triangle;
     private final FrameCounter frameCounter;
-
+    private final boolean support;
     private int index;
 
     public APU() {
+        this.support = this.create();
         this.dmc = new DMC(this);
         this.status = new SRegister();
         this.noise = new Noise(this);
         this.triangle = new Triangle(this);
         this.frameCounter = new FrameCounter();
-        this.smaples = new double[SAMPLE_NUM];
+        this.samples = new double[SAMPLE_NUM];
         this.pulse = new Pulse(this, Pulse.PulseIndex.PULSE_0);
         this.pulse1 = new Pulse(this, Pulse.PulseIndex.PULSE_1);
     }
@@ -86,9 +87,10 @@ public class APU implements NESystemComponent {
         this.pulse1.tick(cycle);
         this.triangle.tick(cycle);
 
-        if (!this.isSupport()) {
+        if (!this.support) {
             return;
         }
+
 
         var n0 = this.noise.output();
         var p0 = this.pulse.output();
@@ -101,34 +103,32 @@ public class APU implements NESystemComponent {
             pulseOut = 95.88 / ((8128 / (double) sum) + 100);
         }
 
-        var tndOut = 1 / ((t0 / 8227.0) + (n0 / 12241.0));
+        var tndOut = 1 / ((t0 / 8227.0) + (n0 / 12241.0) + (120 / 22638));
         tndOut = 159.79 / (tndOut + 100);
 
-        this.smaples[index++] = (tndOut + pulseOut);
+        this.samples[index++] = (tndOut + pulseOut);
         if (index >= SAMPLE_NUM) {
             this.index = 0;
-            play(this.smaples);
+            play(this.samples);
         }
     }
 
     /**
-     *
      * 调用Native模块关闭音频相关资源
-     *
      */
-    public synchronized static native void stop();
+    public synchronized native void stop();
 
     /**
      * 调用Native模块播放音频样本
      *
      * @param samples 音频样本
      */
-    private synchronized static native void play(double[] samples);
+    private native void play(double[] samples);
 
     /**
      * 判断当前系统是否已实现播放音频
      */
-    private native boolean isSupport();
+    private native boolean create();
 
     public boolean interrupt() {
         return this.frameCounter.isInterrupt();

@@ -1,8 +1,16 @@
+#include <malloc.h>
 #include "../include/cn_navclub_nes4j_bin_core_APU.h"
 
 #include "../include/sys_sound.h"
 
-JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_play(JNIEnv *env, jclass class, jdoubleArray array) {
+static SoundHardware *Nes4j_find_hardware_obj_hash_code(JNIEnv *, jobject, bool);
+
+JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_play(JNIEnv *env, jobject this, jdoubleArray array) {
+    SoundHardware *hardware = Nes4j_find_hardware_obj_hash_code(env, this, False);
+    if (hardware == NULL) {
+        fprintf(stderr, "Call before Please init SoundHardware.\n");
+        return;
+    }
     jint length = (*env)->GetArrayLength(env, array);
     double dst[length];
     jboolean copy = JNI_FALSE;
@@ -12,18 +20,27 @@ JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_play(JNIEnv *env, jcla
         return;
     }
     (*env)->ReleaseDoubleArrayElements(env, array, temp, JNI_ABORT);
-    Nes4j_apu_play(dst, length);
+    Nes4j_apu_play(hardware, dst, length);
 }
 
-JNIEXPORT jboolean JNICALL Java_cn_navclub_nes4j_bin_core_APU_isSupport(JNIEnv *env, jobject this) {
-    jboolean support = JNI_FALSE;
+JNIEXPORT jboolean JNICALL Java_cn_navclub_nes4j_bin_core_APU_create(JNIEnv *env, jobject this) {
+    SoundHardware *hardware = Nes4j_find_hardware_obj_hash_code(env, this, True);
+    return hardware != NULL;
 
-#if defined __linux__
-    support = JNI_TRUE;
-#endif
-    return support;
 }
 
-JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_stop(JNIEnv *env, jclass class) {
-    Nes4j_apu_stop();
-};
+JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_stop(JNIEnv *env, jobject this) {
+    SoundHardware *hardware = Nes4j_find_hardware_obj_hash_code(env, this, False);
+    Nes4j_apu_stop(hardware);
+}
+
+static SoundHardware *Nes4j_find_hardware_obj_hash_code(JNIEnv *env, jobject this, bool auto_create) {
+    jclass class = (*env)->GetObjectClass(env, this);
+    jmethodID id = (*env)->GetMethodID(env, class, "hashCode", "()I");
+    jint hash_code = (*env)->CallIntMethod(env, this, id);
+    SoundHardware *hardware = (SoundHardware *) Nes4j_find_hardware(hash_code, auto_create);
+    return hardware;
+}
+
+
+

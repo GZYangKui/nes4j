@@ -75,7 +75,7 @@ public class NES {
 
     public void stop() {
         this.stop = true;
-        APU.stop();
+        this.apu.stop();
     }
 
     private boolean loop() {

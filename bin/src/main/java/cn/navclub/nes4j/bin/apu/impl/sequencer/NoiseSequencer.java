@@ -18,6 +18,9 @@ import lombok.Setter;
  *        `------( XOR ((                   |
  *                \_____\\<-----------------'
  *
+ * The shift register is clocked by the timer and the vacated bit 14 is filled
+ * with the exclusive-OR of *pre-shifted* bits 0 and 1 (mode = 0) or bits 0 and 6
+ * (mode = 1), resulting in 32767-bit and 93-bit sequences, respectively.
  *
  */
 public class NoiseSequencer implements Sequencer {

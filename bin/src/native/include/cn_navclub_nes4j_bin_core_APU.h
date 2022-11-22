@@ -15,7 +15,7 @@ extern "C" {
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_stop
-  (JNIEnv *, jclass);
+  (JNIEnv *, jobject);
 
 /*
  * Class:     cn_navclub_nes4j_bin_core_APU
@@ -23,14 +23,14 @@ JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_stop
  * Signature: ([D)V
  */
 JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_play
-  (JNIEnv *, jclass, jdoubleArray);
+  (JNIEnv *, jobject, jdoubleArray);
 
 /*
  * Class:     cn_navclub_nes4j_bin_core_APU
- * Method:    isSupport
+ * Method:    create
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_cn_navclub_nes4j_bin_core_APU_isSupport
+JNIEXPORT jboolean JNICALL Java_cn_navclub_nes4j_bin_core_APU_create
   (JNIEnv *, jobject);
 
 #ifdef __cplusplus
