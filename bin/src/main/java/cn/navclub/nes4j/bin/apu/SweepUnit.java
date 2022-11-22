@@ -37,7 +37,7 @@ public class SweepUnit implements CycleDriver {
         //
         // 调节方形波周期
         //
-        var divider = this.pulse.getDivider();
+        var timer = this.pulse.getTimer();
         var period = divider.getPeriod();
         var result = period << this.shift;
         if (this.negative) {

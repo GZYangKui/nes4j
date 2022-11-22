@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.apu;
 
 import cn.navclub.nes4j.bin.function.CycleDriver;
+import lombok.Getter;
 import lombok.Setter;
 
 public class LengthCounter implements CycleDriver {
@@ -22,6 +23,7 @@ public class LengthCounter implements CycleDriver {
             0x10, 0x1c,
             0x20, 0x1e
     };
+    @Getter
     private int counter;
     //判断是否停止计数
     @Setter

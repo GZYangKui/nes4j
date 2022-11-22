@@ -19,7 +19,6 @@ public class FrameCounter implements NESystemComponent {
     private boolean interrupt;
     //IEQ is disable
     private boolean IRQDisable;
-    //    private final Divider divider;
     @Getter
     private boolean output;
 
@@ -45,12 +44,14 @@ public class FrameCounter implements NESystemComponent {
     @Override
     public void tick(int cycle) {
         this.cycle += cycle;
+        this.output = false;
         var arr = this.mode.getSteps();
 
         if (this.cycle >= arr[this.cursor]) {
             this.interrupt = (mode == MSequencer.FOUR_STEP_SEQ) && (this.cursor == 0);
             this.cycle -= arr[this.cursor++];
             this.cursor %= 4;
+            this.output = true;
         }
     }
 

@@ -6,17 +6,21 @@ import lombok.Getter;
 
 public abstract class Channel implements NESystemComponent {
     @Getter
-    protected final Divider divider;
+    protected final Timer timer;
     //储存四个寄存器的值
     protected byte[] value;
     protected final APU apu;
     @Getter
     protected boolean lock;
+    protected final Sequencer sequencer;
+    protected final LengthCounter lengthCounter;
 
-    public Channel(final APU apu) {
+    public Channel(final APU apu, final Sequencer sequencer) {
         this.apu = apu;
         this.value = new byte[4];
-        this.divider = new Divider();
+        this.sequencer = sequencer;
+        this.timer = new Timer(this.sequencer);
+        this.lengthCounter = new LengthCounter();
     }
 
     @Override
@@ -26,15 +30,24 @@ public abstract class Channel implements NESystemComponent {
 
     @Override
     public void tick(int cycle) {
-
+        this.timer.tick(cycle);
+        this.lengthCounter.tick(cycle);
     }
 
     /**
-     *
-     *  当前通道输出
-     *
+     * 当前通道输出
      */
     public int output() {
         return 0;
+    }
+
+    /**
+     * 更新当前定时器的值
+     */
+    protected void updateTimeValue() {
+        var lsb = this.value[2] & 0xff;
+        var msb = this.value[3] & 0x07;
+        var period = lsb | msb << 8;
+        this.timer.setPeriod(period);
     }
 }

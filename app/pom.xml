@@ -67,37 +67,10 @@
     </dependencies>
     <build>
         <plugins>
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-shade-plugin</artifactId>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <goals>-->
-<!--                            <goal>shade</goal>-->
-<!--                        </goals>-->
-<!--                        <configuration>-->
-<!--                            <artifactSet>-->
-<!--                                <excludes>-->
-<!--                                    <exclude>org.openjfx:javafx-base</exclude>-->
-<!--                                    <exclude>org.openjfx:javafx-controls</exclude>-->
-<!--                                    <exclude>org.openjfx:javafx-graphics</exclude>-->
-<!--                                    <exclude>org.slf4j:slf4j-api</exclude>-->
-<!--                                    <exclude>ch.qos.logback:logback-core</exclude>-->
-<!--                                    <exclude>ch.qos.logback:logback-classic</exclude>-->
-<!--                                    <exclude>org.controlsfx:controlsfx</exclude>-->
-<!--                                </excludes>-->
-<!--                            </artifactSet>-->
-<!--                            <transformers>-->
-<!--                                <transformer-->
-<!--                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">-->
-<!--                                    <mainClass>cn.navclub.nes4j.app.NES4J</mainClass>-->
-<!--                                </transformer>-->
-<!--                            </transformers>-->
-<!--                        </configuration>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-
-<!--            </plugin>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 </project>

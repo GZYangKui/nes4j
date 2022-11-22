@@ -13,7 +13,6 @@ public class Divider implements CycleDriver {
     @Setter
     @Getter
     private int period;
-
     private boolean output;
 
 

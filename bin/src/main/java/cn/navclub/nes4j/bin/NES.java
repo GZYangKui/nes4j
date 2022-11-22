@@ -13,6 +13,10 @@ import java.util.function.Consumer;
 @Slf4j
 @Getter
 public class NES {
+    static {
+        System.loadLibrary("nes4j");
+    }
+
     //程序计数器重置地址
     private static final int PC_RESET = 0xfffc;
     //程序栈重置地址
