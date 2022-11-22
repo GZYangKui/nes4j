@@ -29,14 +29,13 @@ public class Divider implements CycleDriver {
         this.counter--;
         //重置计数器并输出一个时钟
         if (this.counter == 0) {
-            this.reset(true);
+            this.reset();
+            this.output = true;
         }
     }
 
-    public void reset(boolean output) {
+    public void reset() {
+        this.output = false;
         this.counter = this.period;
-        if (output) {
-            this.output = true;
-        }
     }
 }

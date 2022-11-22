@@ -5,7 +5,6 @@ import cn.navclub.nes4j.app.NES4J;
 import cn.navclub.nes4j.app.dialog.DPalette;
 import cn.navclub.nes4j.app.event.GameEventWrap;
 import cn.navclub.nes4j.app.model.KeyMapper;
-import cn.navclub.nes4j.app.util.UIUtil;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.JoyPad;
 import cn.navclub.nes4j.bin.core.PPU;
@@ -103,10 +102,10 @@ public class GameWorld extends Stage {
         this.show();
 
         this.setOnCloseRequest(event -> {
-            if (this.instance == null) {
-                return;
+            this.fpsTimer.stop();
+            if (this.instance != null) {
+                this.instance.stop();
             }
-            this.instance.setStop(true);
         });
 
         this.execute(file);
@@ -128,9 +127,6 @@ public class GameWorld extends Stage {
                 }
             }
         });
-
-        //停止帧数计数器
-        this.setOnCloseRequest(event -> this.fpsTimer.stop());
     }
 
     private AnimationTimer createFPSTimer() {
@@ -167,10 +163,6 @@ public class GameWorld extends Stage {
                     .newBuilder()
                     .file(file)
                     .gameLoopCallback(this::gameLoopCallback)
-                    .errorHandler(t -> {
-                        t.printStackTrace();
-                        UIUtil.showError(t, null, it -> this.close());
-                    })
                     .build();
             this.instance.execute();
         }).whenComplete((r, t) -> {

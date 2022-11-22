@@ -17,9 +17,10 @@ public class Pulse extends Channel {
 
     public Pulse(APU apu, PulseIndex index) {
         super(apu, new SeqSequencer());
+
         this.index = index;
+        this.sweepUnit = new SweepUnit();
         this.envelope = new Envelope(this);
-        this.sweepUnit = new SweepUnit(this);
     }
 
     @Override
@@ -45,9 +46,7 @@ public class Pulse extends Channel {
         }
 
         if (i == 3) {
-            if (!this.lock) {
-                this.lock = true;
-            }
+            this.lock = true;
             var status = this.index == PulseIndex.PULSE_0 ? APUStatus.PULSE_1 : APUStatus.PULSE_2;
             if (this.apu.readStatus(status)) {
                 this.lengthCounter.lookupTable(b);
@@ -59,8 +58,14 @@ public class Pulse extends Channel {
     @Override
     public void tick(int cycle) {
         super.tick(cycle);
-        this.lock = false;
+
         this.envelope.tick(cycle);
+        this.sweepUnit.tick(cycle);
+
+        this.lock = false;
+
+        var value = this.sweepUnit.calculate(this.timer.getPeriod(), this.index);
+        this.timer.setPeriod(value);
     }
 
     /*
@@ -84,6 +89,9 @@ public class Pulse extends Channel {
     public int output() {
         var value = this.envelope.getVolume();
         if (sequencer.value() == 0) {
+            value = 0;
+        }
+        if (lengthCounter.getCounter() == 0) {
             value = 0;
         }
         return value;

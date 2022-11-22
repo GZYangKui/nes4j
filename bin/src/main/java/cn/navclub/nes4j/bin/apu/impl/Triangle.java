@@ -2,6 +2,7 @@ package cn.navclub.nes4j.bin.apu.impl;
 
 import cn.navclub.nes4j.bin.apu.Channel;
 import cn.navclub.nes4j.bin.apu.LinearCounter;
+import cn.navclub.nes4j.bin.apu.impl.sequencer.TriangleSequencer;
 import cn.navclub.nes4j.bin.core.APU;
 import cn.navclub.nes4j.bin.enums.APUStatus;
 
@@ -9,7 +10,7 @@ public class Triangle extends Channel {
     private final LinearCounter linearCounter;
 
     public Triangle(APU apu) {
-        super(apu, null);
+        super(apu, new TriangleSequencer());
         this.linearCounter = new LinearCounter();
     }
 
@@ -46,5 +47,24 @@ public class Triangle extends Channel {
     public void tick(int cycle) {
         super.tick(cycle);
         this.linearCounter.tick(cycle);
+    }
+
+    /**
+     *
+     *
+     *                    +---------+    +---------+
+     *                    |LinearCtr|    | Length  |
+     *                    +---------+    +---------+
+     *                         |              |
+     *                         v              v
+     *     +---------+        |\             |\         +---------+    +---------+
+     *     |  Timer  |------->| >----------->| >------->|Sequencer|--->|   DAC   |
+     *     +---------+        |/             |/         +---------+    +---------+
+     *
+     *
+     */
+    @Override
+    public int output() {
+        return sequencer.value();
     }
 }

@@ -3,7 +3,7 @@ package cn.navclub.nes4j.bin.apu;
 import cn.navclub.nes4j.bin.function.CycleDriver;
 
 /**
- * 包络生成器
+ * Envelope Generate
  */
 public class Envelope implements CycleDriver {
     private final Divider divider;
@@ -27,12 +27,17 @@ public class Envelope implements CycleDriver {
         this.divider.setPeriod(volume + 1);
     }
 
+    /**
+     * When clocked by the frame sequencer, one of two actions occurs: if there was a
+     * write to the fourth channel register since the last clock, the counter is set
+     * to 15 and the divider is reset, otherwise the divider is clocked.
+     */
     @Override
     public void tick(int cycle) {
         var lock = this.channel.lock;
         if (lock) {
             this.counter = 15;
-            this.divider.reset(false);
+            this.divider.reset();
         } else {
             this.divider.tick(cycle);
         }
@@ -42,13 +47,15 @@ public class Envelope implements CycleDriver {
         if (this.loop && this.counter == 0)
             this.counter = 15;
         else {
-            if (this.counter > 0)
+            if (this.counter != 0)
                 this.counter--;
         }
     }
 
     /**
-     * 获取音量
+     * When disable is set, the channel's volume is n, otherwise it is the value in
+     * the counter. Unless overridden by some other condition, the channel's DAC
+     * receives the channel's volume value.
      */
     public int getVolume() {
         if (this.disable) {

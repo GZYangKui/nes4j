@@ -2,7 +2,7 @@
 
 #include "../include/sys_sound.h"
 
-JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_play(JNIEnv *env, jobject this, jdoubleArray array) {
+JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_play(JNIEnv *env, jclass class, jdoubleArray array) {
     jint length = (*env)->GetArrayLength(env, array);
     double dst[length];
     jboolean copy = JNI_FALSE;
@@ -23,3 +23,7 @@ JNIEXPORT jboolean JNICALL Java_cn_navclub_nes4j_bin_core_APU_isSupport(JNIEnv *
 #endif
     return support;
 }
+
+JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_stop(JNIEnv *env, jclass class) {
+    Nes4j_apu_stop();
+};

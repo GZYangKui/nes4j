@@ -8,14 +8,22 @@
 extern "C" {
 #endif
 #undef cn_navclub_nes4j_bin_core_APU_SAMPLE_NUM
-#define cn_navclub_nes4j_bin_core_APU_SAMPLE_NUM 20L
+#define cn_navclub_nes4j_bin_core_APU_SAMPLE_NUM 50L
+/*
+ * Class:     cn_navclub_nes4j_bin_core_APU
+ * Method:    stop
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_stop
+  (JNIEnv *, jclass);
+
 /*
  * Class:     cn_navclub_nes4j_bin_core_APU
  * Method:    play
  * Signature: ([D)V
  */
 JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_play
-  (JNIEnv *, jobject, jdoubleArray);
+  (JNIEnv *, jclass, jdoubleArray);
 
 /*
  * Class:     cn_navclub_nes4j_bin_core_APU

@@ -20,8 +20,8 @@ add_executable(nes4j_test ${SRC_DIR})
 include_directories(nes4j ${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2})
 include_directories(nes4j_test ${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2})
 
-target_link_libraries(nes4j ${ALSA_LIBRARIES})
-target_link_libraries(nes4j_test ${ALSA_LIBRARIES})
+target_link_libraries(nes4j ${ALSA_LIBRARIES} m)
+target_link_libraries(nes4j_test ${ALSA_LIBRARIES} m)
 
 
 add_test(NAME test COMMAND nes4j_test 2 3)

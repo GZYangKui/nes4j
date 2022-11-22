@@ -12,7 +12,7 @@ import cn.navclub.nes4j.bin.enums.APUStatus;
  * <a href="https://www.nesdev.org/wiki/APU">APU Document</a>
  */
 public class APU implements NESystemComponent {
-    private static final int SAMPLE_NUM = 20;
+    private static final int SAMPLE_NUM = 50;
 
     private final DMC dmc;
     private final Noise noise;
@@ -82,28 +82,48 @@ public class APU implements NESystemComponent {
             return;
         }
         this.pulse.tick(cycle);
+        this.noise.tick(cycle);
         this.pulse1.tick(cycle);
+        this.triangle.tick(cycle);
 
+        if (!this.isSupport()) {
+            return;
+        }
+
+        var n0 = this.noise.output();
         var p0 = this.pulse.output();
         var p1 = this.pulse1.output();
+        var t0 = this.triangle.output();
 
         var sum = p0 + p1;
-        var out = 0d;
+        var pulseOut = 0d;
         if (sum != 0) {
-            out = 95.88 / ((8128 / (double) sum) + 100);
+            pulseOut = 95.88 / ((8128 / (double) sum) + 100);
         }
 
-        if (this.isSupport()) {
-            this.smaples[index++] = out;
-            if (index >= SAMPLE_NUM) {
-                this.index = 0;
-                this.play(this.smaples);
-            }
-        }
+        var tndOut = 1 / ((t0 / 8227.0) + (n0 / 12241.0));
+        tndOut = 159.79 / (tndOut + 100);
 
+        this.smaples[index++] = (tndOut + pulseOut);
+        if (index >= SAMPLE_NUM) {
+            this.index = 0;
+            play(this.smaples);
+        }
     }
 
-    private native void play(double[] samples);
+    /**
+     *
+     * 调用Native模块关闭音频相关资源
+     *
+     */
+    public synchronized static native void stop();
+
+    /**
+     * 调用Native模块播放音频样本
+     *
+     * @param samples 音频样本
+     */
+    private synchronized static native void play(double[] samples);
 
     /**
      * 判断当前系统是否已实现播放音频

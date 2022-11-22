@@ -14,7 +14,7 @@ import java.io.File;
 public class NESFile {
     private final static int HEADER_SIZE = 16;
 
-    private final NESFormat format;
+
     private final int rgbSize;
     private final int chSize;
     private final int flag6;
@@ -24,6 +24,7 @@ public class NESFile {
     private final byte[] ch;
     private final byte[] train;
     private final NMapper mapper;
+    private final NESFormat format;
     private final byte[] cellaneous;
     private final NameMirror mirrors;
 

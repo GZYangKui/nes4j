@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 public class FrameCounter implements NESystemComponent {
     //0->4 1->5
     private MSequencer mode;
+    @Getter
     //2*CPU cycle=APU cycle
     private int cycle;
     private int cursor;

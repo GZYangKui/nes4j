@@ -19,10 +19,6 @@ public class NESTest {
         var frame = new Frame();
         var render = new Render();
         TCallback<PPU, JoyPad, JoyPad> gameLoopCallback = (ppu, joyPad, joyPad1) -> {
-            counter++;
-            if (counter == 27) {
-                System.out.println("stop");
-            }
             render.render(ppu, frame);
         };
 

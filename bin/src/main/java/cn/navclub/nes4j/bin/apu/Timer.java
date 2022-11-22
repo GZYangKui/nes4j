@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.apu;
 
 import cn.navclub.nes4j.bin.function.CycleDriver;
+import lombok.Getter;
 import lombok.Setter;
 
 /**
@@ -9,8 +10,10 @@ import lombok.Setter;
  *
  */
 public class Timer implements CycleDriver {
+    @Getter
     private int counter;
     @Setter
+    @Getter
     private int period;
     private final Sequencer sequencer;
 

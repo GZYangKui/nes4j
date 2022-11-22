@@ -14,9 +14,8 @@ public class Bus implements NESystemComponent {
     private static final int RAM_MIRROR_END = 0x1fff;
     private static final int RPG_UNIT = 16 * 1024;
 
-
-    private final PPU ppu;
     private final APU apu;
+    private final PPU ppu;
     private final byte[] ram;
     private final byte[] rpg;
     private final byte[] rpgRom;
@@ -30,11 +29,11 @@ public class Bus implements NESystemComponent {
     private final NMapper mapper;
     private final TCallback<PPU, JoyPad, JoyPad> gameLoopCallback;
 
-    public Bus(NMapper mapper, byte[] rpg, final PPU ppu, TCallback<PPU, JoyPad, JoyPad> gameLoopCallback, JoyPad joyPad, JoyPad joyPad1) {
+    public Bus(NMapper mapper, byte[] rpg, final PPU ppu, final APU apu, TCallback<PPU, JoyPad, JoyPad> gameLoopCallback, JoyPad joyPad, JoyPad joyPad1) {
         this.ppu = ppu;
+        this.apu = apu;
         this.rpgRom = rpg;
         this.mapper = mapper;
-        this.apu = new APU();
         this.joyPad = joyPad;
         this.joyPad1 = joyPad1;
         this.rpgSize = rpg.length;
@@ -51,8 +50,8 @@ public class Bus implements NESystemComponent {
 
     }
 
-    public Bus(byte[] rpg, final PPU ppu, JoyPad joyPad, JoyPad joyPad1) {
-        this(NMapper.NROM, rpg, ppu, null, joyPad, joyPad1);
+    public Bus(byte[] rpg, final PPU ppu, final APU apu, JoyPad joyPad, JoyPad joyPad1) {
+        this(NMapper.NROM, rpg, ppu, apu, null, joyPad, joyPad1);
     }
 
     /**
