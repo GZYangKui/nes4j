@@ -13,7 +13,22 @@ import lombok.Setter;
  * <a href="https://www.nesdev.org/wiki/APU">APU Document</a>
  */
 public class APU implements Component {
-    private static final int SAMPLE_NUM = 100;
+    private static final float[] PULSE_TABLE;
+    private static final float[] TND_TABLE;
+
+    static {
+        TND_TABLE = new float[203];
+        PULSE_TABLE = new float[31];
+
+        for (int i = 0; i < 203; i++) {
+            if (i < 31) {
+                PULSE_TABLE[i] = (float) (95.52 / ((8128.0) / (float) i + 100));
+            }
+            TND_TABLE[i] = (float) (163.67 / (24329.0 / (float) i + 100));
+        }
+    }
+
+    private static final int SAMPLE_NUM = 200;
 
     private final DMChannel dmc;
     private final NoiseChannel noise;
@@ -62,10 +77,9 @@ public class APU implements Component {
             var dmc = (b & 0x10) == 0x10;
             if (!dmc) {
                 this.dmc.setCurrentLength(0);
-            } else {
-                if (this.dmc.getCurrentLength() == 0) {
-                    this.dmc.reset();
-                }
+            }
+            if (dmc && this.dmc.getCurrentLength() == 0) {
+                this.dmc.reset();
             }
         } else if (address >= 0x4000 && address <= 0x4003) {
             this.pulse.write(address, b);
@@ -88,9 +102,9 @@ public class APU implements Component {
             throw new RuntimeException("Write-only register not only read operation.");
         }
         //
-        //When $4015 is read, the status of the channels' length counters and bytes
-        //remaining in the current DMC sample, and interrupt flags are returned.
-        //Afterwards the Frame Sequencer's frame interrupt flag is cleared.
+        // When $4015 is read, the status of the channels' length counters and bytes
+        // remaining in the current DMC sample, and interrupt flags are returned.
+        // Afterwards the Frame Sequencer's frame interrupt flag is cleared.
         //    if-d nt21
         //
         //    IRQ from DMC
@@ -142,15 +156,9 @@ public class APU implements Component {
         var p1 = this.pulse1.output();
         var t0 = this.triangle.output();
 
-        var seqOut = 0d;
-        var sum = (double) (p0 + p1);
-        if (sum != 0) {
-            seqOut = 95.88 / ((8128 / sum) + 100);
-        }
-
-        var tndOut = 1 / ((t0 / 8227.0) + (n0 / 12241.0) + (d0 / 22638.0));
-        tndOut = 159.79 / (tndOut + 100);
-        this.samples[index++] = (int) Math.floor(Math.min(tndOut + seqOut, 1.0) * 32767);
+        var seqOut = PULSE_TABLE[p0 + p1];
+        var tndOut = TND_TABLE[3 * t0 + 2 * n0 + d0];
+        this.samples[index++] = (int) Math.floor(Math.min(tndOut + seqOut, 1.0) * 0x7fffffff);
         if (index >= SAMPLE_NUM) {
             this.index = 0;
             play(this.samples);
@@ -158,7 +166,7 @@ public class APU implements Component {
     }
 
     public boolean halfFrame() {
-        return this.frameCounter.halfFrame();
+        return this.frameCounter.seqIndex() % 2 == 0;
     }
 
     /**
@@ -178,11 +186,12 @@ public class APU implements Component {
      */
     private native boolean create();
 
+    /**
+     *
+     *  判断当前模块是否触发IRQ中断
+     *
+     */
     public boolean interrupt() {
-        return this.frameCounter.interrupt();
+        return this.frameCounter.interrupt() || this.dmc.interrupt();
     }
-
-//    public boolean readStatus(APUStatus status) {
-//        return this.status.contain(status);
-//    }
 }

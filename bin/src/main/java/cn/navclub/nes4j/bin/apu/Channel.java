@@ -38,7 +38,9 @@ public abstract class Channel implements Component {
         if (timer != null) {
             this.timer.tick(cycle);
         }
-        this.lengthCounter.tick(cycle);
+        if (this.apu.halfFrame()) {
+            this.lengthCounter.tick(cycle);
+        }
     }
 
     /**

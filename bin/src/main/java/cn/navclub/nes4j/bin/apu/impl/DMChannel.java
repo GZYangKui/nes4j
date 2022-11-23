@@ -121,4 +121,12 @@ public class DMChannel extends Channel {
         }
         return this.value;
     }
+
+    public boolean interrupt() {
+        var irq = this.interrupt;
+        if (irq) {
+            this.interrupt = false;
+        }
+        return irq;
+    }
 }

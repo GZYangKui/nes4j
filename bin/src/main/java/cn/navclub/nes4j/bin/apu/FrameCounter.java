@@ -54,9 +54,8 @@ public class FrameCounter implements Component {
         return is;
     }
 
-    public boolean halfFrame() {
-        var index = this.sequencer.getIndex() + 1;
-        return index % 2 == 0;
+    public int seqIndex() {
+        return this.sequencer.getIndex() + 1;
     }
 
     public boolean next() {

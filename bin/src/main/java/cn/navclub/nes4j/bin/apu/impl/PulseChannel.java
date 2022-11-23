@@ -18,8 +18,8 @@ public class PulseChannel extends Channel {
         super(apu, new SeqSequencer());
 
         this.index = index;
-        this.sweepUnit = new SweepUnit();
         this.envelope = new Envelope(this);
+        this.sweepUnit = new SweepUnit(this);
     }
 
     @Override
@@ -60,8 +60,6 @@ public class PulseChannel extends Channel {
         if (apu.halfFrame()) {
             this.sweepUnit.tick(cycle);
             this.lengthCounter.tick(cycle);
-            var value = this.sweepUnit.calculate(this.timer.getPeriod(), this.index);
-            this.timer.setPeriod(value);
         }
 
         this.timer.tick(cycle);
