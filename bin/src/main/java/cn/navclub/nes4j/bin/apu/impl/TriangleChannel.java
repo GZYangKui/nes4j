@@ -6,10 +6,10 @@ import cn.navclub.nes4j.bin.apu.impl.sequencer.TriangleSequencer;
 import cn.navclub.nes4j.bin.core.APU;
 import cn.navclub.nes4j.bin.enums.APUStatus;
 
-public class Triangle extends Channel {
+public class TriangleChannel extends Channel {
     private final LinearCounter linearCounter;
 
-    public Triangle(APU apu) {
+    public TriangleChannel(APU apu) {
         super(apu, new TriangleSequencer());
         this.linearCounter = new LinearCounter();
     }
@@ -28,9 +28,7 @@ public class Triangle extends Channel {
         }
 
         if (index == 3) {
-            if (this.apu.readStatus(APUStatus.TRIANGLE)) {
-                this.lengthCounter.lookupTable(b);
-            }
+            this.lengthCounter.lookupTable(b);
         }
 
         //When register $400B is written to, the halt flag is set.
@@ -50,18 +48,14 @@ public class Triangle extends Channel {
     }
 
     /**
-     *
-     *
-     *                    +---------+    +---------+
-     *                    |LinearCtr|    | Length  |
-     *                    +---------+    +---------+
-     *                         |              |
-     *                         v              v
-     *     +---------+        |\             |\         +---------+    +---------+
-     *     |  Timer  |------->| >----------->| >------->|Sequencer|--->|   DAC   |
-     *     +---------+        |/             |/         +---------+    +---------+
-     *
-     *
+     * +---------+    +---------+
+     * |LinearCtr|    | Length  |
+     * +---------+    +---------+
+     * |              |
+     * v              v
+     * +---------+        |\             |\         +---------+    +---------+
+     * |  Timer  |------->| >----------->| >------->|Sequencer|--->|   DAC   |
+     * +---------+        |/             |/         +---------+    +---------+
      */
     @Override
     public int output() {

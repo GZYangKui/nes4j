@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.NESystemComponent;
+import cn.navclub.nes4j.bin.Component;
 import cn.navclub.nes4j.bin.core.impl.CTRegister;
 import cn.navclub.nes4j.bin.core.impl.MKRegister;
 import cn.navclub.nes4j.bin.enums.MaskFlag;
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * <a href="https://www.nesdev.org/wiki/PPU_programmer_reference">PPU document</a>
  */
-public class PPU implements NESystemComponent {
+public class PPU implements Component {
 
     @Getter
     private final byte[] ch;

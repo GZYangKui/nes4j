@@ -1,7 +1,7 @@
 package cn.navclub.nes4j.bin.apu;
 
-import cn.navclub.nes4j.bin.NESystemComponent;
-import cn.navclub.nes4j.bin.enums.MSequencer;
+import cn.navclub.nes4j.bin.Component;
+import cn.navclub.nes4j.bin.apu.impl.sequencer.FrameSequencer;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -10,12 +10,8 @@ import lombok.extern.slf4j.Slf4j;
  * <a href="https://www.nesdev.org/wiki/APU_Frame_Counter">Frame Counter</a>
  */
 @Slf4j
-public class FrameCounter implements NESystemComponent {
-    //0->4 1->5
-    private MSequencer mode;
+public class FrameCounter implements Component {
     @Getter
-    //2*CPU cycle=APU cycle
-    private int cycle;
     private int cursor;
     @Setter
     @Getter
@@ -23,21 +19,19 @@ public class FrameCounter implements NESystemComponent {
     private boolean interrupt;
     //IEQ is disable
     private boolean IRQDisable;
-    @Getter
-    private boolean output;
+    private final FrameSequencer sequencer;
 
     public FrameCounter() {
-//        this.divider = new Divider();
-        this.mode = MSequencer.FOUR_STEP_SEQ;
+        this.sequencer = new FrameSequencer();
     }
 
     @Override
     public void write(int address, byte b) {
         this.cursor = 0;
-        this.output = false;
+        this.sequencer.setOutput(false);
         this.IRQDisable = (b & 0x40) != 0;
         //Sequencer mode: 0 selects 4-step sequence, 1 selects 5-step sequence.
-        this.mode = (b & 0x80) == 0 ? MSequencer.FOUR_STEP_SEQ : MSequencer.FIVE_STEP_SEQ;
+        this.sequencer.setMode((b & 0x80) >> 7);
     }
 
     @Override
@@ -47,16 +41,8 @@ public class FrameCounter implements NESystemComponent {
 
     @Override
     public void tick(int cycle) {
-        this.cycle += cycle;
-        this.output = false;
-        var arr = this.mode.getSteps();
-
-        if (this.cycle >= arr[this.cursor]) {
-            this.interrupt = (mode == MSequencer.FOUR_STEP_SEQ) && (this.cursor == 0);
-            this.cycle -= arr[this.cursor++];
-            this.cursor %= 4;
-            this.output = true;
-        }
+        this.sequencer.setOutput(false);
+        this.sequencer.tick(cycle);
     }
 
     public boolean interrupt() {
@@ -66,5 +52,14 @@ public class FrameCounter implements NESystemComponent {
             this.interrupt = false;
         }
         return is;
+    }
+
+    public boolean halfFrame() {
+        var index = this.sequencer.getIndex() + 1;
+        return index % 2 == 0;
+    }
+
+    public boolean next() {
+        return this.sequencer.isOutput();
     }
 }

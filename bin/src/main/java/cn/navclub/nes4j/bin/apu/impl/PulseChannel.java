@@ -5,17 +5,16 @@ import cn.navclub.nes4j.bin.apu.Envelope;
 import cn.navclub.nes4j.bin.apu.SweepUnit;
 import cn.navclub.nes4j.bin.apu.impl.sequencer.SeqSequencer;
 import cn.navclub.nes4j.bin.core.APU;
-import cn.navclub.nes4j.bin.enums.APUStatus;
 import lombok.Getter;
 
-public class Pulse extends Channel {
+public class PulseChannel extends Channel {
     @Getter
     private final PulseIndex index;
     private final Envelope envelope;
     private final SweepUnit sweepUnit;
 
 
-    public Pulse(APU apu, PulseIndex index) {
+    public PulseChannel(APU apu, PulseIndex index) {
         super(apu, new SeqSequencer());
 
         this.index = index;
@@ -47,25 +46,25 @@ public class Pulse extends Channel {
 
         if (i == 3) {
             this.lock = true;
-            var status = this.index == PulseIndex.PULSE_0 ? APUStatus.PULSE_1 : APUStatus.PULSE_2;
-            if (this.apu.readStatus(status)) {
-                this.lengthCounter.lookupTable(b);
-            }
+            this.lengthCounter.lookupTable(b);
         }
     }
 
 
     @Override
     public void tick(int cycle) {
-        super.tick(cycle);
-
         this.envelope.tick(cycle);
-        this.sweepUnit.tick(cycle);
 
         this.lock = false;
 
-        var value = this.sweepUnit.calculate(this.timer.getPeriod(), this.index);
-        this.timer.setPeriod(value);
+        if (apu.halfFrame()) {
+            this.sweepUnit.tick(cycle);
+            this.lengthCounter.tick(cycle);
+            var value = this.sweepUnit.calculate(this.timer.getPeriod(), this.index);
+            this.timer.setPeriod(value);
+        }
+
+        this.timer.tick(cycle);
     }
 
     /*

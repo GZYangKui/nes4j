@@ -7,7 +7,7 @@ import cn.navclub.nes4j.bin.function.CycleDriver;
  * NES系统核心组件功能抽象
  *
  */
-public interface NESystemComponent extends CycleDriver {
+public interface Component extends CycleDriver {
     /**
      * 向指定位置写入一个字节
      */

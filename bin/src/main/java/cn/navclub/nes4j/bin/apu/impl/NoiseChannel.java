@@ -5,7 +5,7 @@ import cn.navclub.nes4j.bin.apu.Envelope;
 import cn.navclub.nes4j.bin.apu.impl.sequencer.NoiseSequencer;
 import cn.navclub.nes4j.bin.core.APU;
 
-public class Noise extends Channel {
+public class NoiseChannel extends Channel {
     private static final int[] LOOK_TABLE = {
             0x004,
             0x008,
@@ -26,7 +26,7 @@ public class Noise extends Channel {
     };
     private final Envelope envelope;
 
-    public Noise(APU apu) {
+    public NoiseChannel(APU apu) {
         super(apu, new NoiseSequencer());
         this.envelope = new Envelope(this);
     }
@@ -38,10 +38,36 @@ public class Noise extends Channel {
         if (address == 0x400c) {
             this.envelope.update(b);
         }
+        //
+        // Register $400E sets the random generator mode and timer period based on a 4-bit
+        // index into a period table:
+        //
+        //    m--- iiii       mode, period index
+        //
+        //    i   timer period
+        //    ----------------
+        //    0     $004
+        //    1     $008
+        //    2     $010
+        //    3     $020
+        //    4     $040
+        //    5     $060
+        //    6     $080
+        //    7     $0A0
+        //    8     $0CA
+        //    9     $0FE
+        //    A     $17C
+        //    B     $1FC
+        //    C     $2FA
+        //    D     $3F8
+        //    E     $7F2
+        //    F     $FE4
+        //
         if (address == 0x400e) {
             var index = b & 0x0f;
+            var mode = (b & 0x80) >> 7;
             this.timer.setPeriod(LOOK_TABLE[index]);
-            ((NoiseSequencer) this.sequencer).setMode((b & 0x80) >> 7);
+            ((NoiseSequencer) this.sequencer).setMode(mode);
         }
         if (i == 3) {
             this.lock = true;
@@ -49,14 +75,16 @@ public class Noise extends Channel {
     }
 
     /**
-     * +---------+    +---------+    +---------+
-     * |  Timer  |--->| Random  |    | Length  |
-     * +---------+    +---------+    +---------+
-     * |              |
-     * v              v
-     * +---------+        |\             |\         +---------+
-     * |Envelope |------->| >----------->| >------->|   DAC   |
-     * +---------+        |/             |/         +---------+
+     *
+     *     +---------+    +---------+    +---------+
+     *     |  Timer  |--->| Random  |    | Length  |
+     *     +---------+    +---------+    +---------+
+     *                         |              |
+     *                         v              v
+     *     +---------+        |\             |\         +---------+
+     *     |Envelope |------->| >----------->| >------->|   DAC   |
+     *     +---------+        |/             |/         +---------+
+     *
      */
     @Override
     public int output() {

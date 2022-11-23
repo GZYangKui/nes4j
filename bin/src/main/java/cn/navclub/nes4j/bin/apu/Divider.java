@@ -15,6 +15,13 @@ public class Divider implements CycleDriver {
     private int period;
     private boolean output;
 
+    public Divider() {
+
+    }
+
+    public Divider(int period) {
+        this.period = period;
+    }
 
     public boolean output() {
         var temp = this.output;

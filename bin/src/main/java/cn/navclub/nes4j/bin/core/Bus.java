@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.NESystemComponent;
+import cn.navclub.nes4j.bin.Component;
 import cn.navclub.nes4j.bin.enums.NMapper;
 import cn.navclub.nes4j.bin.function.TCallback;
 import lombok.Getter;
@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
-public class Bus implements NESystemComponent {
+public class Bus implements Component {
     private static final int RPG_ROM = 0x8000;
     private static final int RPG_ROM_END = 0xFFFF;
     private static final int RAM_MIRROR_END = 0x1fff;
@@ -37,6 +37,8 @@ public class Bus implements NESystemComponent {
         this.joyPad = joyPad;
         this.joyPad1 = joyPad1;
         this.rpgSize = rpg.length;
+
+        this.apu.setBus(this);
 
         this.ram = new byte[2048];
         this.rpg = new byte[RPG_UNIT * 2];

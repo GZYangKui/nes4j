@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 #undef cn_navclub_nes4j_bin_core_APU_SAMPLE_NUM
-#define cn_navclub_nes4j_bin_core_APU_SAMPLE_NUM 50L
+#define cn_navclub_nes4j_bin_core_APU_SAMPLE_NUM 100L
 /*
  * Class:     cn_navclub_nes4j_bin_core_APU
  * Method:    stop

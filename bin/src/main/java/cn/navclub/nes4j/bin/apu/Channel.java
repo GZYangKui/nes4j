@@ -1,10 +1,10 @@
 package cn.navclub.nes4j.bin.apu;
 
-import cn.navclub.nes4j.bin.NESystemComponent;
+import cn.navclub.nes4j.bin.Component;
 import cn.navclub.nes4j.bin.core.APU;
 import lombok.Getter;
 
-public abstract class Channel implements NESystemComponent {
+public abstract class Channel implements Component {
     @Getter
     protected final Timer timer;
     //储存四个寄存器的值

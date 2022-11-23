@@ -41,14 +41,17 @@ public class Envelope implements CycleDriver {
         } else {
             this.divider.tick(cycle);
         }
-        if (!this.divider.output()) {
-            return;
-        }
-        if (this.loop && this.counter == 0)
-            this.counter = 15;
-        else {
-            if (this.counter != 0)
-                this.counter--;
+        //
+        // When the divider outputs a clock, one of two actions occurs: if loop is set and
+        // counter is zero, it is set to 15, otherwise if counter is non-zero, it is
+        // decremented.
+        //
+        if (this.divider.output()) {
+            if (this.loop && this.counter == 0)
+                this.counter = 15;
+            else {
+                this.counter -= (this.counter != 0 ? 1 : 0);
+            }
         }
     }
 

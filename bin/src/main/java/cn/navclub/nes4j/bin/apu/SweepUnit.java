@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.apu;
 
-import cn.navclub.nes4j.bin.apu.impl.Pulse;
+import cn.navclub.nes4j.bin.apu.impl.PulseChannel;
 import cn.navclub.nes4j.bin.function.CycleDriver;
 
 /**
@@ -41,15 +41,15 @@ public class SweepUnit implements CycleDriver {
      * @param index  Current pulse index
      * @return Calculate value
      */
-    public int calculate(int period, Pulse.PulseIndex index) {
-        if (this.shift > 0) {
+    public int calculate(int period, PulseChannel.PulseIndex index) {
+        if (this.shift == 0) {
             return period;
         }
         var result = period >> this.shift;
         if (this.negative) {
             result = ~result;
         }
-        if (index == Pulse.PulseIndex.PULSE_1) {
+        if (index == PulseChannel.PulseIndex.PULSE_1) {
             result += 1;
         }
         //
