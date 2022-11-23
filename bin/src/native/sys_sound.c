@@ -9,13 +9,13 @@
 /* playback device */
 static char *device = "default";
 
-static void Nes4j_apu_play_linux(SoundHardware *hardware, const double *buffer, usize length);
+static void Nes4j_apu_play_linux(SoundHardware *hardware, const int *buffer, usize length);
 
 #endif
 
 LinkedList *linked_list = NULL;
 
-extern void Nes4j_apu_play(SoundHardware *hardware, const double *buffer, usize length) {
+extern void Nes4j_apu_play(SoundHardware *hardware, const int *buffer, usize length) {
 #ifdef __linux__
     Nes4j_apu_play_linux(hardware, buffer, length);
 #endif
@@ -48,7 +48,7 @@ extern void Nes4j_apu_stop(SoundHardware *hardware) {
 }
 
 
-static void Nes4j_apu_play_linux(SoundHardware *hardware, const double *buffer, usize length) {
+static void Nes4j_apu_play_linux(SoundHardware *hardware, const int *buffer, usize length) {
     snd_pcm_sframes_t frames;
     snd_pcm_t *t = hardware->context;
     for (int i = 0; i < 16; ++i) {
@@ -90,7 +90,7 @@ extern SoundHardware *Nes4j_find_hardware(int has_code, bool auto_create) {
             printf("Playback open error: %s\n", snd_strerror(err));
         }
         if ((err = snd_pcm_set_params(handle,
-                                      SND_PCM_FORMAT_FLOAT,
+                                      SND_PCM_FORMAT_S16,
                                       SND_PCM_ACCESS_RW_INTERLEAVED,
                                       1,
                                       48000,

@@ -2,7 +2,6 @@ package cn.navclub.nes4j.bin.apu.impl;
 
 import cn.navclub.nes4j.bin.apu.Channel;
 import cn.navclub.nes4j.bin.core.APU;
-import cn.navclub.nes4j.bin.enums.APUStatus;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -66,7 +65,7 @@ public class DMChannel extends Channel {
 
     @Override
     public void tick(int cycle) {
-        if (!this.apu.readStatus(APUStatus.DMC)) {
+        if (!this.enable) {
             return;
         }
         this.stepReader();
@@ -96,18 +95,17 @@ public class DMChannel extends Channel {
     }
 
     public void stepReader() {
-        if (!(this.currentLength > 0 && this.bitCount == 0)) {
-            return;
-        }
-        this.bitCount = 8;
-        this.shiftReg = this.apu.getBus().read(this.currentAddress);
-        this.currentAddress++;
-        if (this.currentAddress == 0) {
-            this.currentAddress = 0x8000;
-        }
-        this.currentLength--;
-        if (this.currentLength == 0 && this.loop) {
-            this.reset();
+        if (this.currentLength > 0 && this.bitCount == 0) {
+            this.bitCount = 8;
+            this.shiftReg = this.apu.getBus().read(this.currentAddress);
+            this.currentAddress++;
+            if (this.currentAddress == 0) {
+                this.currentAddress = 0x8000;
+            }
+            this.currentLength--;
+            if (this.currentLength == 0 && this.loop) {
+                this.reset();
+            }
         }
     }
 
@@ -118,6 +116,9 @@ public class DMChannel extends Channel {
 
     @Override
     public int output() {
+        if (!this.enable) {
+            return 0;
+        }
         return this.value;
     }
 }

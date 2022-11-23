@@ -3,8 +3,12 @@ package cn.navclub.nes4j.bin.apu;
 import cn.navclub.nes4j.bin.Component;
 import cn.navclub.nes4j.bin.core.APU;
 import lombok.Getter;
+import lombok.Setter;
 
 public abstract class Channel implements Component {
+    @Getter
+    @Setter
+    protected boolean enable;
     @Getter
     protected final Timer timer;
     //储存四个寄存器的值
@@ -20,8 +24,8 @@ public abstract class Channel implements Component {
         this.apu = apu;
         this.value = new byte[4];
         this.sequencer = sequencer;
-        this.timer = new Timer(this.sequencer);
-        this.lengthCounter = new LengthCounter();
+        this.lengthCounter = new LengthCounter(this);
+        this.timer = sequencer == null ? null : new Timer(this.sequencer);
     }
 
     @Override
@@ -31,7 +35,9 @@ public abstract class Channel implements Component {
 
     @Override
     public void tick(int cycle) {
-        this.timer.tick(cycle);
+        if (timer != null) {
+            this.timer.tick(cycle);
+        }
         this.lengthCounter.tick(cycle);
     }
 

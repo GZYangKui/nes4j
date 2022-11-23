@@ -86,6 +86,9 @@ public class PulseChannel extends Channel {
      */
     @Override
     public int output() {
+        if (!this.enable) {
+            return 0;
+        }
         var value = this.envelope.getVolume();
         if (sequencer.value() == 0) {
             value = 0;

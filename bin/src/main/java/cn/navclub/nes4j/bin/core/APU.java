@@ -6,7 +6,6 @@ import cn.navclub.nes4j.bin.apu.impl.DMChannel;
 import cn.navclub.nes4j.bin.apu.impl.NoiseChannel;
 import cn.navclub.nes4j.bin.apu.impl.PulseChannel;
 import cn.navclub.nes4j.bin.apu.impl.TriangleChannel;
-import cn.navclub.nes4j.bin.enums.APUStatus;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,8 +19,7 @@ public class APU implements Component {
     private final NoiseChannel noise;
     private final PulseChannel pulse;
     private final PulseChannel pulse1;
-    private final double[] samples;
-    private final SRegister status;
+    private final int[] samples;
     private final TriangleChannel triangle;
     private final FrameCounter frameCounter;
     private final boolean support;
@@ -33,11 +31,10 @@ public class APU implements Component {
     public APU() {
         this.support = this.create();
         this.dmc = new DMChannel(this);
-        this.status = new SRegister();
         this.noise = new NoiseChannel(this);
         this.triangle = new TriangleChannel(this);
         this.frameCounter = new FrameCounter();
-        this.samples = new double[SAMPLE_NUM];
+        this.samples = new int[SAMPLE_NUM];
         this.pulse = new PulseChannel(this, PulseChannel.PulseIndex.PULSE_0);
         this.pulse1 = new PulseChannel(this, PulseChannel.PulseIndex.PULSE_1);
     }
@@ -56,19 +53,13 @@ public class APU implements Component {
         //is set to 0.
         //
         if (address == 0x4015) {
-            this.status.setBits(b);
 
-            var n0 = this.noise.getLengthCounter();
-            var l0 = this.pulse.getLengthCounter();
-            var l1 = this.pulse1.getLengthCounter();
-            var t0 = this.triangle.getLengthCounter();
+            this.pulse.setEnable((b & 0x01) == 0x01);
+            this.pulse1.setEnable((b & 0x02) == 0x02);
+            this.triangle.setEnable((b & 0x04) == 0x04);
+            this.noise.setEnable((b & 0x08) == 0x08);
 
-            l0.setDisable((b & 0x01) == 0);
-            l1.setDisable((b & 0x02) == 0);
-            t0.setDisable((b & 0x04) == 0);
-            n0.setDisable((b & 0x08) == 0);
-
-            var dmc = (b & 0x10) != 0;
+            var dmc = (b & 0x10) == 0x10;
             if (!dmc) {
                 this.dmc.setCurrentLength(0);
             } else {
@@ -145,11 +136,11 @@ public class APU implements Component {
         }
 
 
-        var d0 = this.readStatus(APUStatus.DMC) ? this.dmc.output() : 0;
-        var n0 = this.readStatus(APUStatus.NOISE) ? this.noise.output() : 0;
-        var p0 = this.readStatus(APUStatus.PULSE_1) ? this.pulse.output() : 0;
-        var p1 = this.readStatus(APUStatus.PULSE_2) ? this.pulse1.output() : 0;
-        var t0 = this.readStatus(APUStatus.TRIANGLE) ? this.triangle.output() : 0;
+        var d0 = this.dmc.output();
+        var n0 = this.noise.output();
+        var p0 = this.pulse.output();
+        var p1 = this.pulse1.output();
+        var t0 = this.triangle.output();
 
         var seqOut = 0d;
         var sum = (double) (p0 + p1);
@@ -159,8 +150,7 @@ public class APU implements Component {
 
         var tndOut = 1 / ((t0 / 8227.0) + (n0 / 12241.0) + (d0 / 22638.0));
         tndOut = 159.79 / (tndOut + 100);
-
-        this.samples[index++] = (tndOut + seqOut);
+        this.samples[index++] = (int) Math.floor(Math.min(tndOut + seqOut, 1.0) * 32767);
         if (index >= SAMPLE_NUM) {
             this.index = 0;
             play(this.samples);
@@ -181,7 +171,7 @@ public class APU implements Component {
      *
      * @param samples 音频样本
      */
-    private native void play(double[] samples);
+    private native void play(int[] samples);
 
     /**
      * 判断当前系统是否已实现播放音频
@@ -192,7 +182,7 @@ public class APU implements Component {
         return this.frameCounter.interrupt();
     }
 
-    public boolean readStatus(APUStatus status) {
-        return this.status.contain(status);
-    }
+//    public boolean readStatus(APUStatus status) {
+//        return this.status.contain(status);
+//    }
 }

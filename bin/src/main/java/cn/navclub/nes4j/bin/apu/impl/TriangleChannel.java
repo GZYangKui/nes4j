@@ -4,7 +4,6 @@ import cn.navclub.nes4j.bin.apu.Channel;
 import cn.navclub.nes4j.bin.apu.LinearCounter;
 import cn.navclub.nes4j.bin.apu.impl.sequencer.TriangleSequencer;
 import cn.navclub.nes4j.bin.core.APU;
-import cn.navclub.nes4j.bin.enums.APUStatus;
 
 public class TriangleChannel extends Channel {
     private final LinearCounter linearCounter;
@@ -59,6 +58,9 @@ public class TriangleChannel extends Channel {
      */
     @Override
     public int output() {
+        if (!this.enable) {
+            return 0;
+        }
         return sequencer.value();
     }
 }

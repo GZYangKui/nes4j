@@ -5,22 +5,21 @@
 
 static SoundHardware *Nes4j_find_hardware_obj_hash_code(JNIEnv *, jobject, bool);
 
-JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_play(JNIEnv *env, jobject this, jdoubleArray array) {
+JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_core_APU_play(JNIEnv *env, jobject this, jintArray array) {
     SoundHardware *hardware = Nes4j_find_hardware_obj_hash_code(env, this, False);
     if (hardware == NULL) {
         fprintf(stderr, "Call before Please init SoundHardware.\n");
         return;
     }
     jint length = (*env)->GetArrayLength(env, array);
-    double dst[length];
     jboolean copy = JNI_FALSE;
-    jdouble *temp = (*env)->GetDoubleArrayElements(env, array, &copy);
+    jint *temp = (*env)->GetIntArrayElements(env, array, &copy);
     if (!temp) {
         fprintf(stderr, "Get double array elements is NULL it was gc recovery?\n");
         return;
     }
-    (*env)->ReleaseDoubleArrayElements(env, array, temp, JNI_ABORT);
-    Nes4j_apu_play(hardware, dst, length);
+    (*env)->ReleaseIntArrayElements(env, array, temp, JNI_ABORT);
+    Nes4j_apu_play(hardware, temp, length);
 }
 
 JNIEXPORT jboolean JNICALL Java_cn_navclub_nes4j_bin_core_APU_create(JNIEnv *env, jobject this) {

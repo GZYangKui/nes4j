@@ -28,8 +28,12 @@ public class LengthCounter implements CycleDriver {
     //判断是否停止计数
     @Setter
     private boolean halt;
-    //判断是否禁用
-    private boolean disable;
+
+    private final Channel channel;
+
+    public LengthCounter(Channel channel) {
+        this.channel = channel;
+    }
 
     @Override
     public void tick(int cycle) {
@@ -37,26 +41,19 @@ public class LengthCounter implements CycleDriver {
         // When clocked by the frame sequencer, if the halt flag is clear and the counter
         // is non-zero, it is decremented.
         //
-        if (this.halt || this.counter == 0 || this.disable) {
+        if (this.halt || this.counter == 0 || !this.channel.enable) {
             return;
         }
         this.counter--;
     }
 
     public void lookupTable(byte b) {
-        if (this.disable) {
+        if (!this.channel.enable) {
             return;
         }
         var msb = (b & 0xf0) >> 4;
         var index = msb * 2;
         var offset = (b & 0x08) >> 3;
         this.counter = LOOKUP_TABLE[index + offset];
-    }
-
-    public void setDisable(boolean disable) {
-        if (disable) {
-            this.counter = 0;
-        }
-        this.disable = disable;
     }
 }
