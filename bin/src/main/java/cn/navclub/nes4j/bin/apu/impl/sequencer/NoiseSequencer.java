@@ -54,7 +54,7 @@ public class NoiseSequencer implements Sequencer {
      *
      */
     @Override
-    public void tick(int cycle) {
+    public void tick() {
         var index = this.mode == 0 ? 1 : 6;
         var a = this.sequence & 0x01;
         var b = (this.sequence >> index) & 0x01;

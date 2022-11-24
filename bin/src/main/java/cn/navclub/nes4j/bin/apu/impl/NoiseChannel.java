@@ -4,6 +4,7 @@ import cn.navclub.nes4j.bin.apu.Channel;
 import cn.navclub.nes4j.bin.apu.Envelope;
 import cn.navclub.nes4j.bin.apu.impl.sequencer.NoiseSequencer;
 import cn.navclub.nes4j.bin.core.APU;
+import lombok.Getter;
 
 public class NoiseChannel extends Channel {
     private static final int[] LOOK_TABLE = {
@@ -24,6 +25,7 @@ public class NoiseChannel extends Channel {
             0x3f2,
             0xfe4
     };
+    @Getter
     private final Envelope envelope;
 
     public NoiseChannel(APU apu) {
@@ -98,13 +100,5 @@ public class NoiseChannel extends Channel {
             value = 0;
         }
         return value;
-    }
-
-    @Override
-    public void tick(int cycle) {
-        super.tick(cycle);
-        this.envelope.tick(cycle);
-
-        this.lock = false;
     }
 }

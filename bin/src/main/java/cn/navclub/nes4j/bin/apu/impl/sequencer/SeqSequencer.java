@@ -15,7 +15,7 @@ public class SeqSequencer implements Sequencer {
     private int index;
 
     @Override
-    public void tick(int cycle) {
+    public void tick() {
         this.index = (this.index + 1) % 8;
     }
 

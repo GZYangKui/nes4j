@@ -46,7 +46,7 @@ public class TriangleSequencer implements Sequencer {
     }
 
     @Override
-    public void tick(int cycle) {
+    public void tick() {
         this.index = (this.index + 1) % sequencer.length;
     }
 }

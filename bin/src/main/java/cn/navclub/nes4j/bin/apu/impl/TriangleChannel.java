@@ -5,8 +5,10 @@ import cn.navclub.nes4j.bin.apu.LinearCounter;
 import cn.navclub.nes4j.bin.apu.Timer;
 import cn.navclub.nes4j.bin.apu.impl.sequencer.TriangleSequencer;
 import cn.navclub.nes4j.bin.core.APU;
+import lombok.Getter;
 
 public class TriangleChannel extends Channel {
+    @Getter
     private final LinearCounter linearCounter;
 
     public TriangleChannel(APU apu) {
@@ -36,9 +38,9 @@ public class TriangleChannel extends Channel {
     }
 
     @Override
-    public void tick(int cycle) {
-        super.tick(cycle);
-        this.linearCounter.tick(cycle);
+    public void tick() {
+        super.tick();
+        this.linearCounter.tick();
     }
 
     /**
@@ -69,7 +71,7 @@ public class TriangleChannel extends Channel {
         }
 
         @Override
-        public void tick(int cycle) {
+        public void tick() {
             if (this.counter == 0) {
                 this.counter = this.period;
             } else {
@@ -82,7 +84,7 @@ public class TriangleChannel extends Channel {
                     var linearCounter = this.channel.linearCounter;
                     var lengthCounter = this.channel.lengthCounter;
                     if (lengthCounter.getCounter() != 0 && linearCounter.getCounter() != 0) {
-                        this.sequencer.tick(cycle);
+                        this.sequencer.tick();
                     }
                 }
             }

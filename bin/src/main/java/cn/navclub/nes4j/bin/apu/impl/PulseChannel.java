@@ -10,7 +10,9 @@ import lombok.Getter;
 public class PulseChannel extends Channel {
     @Getter
     private final PulseIndex index;
+    @Getter
     private final Envelope envelope;
+    @Getter
     private final SweepUnit sweepUnit;
 
 
@@ -51,21 +53,6 @@ public class PulseChannel extends Channel {
         this.updateTimeValue(address, b);
     }
 
-
-    @Override
-    public void tick(int cycle) {
-        this.envelope.tick(cycle);
-
-        this.lock = false;
-
-        if (apu.halfFrame()) {
-            this.sweepUnit.tick(cycle);
-            this.lengthCounter.tick(cycle);
-        }
-
-        this.timer.tick(cycle);
-    }
-
     /*
      *
      *                    +---------+    +---------+
@@ -96,6 +83,12 @@ public class PulseChannel extends Channel {
             value = 0;
         }
         return value;
+    }
+
+    @Override
+    public void lengthTick() {
+        super.lengthTick();
+        this.sweepUnit.tick();
     }
 
     public enum PulseIndex {

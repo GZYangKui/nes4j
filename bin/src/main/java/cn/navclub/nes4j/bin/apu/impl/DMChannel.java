@@ -38,6 +38,7 @@ public class DMChannel extends Channel {
     private int timeValue;
     private int timePeriod;
     @Getter
+    @Setter
     private boolean interrupt;
 
 
@@ -69,7 +70,7 @@ public class DMChannel extends Channel {
     }
 
     @Override
-    public void tick(int cycle) {
+    public void tick() {
         if (!this.enable) {
             return;
         }

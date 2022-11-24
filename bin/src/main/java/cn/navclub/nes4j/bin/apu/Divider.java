@@ -32,7 +32,7 @@ public class Divider implements CycleDriver {
     }
 
     @Override
-    public void tick(int cycle) {
+    public void tick() {
         this.counter--;
         //重置计数器并输出一个时钟
         if (this.counter == 0) {

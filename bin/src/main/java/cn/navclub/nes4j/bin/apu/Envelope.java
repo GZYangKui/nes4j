@@ -35,13 +35,13 @@ public class Envelope implements CycleDriver {
      * to 15 and the divider is reset, otherwise the divider is clocked.
      */
     @Override
-    public void tick(int cycle) {
+    public void tick() {
         var lock = this.channel.lock;
         if (lock) {
             this.counter = 15;
             this.divider.reset();
         } else {
-            this.divider.tick(cycle);
+            this.divider.tick();
         }
         //
         // When the divider outputs a clock, one of two actions occurs: if loop is set and

@@ -31,11 +31,9 @@ public abstract class Channel implements Component {
     }
 
     @Override
-    public void tick(int cycle) {
-        this.timer.tick(cycle);
-        if (this.apu.halfFrame()) {
-            this.lengthCounter.tick(cycle);
-        }
+    public void tick() {
+        this.lock = false;
+        this.timer.tick();
     }
 
     public void setEnable(boolean enable) {
@@ -47,6 +45,10 @@ public abstract class Channel implements Component {
         if (!this.enable) {
             this.lengthCounter.setCounter(0);
         }
+    }
+
+    public void lengthTick() {
+        this.lengthCounter.tick();
     }
 
     /**

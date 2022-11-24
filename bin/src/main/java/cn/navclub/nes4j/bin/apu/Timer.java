@@ -22,14 +22,14 @@ public class Timer implements CycleDriver {
     }
 
     @Override
-    public void tick(int cycle) {
+    public void tick() {
         if (this.counter == 0) {
             this.counter = this.period;
         } else {
             this.counter--;
             //生成序列
             if (this.counter == 0 && this.sequencer != null) {
-                this.sequencer.tick(cycle);
+                this.sequencer.tick();
             }
         }
     }

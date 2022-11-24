@@ -16,6 +16,7 @@ public class APU implements Component {
     private static final float[] PULSE_TABLE;
     private static final float[] TND_TABLE;
 
+
     static {
         TND_TABLE = new float[203];
         PULSE_TABLE = new float[31];
@@ -28,21 +29,20 @@ public class APU implements Component {
         }
     }
 
-    private static final int SAMPLE_NUM = 100;
-
     private final DMChannel dmc;
     private final NoiseChannel noise;
     private final PulseChannel pulse;
     private final PulseChannel pulse1;
     private final TriangleChannel triangle;
     private final FrameCounter frameCounter;
-    private final boolean support;
     @Getter
     @Setter
     private Bus bus;
+    private float[] samples;
+    private int index;
 
     public APU() {
-        this.support = this.create();
+        this.samples = new float[1024];
         this.dmc = new DMChannel(this);
         this.noise = new NoiseChannel(this);
         this.triangle = new TriangleChannel(this);
@@ -71,13 +71,14 @@ public class APU implements Component {
             this.triangle.setEnable((b & 0x04) == 0x04);
             this.noise.setEnable((b & 0x08) == 0x08);
 
-            var dmc = (b & 0x10) == 0x10;
-            if (!dmc) {
+            var dmcEnable = (b & 0x10) == 0x10;
+            if (!dmcEnable) {
                 this.dmc.setCurrentLength(0);
             }
-            if (dmc && this.dmc.getCurrentLength() == 0) {
+            if (dmcEnable && this.dmc.getCurrentLength() == 0) {
                 this.dmc.reset();
             }
+            this.dmc.setInterrupt(false);
         }
         //0x4000-0x4003 Square Channel1
         else if (address >= 0x4000 && address <= 0x4003) {
@@ -141,24 +142,70 @@ public class APU implements Component {
         return (byte) value;
     }
 
+    private long cycle;
+
     @Override
     public void tick(int cycle) {
+        this.cycle += cycle;
+
+        if (this.cycle % 2 == 0) {
+            this.dmc.tick();
+            this.pulse.tick();
+            this.pulse1.tick();
+            this.noise.tick();
+        }
+
+        this.triangle.tick();
+
         this.frameCounter.tick(cycle);
-        if (!this.frameCounter.next()) {
-            return;
+
+        if (this.frameCounter.isOutput()) {
+            var index = this.frameCounter.getIndex() - 1;
+            if (index % 2 != 0) {
+                this.pulse.lengthTick();
+                this.pulse1.lengthTick();
+                this.noise.lengthTick();
+                this.triangle.lengthTick();
+            }
+
+            this.pulse.getEnvelope().tick();
+            this.noise.getEnvelope().tick();
+            this.pulse1.getEnvelope().tick();
+            this.triangle.getLinearCounter().tick();
         }
 
-        this.dmc.tick(cycle);
-        this.pulse.tick(cycle);
-        this.noise.tick(cycle);
-        this.pulse1.tick(cycle);
-        this.triangle.tick(cycle);
 
-        if (!this.support) {
-            return;
+        this.samples[index++] = this.lookupSample();
+        if (this.index >= this.samples.length) {
+            this.index = 0;
+            this.play(this.samples);
         }
+    }
 
-
+    /**
+     *
+     *
+     * Implementation Using Lookup Table
+     * ---------------------------------
+     * The formulas can be efficiently implemented using two lookup tables: a 31-entry
+     * table for the two square channels and a 203-entry table for the remaining
+     * channels (due to the approximation of tnd_out, the numerators are adjusted
+     * slightly to preserve the normalized output range).
+     *
+     *     square_table [n] = 95.52 / (8128.0 / n + 100)
+     *
+     *     square_out = square_table [square1 + square2]
+     *
+     * The latter table is approximated (within 4%) by using a base unit close to the
+     * DMC's DAC.
+     *
+     *     tnd_table [n] = 163.67 / (24329.0 / n + 100)
+     *
+     *     tnd_out = tnd_table [3 * triangle + 2 * noise + dmc]
+     *
+     *
+     */
+    private float lookupSample() {
         var d0 = this.dmc.output();
         var n0 = this.noise.output();
         var p0 = this.pulse.output();
@@ -167,13 +214,8 @@ public class APU implements Component {
 
         var seqOut = PULSE_TABLE[p0 + p1];
         var tndOut = TND_TABLE[3 * t0 + 2 * n0 + d0];
-        var out = tndOut + seqOut;
 
-        play(new float[]{out});
-    }
-
-    public boolean halfFrame() {
-        return this.frameCounter.seqIndex() % 2 == 0;
+        return tndOut + seqOut;
     }
 
     /**
@@ -187,11 +229,6 @@ public class APU implements Component {
      * @param samples 音频样本
      */
     private native void play(float[] samples);
-
-    /**
-     * 判断当前系统是否已实现播放音频
-     */
-    private native boolean create();
 
     /**
      *

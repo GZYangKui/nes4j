@@ -41,7 +41,7 @@ public class LinearCounter implements CycleDriver {
      *
      */
     @Override
-    public void tick(int cycle) {
+    public void tick() {
         if (this.halt) {
             this.counter = this.defaultValue;
         } else {

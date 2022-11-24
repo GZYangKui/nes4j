@@ -1,12 +1,22 @@
 package cn.navclub.nes4j.bin.function;
 
-/**
- * 实现该接口的类均可被CPU时钟驱动
- */
-@FunctionalInterface
 public interface CycleDriver {
     /**
-     * CPU时钟发生改变回调当前方法
+     *
+     * 该函数仅在需要时钟传递场景使用
+     *
+     * @param cycle 传递时钟值
      */
-    void tick(int cycle);
+    default void tick(int cycle) {
+
+    }
+
+    /**
+     *
+     * 该函数使用无需时钟传递场景使用
+     *
+     */
+    default void tick() {
+
+    }
 }

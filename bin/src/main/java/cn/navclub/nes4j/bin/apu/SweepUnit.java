@@ -68,8 +68,8 @@ public class SweepUnit implements CycleDriver {
      * is reset.
      */
     @Override
-    public void tick(int cycle) {
-        this.divider.tick(cycle);
+    public void tick() {
+        this.divider.tick();
         if (this.write) {
             this.write = false;
             this.divider.reset();

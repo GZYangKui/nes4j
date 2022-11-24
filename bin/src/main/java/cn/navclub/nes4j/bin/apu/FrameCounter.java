@@ -1,7 +1,6 @@
 package cn.navclub.nes4j.bin.apu;
 
 import cn.navclub.nes4j.bin.Component;
-import cn.navclub.nes4j.bin.apu.impl.sequencer.FrameSequencer;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -11,27 +10,37 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class FrameCounter implements Component {
-    @Getter
-    private int cursor;
     @Setter
     @Getter
     //Whether happen interrupt
     private boolean interrupt;
     //IEQ is disable
     private boolean IRQDisable;
-    private final FrameSequencer sequencer;
+    @Setter
+    private int mode;
+    //2*CPU cycle=APU cycle
+    private int cycle;
+    @Getter
+    private int index;
+    @Getter
+    @Setter
+    private boolean output;
+
+    private final int[][] sequencers = new int[][]{
+            {7457, 7456, 7458, 7458},
+            {7457, 7456, 7458, 14910}
+    };
 
     public FrameCounter() {
-        this.sequencer = new FrameSequencer();
+        this.index = 1;
     }
 
     @Override
     public void write(int address, byte b) {
-        this.cursor = 0;
-        this.sequencer.setOutput(false);
-        this.IRQDisable = (b & 0x40) != 0;
+        this.output = false;
         //Sequencer mode: 0 selects 4-step sequence, 1 selects 5-step sequence.
-        this.sequencer.setMode((b & 0x80) >> 7);
+        this.mode = ((b & 0x80) >> 7);
+        this.IRQDisable = (b & 0x40) != 0;
     }
 
     @Override
@@ -41,8 +50,17 @@ public class FrameCounter implements Component {
 
     @Override
     public void tick(int cycle) {
-        this.sequencer.setOutput(false);
-        this.sequencer.tick(cycle);
+        this.cycle += cycle;
+        var stepValue = this.sequencers[this.mode][this.index - 1];
+        this.output = this.cycle >= stepValue;
+        if (this.output) {
+            this.index = this.index + 1;
+            this.index = this.index % 5;
+            if (this.index == 0) {
+                this.index += 1;
+            }
+            this.cycle %= stepValue;
+        }
     }
 
     public boolean interrupt() {
@@ -52,13 +70,5 @@ public class FrameCounter implements Component {
             this.interrupt = false;
         }
         return is;
-    }
-
-    public int seqIndex() {
-        return this.sequencer.getIndex() + 1;
-    }
-
-    public boolean next() {
-        return this.sequencer.isOutput();
     }
 }
