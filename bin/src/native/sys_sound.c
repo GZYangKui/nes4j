@@ -55,7 +55,7 @@ static void Nes4j_apu_play_linux(SoundHardware *hardware, const float *sample, u
     if (frames < 0)
         frames = snd_pcm_recover(t, frames, 0);
     if (frames < 0) {
-        printf("snd_pcm_writei failed: %s\n", snd_strerror(frames));
+        printf("snd_pcm_writei failed：%s\n", snd_strerror(frames));
         return;
     }
     if (frames > 0 && frames < length) {
@@ -91,10 +91,10 @@ extern SoundHardware *Nes4j_find_hardware(int has_code, bool auto_create) {
                                       SND_PCM_FORMAT_FLOAT,
                                       SND_PCM_ACCESS_RW_INTERLEAVED,
                                       1,
-                                      48000,
+                                      44100,
                                       1,
-                                      //1s
-                                      1000000)) < 0) {
+                //.5s
+                                      500000)) < 0) {
             printf("Playback open error: %s\n", snd_strerror(err));
         }
         //Open linux sound card fail

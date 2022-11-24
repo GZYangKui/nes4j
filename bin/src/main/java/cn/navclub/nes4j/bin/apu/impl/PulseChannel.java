@@ -72,15 +72,10 @@ public class PulseChannel extends Channel {
      */
     @Override
     public int output() {
-        if (!this.enable) {
+        if (!this.enable || this.sequencer.value() == 0 || this.lengthCounter.getCounter() == 0) {
             return 0;
         }
-        var value = this.envelope.getVolume();
-        value = value * this.sequencer.value();
-        if (lengthCounter.getCounter() == 0) {
-            value = 0;
-        }
-        return value;
+        return this.envelope.getVolume();
     }
 
     @Override

@@ -38,11 +38,11 @@ public class APU implements Component {
     @Getter
     @Setter
     private Bus bus;
-    private float[] samples;
     private int index;
+    private final float[] samples;
 
     public APU() {
-        this.samples = new float[1024 * 16];
+        this.samples = new float[4096];
         this.dmc = new DMChannel(this);
         this.noise = new NoiseChannel(this);
         this.triangle = new TriangleChannel(this);
@@ -174,11 +174,12 @@ public class APU implements Component {
             this.triangle.getLinearCounter().tick();
         }
 
-
-        this.samples[index++] = this.lookupSample();
-        if (this.index >= this.samples.length) {
-            this.index = 0;
-            this.play(this.samples);
+        if ((this.cycle / 2) % 41 == 0) {
+            this.samples[index++] = this.lookupSample();
+            if (this.index >= this.samples.length) {
+                this.index = 0;
+                this.play(this.samples);
+            }
         }
     }
 

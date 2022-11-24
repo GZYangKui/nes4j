@@ -56,7 +56,10 @@ public class TriangleChannel extends Channel {
      */
     @Override
     public int output() {
-        if (!this.enable) {
+        if (!this.enable
+                || this.timer.getPeriod() < 3
+                || this.linearCounter.getCounter() == 0
+                || this.lengthCounter.getCounter() == 0) {
             return 0;
         }
         return sequencer.value();

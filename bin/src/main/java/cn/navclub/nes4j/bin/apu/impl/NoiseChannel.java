@@ -37,6 +37,7 @@ public class NoiseChannel extends Channel {
     public void write(int address, byte b) {
         if (address == 0x400c) {
             this.envelope.update(b);
+            this.lengthCounter.setHalt((b & 0x20) != 0);
         }
         //
         // Register $400E sets the random generator mode and timer period based on a 4-bit
@@ -72,6 +73,7 @@ public class NoiseChannel extends Channel {
 
         if (address == 0x400f) {
             this.lock = true;
+            this.lengthCounter.setCounter(b >>> 3);
         }
     }
 
@@ -89,16 +91,9 @@ public class NoiseChannel extends Channel {
      */
     @Override
     public int output() {
-        if (!this.enable) {
+        if (!this.enable || this.sequencer.value() == 0 || this.lengthCounter.getCounter() == 0) {
             return 0;
         }
-        var value = this.envelope.getVolume();
-        if (this.sequencer.value() == 0) {
-            value = 0;
-        }
-        if (lengthCounter.getCounter() == 0) {
-            value = 0;
-        }
-        return value;
+        return this.envelope.getVolume();
     }
 }
