@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.apu;
 
 import cn.navclub.nes4j.bin.function.CycleDriver;
+import lombok.Getter;
 
 /**
  * Envelope Generate
@@ -11,6 +12,7 @@ public class Envelope implements CycleDriver {
 
     private int volume;
     private int counter;
+    @Getter
     private boolean loop;
     private boolean disable;
 

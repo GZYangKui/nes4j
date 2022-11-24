@@ -33,8 +33,6 @@ public class NoiseChannel extends Channel {
 
     @Override
     public void write(int address, byte b) {
-        var i = address % 0x400c;
-        this.value[i] = b;
         if (address == 0x400c) {
             this.envelope.update(b);
         }
@@ -69,7 +67,8 @@ public class NoiseChannel extends Channel {
             this.timer.setPeriod(LOOK_TABLE[index]);
             ((NoiseSequencer) this.sequencer).setMode(mode);
         }
-        if (i == 3) {
+
+        if (address == 0x400f) {
             this.lock = true;
         }
     }

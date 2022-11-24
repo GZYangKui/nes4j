@@ -24,30 +24,31 @@ public class PulseChannel extends Channel {
 
     @Override
     public void write(int address, byte b) {
-        var i = address % this.index.offset;
-        this.value[i] = b;
-
-        if (i == 0) {
+        if (address == 0x4000 || address == 0x4004) {
             this.envelope.update(b);
-            this.lengthCounter.setHalt((b & 0x20) != 0);
+            //
+            // Because the envelope loop and length counter disable flags are mapped to the
+            // same bit, the length counter can't be used while the envelope is in loop mode.
+            //
+            if (!this.envelope.isLoop()) {
+                this.lengthCounter.setHalt((b & 0x20) != 0);
+            }
             //更新占空比
             ((SeqSequencer) (this.sequencer)).setDuty(b & 0x03);
         }
 
-        //更新定时器周期
-        if (i >= 2) {
-            this.updateTimeValue();
-        }
-
         //更新滑音单元
-        if (i == 1) {
+        if (address == 0x4001 || address == 0x4005) {
             this.sweepUnit.update(b);
         }
 
-        if (i == 3) {
+        if (address == 0x4003 || address == 0x4007) {
             this.lock = true;
             this.lengthCounter.lookupTable(b);
         }
+
+        //更新定时器周期
+        this.updateTimeValue(address, b);
     }
 
 

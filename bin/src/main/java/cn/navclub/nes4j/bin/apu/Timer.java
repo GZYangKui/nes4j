@@ -11,11 +11,11 @@ import lombok.Setter;
  */
 public class Timer implements CycleDriver {
     @Getter
-    private int counter;
+    protected int counter;
     @Setter
     @Getter
-    private int period;
-    private final Sequencer sequencer;
+    protected int period;
+    protected final Sequencer sequencer;
 
     public Timer(Sequencer sequencer) {
         this.sequencer = sequencer;

@@ -52,6 +52,11 @@ public class DMChannel extends Channel {
             this.interrupt = (b & 0x80) != 0;
             this.timePeriod = (FREQ_TABLE[b & 0x0f]);
         }
+        //
+        // A write to $4011 sets the counter and DAC to a new value:
+        //
+        //    -ddd dddd       new DAC value
+        //
         if (address == 0x4011) {
             this.value = (byte) (b & 0x7f);
         }

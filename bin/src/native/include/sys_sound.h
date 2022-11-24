@@ -16,7 +16,7 @@ extern SoundHardware *Nes4j_find_hardware(int has_code, bool auto_create);
  * 播放音频
  *
  */
-extern void Nes4j_apu_play(SoundHardware *hardware, const int *buffer, usize length);
+extern void Nes4j_apu_play(SoundHardware *hardware, const float *sample, usize length);
 
 /**
  *

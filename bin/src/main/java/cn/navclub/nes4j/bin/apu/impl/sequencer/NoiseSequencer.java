@@ -30,6 +30,7 @@ public class NoiseSequencer implements Sequencer {
     private int sequence;
 
     public NoiseSequencer() {
+        //On power-up, the shift register is loaded with the value 1.
         this.sequence = 1;
     }
 
@@ -55,10 +56,10 @@ public class NoiseSequencer implements Sequencer {
     @Override
     public void tick(int cycle) {
         var index = this.mode == 0 ? 1 : 6;
-        var b0 = this.sequence & 0x01;
-        var b1 = (this.sequence >> index) & 0x01;
+        var a = this.sequence & 0x01;
+        var b = (this.sequence >> index) & 0x01;
         this.sequence >>= 1;
-        var xor = b0 ^ b1;
+        var xor = a ^ b;
         this.sequence |= (xor != 0 ? 0x02000 : 0x000000);
     }
 }

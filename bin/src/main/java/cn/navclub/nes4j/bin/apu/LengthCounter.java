@@ -24,6 +24,7 @@ public class LengthCounter implements CycleDriver {
             0x20, 0x1e
     };
     @Getter
+    @Setter
     private int counter;
     //判断是否停止计数
     @Setter

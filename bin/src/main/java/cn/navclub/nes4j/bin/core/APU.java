@@ -28,17 +28,15 @@ public class APU implements Component {
         }
     }
 
-    private static final int SAMPLE_NUM = 200;
+    private static final int SAMPLE_NUM = 100;
 
     private final DMChannel dmc;
     private final NoiseChannel noise;
     private final PulseChannel pulse;
     private final PulseChannel pulse1;
-    private final int[] samples;
     private final TriangleChannel triangle;
     private final FrameCounter frameCounter;
     private final boolean support;
-    private int index;
     @Getter
     @Setter
     private Bus bus;
@@ -49,7 +47,6 @@ public class APU implements Component {
         this.noise = new NoiseChannel(this);
         this.triangle = new TriangleChannel(this);
         this.frameCounter = new FrameCounter();
-        this.samples = new int[SAMPLE_NUM];
         this.pulse = new PulseChannel(this, PulseChannel.PulseIndex.PULSE_0);
         this.pulse1 = new PulseChannel(this, PulseChannel.PulseIndex.PULSE_1);
     }
@@ -81,17 +78,29 @@ public class APU implements Component {
             if (dmc && this.dmc.getCurrentLength() == 0) {
                 this.dmc.reset();
             }
-        } else if (address >= 0x4000 && address <= 0x4003) {
+        }
+        //0x4000-0x4003 Square Channel1
+        else if (address >= 0x4000 && address <= 0x4003) {
             this.pulse.write(address, b);
-        } else if (address >= 0x4004 && address <= 0x4007) {
+        }
+        //0x4004-0x4007  Square Channel2
+        else if (address >= 0x4004 && address <= 0x4007) {
             this.pulse1.write(address, b);
-        } else if (address >= 0x4008 && address <= 0x400b) {
+        }
+        //0x4008-0x400b Triangle channel
+        else if (address >= 0x4008 && address <= 0x400b) {
             this.triangle.write(address, b);
-        } else if (address >= 0x400c && address <= 0x400f) {
+        }
+        //0x400c-0x400f Noise channel
+        else if (address >= 0x400c && address <= 0x400f) {
             this.noise.write(address, b);
-        } else if (address >= 0x4010 && address <= 0x4013) {
+        }
+        //0x4010-0x4013 DMC channel
+        else if (address >= 0x4010 && address <= 0x4013) {
             this.dmc.write(address, b);
-        } else if (address == 0x4017) {
+        }
+        //Frame sequencer
+        else if (address == 0x4017) {
             this.frameCounter.write(address, b);
         }
     }
@@ -158,11 +167,9 @@ public class APU implements Component {
 
         var seqOut = PULSE_TABLE[p0 + p1];
         var tndOut = TND_TABLE[3 * t0 + 2 * n0 + d0];
-        this.samples[index++] = (int) Math.floor(Math.min(tndOut + seqOut, 1.0) * 0x7fffffff);
-        if (index >= SAMPLE_NUM) {
-            this.index = 0;
-            play(this.samples);
-        }
+        var out = tndOut + seqOut;
+
+        play(new float[]{out});
     }
 
     public boolean halfFrame() {
@@ -179,7 +186,7 @@ public class APU implements Component {
      *
      * @param samples 音频样本
      */
-    private native void play(int[] samples);
+    private native void play(float[] samples);
 
     /**
      * 判断当前系统是否已实现播放音频

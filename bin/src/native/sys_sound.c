@@ -9,15 +9,15 @@
 /* playback device */
 static char *device = "default";
 
-static void Nes4j_apu_play_linux(SoundHardware *hardware, const int *buffer, usize length);
+static void Nes4j_apu_play_linux(SoundHardware *hardware, const float *sample, usize length);
 
 #endif
 
 LinkedList *linked_list = NULL;
 
-extern void Nes4j_apu_play(SoundHardware *hardware, const int *buffer, usize length) {
+extern void Nes4j_apu_play(SoundHardware *hardware, const float *sample, usize length) {
 #ifdef __linux__
-    Nes4j_apu_play_linux(hardware, buffer, length);
+    Nes4j_apu_play_linux(hardware, sample, length);
 #endif
 }
 
@@ -48,11 +48,10 @@ extern void Nes4j_apu_stop(SoundHardware *hardware) {
 }
 
 
-static void Nes4j_apu_play_linux(SoundHardware *hardware, const int *buffer, usize length) {
+static void Nes4j_apu_play_linux(SoundHardware *hardware, const float *sample, usize length) {
     snd_pcm_sframes_t frames;
     snd_pcm_t *t = hardware->context;
-//    for (int i = 0; i < 16; ++i) {
-    frames = snd_pcm_writei(t, buffer, length);
+    frames = snd_pcm_writei(t, sample, length);
     if (frames < 0)
         frames = snd_pcm_recover(t, frames, 0);
     if (frames < 0) {
@@ -60,9 +59,8 @@ static void Nes4j_apu_play_linux(SoundHardware *hardware, const int *buffer, usi
         return;
     }
     if (frames > 0 && frames < length) {
-        printf("Short write (expected %li, wrote %li)\n", (long) sizeof(buffer), frames);
+        printf("Short write (expected %li, wrote %li)\n", length, frames);
     }
-//    }
 }
 
 
@@ -90,7 +88,7 @@ extern SoundHardware *Nes4j_find_hardware(int has_code, bool auto_create) {
             printf("Playback open error: %s\n", snd_strerror(err));
         }
         if ((err = snd_pcm_set_params(handle,
-                                      SND_PCM_FORMAT_S32,
+                                      SND_PCM_FORMAT_FLOAT,
                                       SND_PCM_ACCESS_RW_INTERLEAVED,
                                       1,
                                       48000,
