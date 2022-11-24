@@ -76,9 +76,7 @@ public class PulseChannel extends Channel {
             return 0;
         }
         var value = this.envelope.getVolume();
-        if (sequencer.value() == 0) {
-            value = 0;
-        }
+        value = value * this.sequencer.value();
         if (lengthCounter.getCounter() == 0) {
             value = 0;
         }

@@ -49,10 +49,10 @@ public class FrameCounter implements Component {
     }
 
     @Override
-    public void tick(int cycle) {
-        this.cycle += cycle;
+    public void tick() {
+        this.cycle++;
         var stepValue = this.sequencers[this.mode][this.index - 1];
-        this.output = this.cycle >= stepValue;
+        this.output = this.cycle > stepValue;
         if (this.output) {
             this.index = this.index + 1;
             this.index = this.index % 5;

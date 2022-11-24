@@ -265,10 +265,11 @@ public class Bus implements Component {
     public void tick(int cycle) {
         var nmi = this.ppu.getIsNMI();
         var before = nmi.get();
-        //同步APU时钟
-        this.apu.tick(cycle);
         //同步PPU时钟
         this.ppu.tick(cycle * 3);
+        for (int i = 0; i < cycle; i++) {
+            this.apu.tick();
+        }
         var after = nmi.get();
         if (!before && after && gameLoopCallback != null) {
             this.gameLoopCallback.accept(this.ppu, this.joyPad, this.joyPad1);

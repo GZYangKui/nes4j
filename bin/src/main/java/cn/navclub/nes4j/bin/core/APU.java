@@ -42,7 +42,7 @@ public class APU implements Component {
     private int index;
 
     public APU() {
-        this.samples = new float[1024];
+        this.samples = new float[1024 * 16];
         this.dmc = new DMChannel(this);
         this.noise = new NoiseChannel(this);
         this.triangle = new TriangleChannel(this);
@@ -145,8 +145,8 @@ public class APU implements Component {
     private long cycle;
 
     @Override
-    public void tick(int cycle) {
-        this.cycle += cycle;
+    public void tick() {
+        this.cycle++;
 
         if (this.cycle % 2 == 0) {
             this.dmc.tick();
@@ -157,7 +157,7 @@ public class APU implements Component {
 
         this.triangle.tick();
 
-        this.frameCounter.tick(cycle);
+        this.frameCounter.tick();
 
         if (this.frameCounter.isOutput()) {
             var index = this.frameCounter.getIndex() - 1;
@@ -214,6 +214,7 @@ public class APU implements Component {
 
         var seqOut = PULSE_TABLE[p0 + p1];
         var tndOut = TND_TABLE[3 * t0 + 2 * n0 + d0];
+
 
         return tndOut + seqOut;
     }

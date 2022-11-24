@@ -59,7 +59,6 @@ public class NoiseSequencer implements Sequencer {
         var a = this.sequence & 0x01;
         var b = (this.sequence >> index) & 0x01;
         this.sequence >>= 1;
-        var xor = a ^ b;
-        this.sequence |= (xor != 0 ? 0x02000 : 0x000000);
+        this.sequence |= ((a ^ b) << 14);
     }
 }

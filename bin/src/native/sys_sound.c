@@ -93,7 +93,8 @@ extern SoundHardware *Nes4j_find_hardware(int has_code, bool auto_create) {
                                       1,
                                       48000,
                                       1,
-                                      500000)) < 0) {
+                                      //1s
+                                      1000000)) < 0) {
             printf("Playback open error: %s\n", snd_strerror(err));
         }
         //Open linux sound card fail
