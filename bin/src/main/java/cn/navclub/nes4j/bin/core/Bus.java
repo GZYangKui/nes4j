@@ -266,9 +266,9 @@ public class Bus implements Component {
         var nmi = this.ppu.getIsNMI();
         var before = nmi.get();
         //同步PPU时钟
-        this.ppu.tick(cycle * 3);
         for (int i = 0; i < cycle; i++) {
             this.apu.tick();
+            this.ppu.tick();
         }
         var after = nmi.get();
         if (!before && after && gameLoopCallback != null) {

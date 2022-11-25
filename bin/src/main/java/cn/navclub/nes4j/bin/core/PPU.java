@@ -41,7 +41,6 @@ public class PPU implements Component {
     //判断是否发生NMI中断
     @Getter
     private final AtomicBoolean isNMI;
-
     private int cycles;
     //Mirrors
     @Getter
@@ -78,8 +77,8 @@ public class PPU implements Component {
      * <a hrep="https://www.nesdev.org/wiki/PPU_rendering">PPU Render</a>
      */
     @Override
-    public void tick(int cycles) {
-        this.cycles += cycles;
+    public void tick() {
+        this.cycles += 3;
 
         //判断是否发生水平消隐(从当前行右侧回到下一行左侧)
         if (this.cycles < 341) {
