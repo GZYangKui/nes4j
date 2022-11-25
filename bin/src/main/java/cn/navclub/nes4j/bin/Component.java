@@ -17,4 +17,11 @@ public interface Component extends CycleDriver {
      * 从指定位置读取一个字节
      */
     byte read(int address);
+
+    /**
+     * 组件停止时触发资源清除工作
+     */
+    default void stop(){
+
+    }
 }

@@ -3,6 +3,7 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.Component;
 import cn.navclub.nes4j.bin.core.impl.CTRegister;
 import cn.navclub.nes4j.bin.core.impl.MKRegister;
+import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.enums.MaskFlag;
 import cn.navclub.nes4j.bin.enums.NameMirror;
 import cn.navclub.nes4j.bin.enums.PStatus;
@@ -10,13 +11,13 @@ import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.security.PublicKey;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * <a href="https://www.nesdev.org/wiki/PPU_programmer_reference">PPU document</a>
  */
 public class PPU implements Component {
-
     @Getter
     private final byte[] ch;
     //The data necessary for render the screen
@@ -38,9 +39,6 @@ public class PPU implements Component {
     private int oamAddr;
     private int scanLine;
     private byte readByteBuf;
-    //判断是否发生NMI中断
-    @Getter
-    private final AtomicBoolean isNMI;
     private int cycles;
     //Mirrors
     @Getter
@@ -48,9 +46,11 @@ public class PPU implements Component {
     private NameMirror mirrors;
     @Getter
     private final PPUScroll scroll;
+    private final Bus bus;
+    private boolean nmi;
 
-    public PPU(byte[] ch, NameMirror mirrors) {
-
+    public PPU(final Bus bus, byte[] ch, NameMirror mirrors) {
+        this.bus = bus;
         this.oamAddr = 0;
         this.scanLine = 0;
         this.readByteBuf = 0;
@@ -64,13 +64,12 @@ public class PPU implements Component {
         this.paletteTable = new byte[32];
         this.status = new SRegister();
         this.control = new CTRegister();
-        this.isNMI = new AtomicBoolean(false);
 
         System.arraycopy(ch, 0, this.ch, 0, Math.min(this.ch.length, ch.length));
     }
 
-    public PPU(NameMirror mirrors) {
-        this(new byte[2048], mirrors);
+    public PPU(Bus bus, NameMirror mirrors) {
+        this(bus, new byte[2048], mirrors);
     }
 
     /**
@@ -97,14 +96,14 @@ public class PPU implements Component {
             this.status.set(PStatus.V_BLANK_OCCUR);
             this.status.clear(PStatus.SPRITE_ZERO_HIT);
             if (this.control.generateVBlankNMI()) {
-                this.isNMI.set(true);
+                this.cpuNMInterrupt();
             }
         }
 
         //一帧渲染完毕 垂直消隐(从右下角回到左上角)
         if (this.scanLine >= 262) {
+            this.nmi = false;
             this.scanLine = 0;
-            this.isNMI.set(false);
             this.status.clear(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT);
         }
     }
@@ -227,7 +226,7 @@ public class PPU implements Component {
         var temp = this.control.generateVBlankNMI();
         this.control.update(b);
         if (!temp && this.control.generateVBlankNMI() && this.status.contain(PStatus.V_BLANK_OCCUR)) {
-            this.isNMI.set(true);
+            this.cpuNMInterrupt();
         }
     }
 
@@ -237,5 +236,18 @@ public class PPU implements Component {
 
     public void writeMask(byte b) {
         this.mask.setBits(b);
+    }
+
+    /**
+     *
+     * Output one frame video sign.
+     *
+     */
+    private void cpuNMInterrupt() {
+        if (this.nmi) {
+            return;
+        }
+        this.nmi = true;
+        this.bus.interrupt(CPUInterrupt.NMI);
     }
 }

@@ -2,7 +2,7 @@ package cn.navclub.nes4j.app;
 
 import cn.navclub.nes4j.app.control.Tile;
 import cn.navclub.nes4j.app.util.OSUtil;
-import cn.navclub.nes4j.bin.core.NESFile;
+import cn.navclub.nes4j.bin.core.Cartridge;
 import cn.navclub.nes4j.bin.util.PatternTableUtil;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -99,13 +99,13 @@ public class CHRView extends Application {
     public void loadNESFile(File file) {
         //Clear already exist tiles
         this.flowPane.getChildren().clear();
-        var future = CompletableFuture.supplyAsync(() -> new NESFile(file));
+        var future = CompletableFuture.supplyAsync(() -> new Cartridge(file));
         future.whenComplete((nesFile, t) -> {
             if (t != null) {
                 t.printStackTrace();
                 return;
             }
-            var ch = nesFile.getCh();
+            var ch = nesFile.getChrom();
             var len = ch.length / 16;
             for (int i = 0; i < len; i++) {
                 var k = i * 16;

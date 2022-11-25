@@ -6,6 +6,7 @@ import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.enums.CPUStatus;
 import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Data;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -25,7 +26,6 @@ public class CPU {
     private int pc;
     private int pcReset;
     private int stackReset;
-
     //栈指针寄存器,始终指向栈顶
     private int sp;
     private final Bus bus;
@@ -39,7 +39,7 @@ public class CPU {
         this.pcReset = pcReset;
         this.stackReset = stackReset;
         this.status = new SRegister();
-        this.modeProvider = new AddressModeProvider(this, bus);
+        this.modeProvider = new AddressModeProvider(this, this.bus);
     }
 
 
@@ -337,6 +337,10 @@ public class CPU {
     }
 
     public void interrupt(CPUInterrupt interrupt) {
+        if (interrupt != CPUInterrupt.NMI && this.status.contain(CPUStatus.ID)) {
+            return;
+        }
+
         this.pushInt(this.pc);
 
         var flag = this.status._clone();
@@ -354,25 +358,10 @@ public class CPU {
 
 
     public void next() {
-
-        //PPU NMI Interrupt
-        if (this.bus.pollPPUNMI()) {
-            this.interrupt(CPUInterrupt.NMI);
-        }
-
-        //APU IRQ Interrupt
-        if (this.bus.pollAPUIRQ() && !this.status.contain(CPUStatus.ID)) {
-            this.interrupt(CPUInterrupt.IRQ);
-        }
-
         var openCode = this.bus.read(this.pc);
         var pcState = (++this.pc);
 
         if (openCode == 0x00) {
-            //中断禁用->忽略中断
-            if (this.status.contain(CPUStatus.ID)) {
-                return;
-            }
             this.interrupt(CPUInterrupt.BRK);
         }
 

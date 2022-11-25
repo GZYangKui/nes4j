@@ -1,9 +1,12 @@
 package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.Component;
+import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.enums.NMapper;
+import cn.navclub.nes4j.bin.enums.NameMirror;
 import cn.navclub.nes4j.bin.function.TCallback;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -14,11 +17,13 @@ public class Bus implements Component {
     private static final int RAM_MIRROR_END = 0x1fff;
     private static final int RPG_UNIT = 16 * 1024;
 
+    @Getter
     private final APU apu;
+    @Getter
     private final PPU ppu;
     private final byte[] ram;
     private final byte[] rpg;
-    private final byte[] rpgRom;
+    private final byte[] rpgrom;
     @Getter
     private final int rpgSize;
     //player1
@@ -27,33 +32,35 @@ public class Bus implements Component {
     private final JoyPad joyPad1;
     //cartridge mapper
     private final NMapper mapper;
+    @Getter
     private final TCallback<PPU, JoyPad, JoyPad> gameLoopCallback;
 
-    public Bus(NMapper mapper, byte[] rpg, final PPU ppu, final APU apu, TCallback<PPU, JoyPad, JoyPad> gameLoopCallback, JoyPad joyPad, JoyPad joyPad1) {
-        this.ppu = ppu;
-        this.apu = apu;
-        this.rpgRom = rpg;
-        this.mapper = mapper;
-        this.joyPad = joyPad;
-        this.joyPad1 = joyPad1;
-        this.rpgSize = rpg.length;
+    @Setter
+    private CPU cpu;
 
-        this.apu.setBus(this);
+    public Bus(NMapper mapper, NameMirror mirror, byte[] rpgrom, byte[] chrom, TCallback<PPU, JoyPad, JoyPad> gameLoopCallback) {
+        this.mapper = mapper;
+        this.rpgrom = rpgrom;
+        this.rpgSize = rpgrom.length;
 
         this.ram = new byte[2048];
+        this.joyPad = new JoyPad();
+        this.joyPad1 = new JoyPad();
+        this.apu = new APU(this);
         this.rpg = new byte[RPG_UNIT * 2];
+        this.ppu = new PPU(this, chrom, mirror);
 
         if (mapper == NMapper.NROM) {
-            System.arraycopy(rpg, 0, this.rpg, 0, RPG_UNIT);
+            System.arraycopy(this.rpgrom, 0, this.rpg, 0, RPG_UNIT);
         }
-        System.arraycopy(rpg, ((this.rpgSize / RPG_UNIT) - 1) * RPG_UNIT, this.rpg, RPG_UNIT, RPG_UNIT);
+
+        System.arraycopy(this.rpgrom, ((this.rpgSize / RPG_UNIT) - 1) * RPG_UNIT, this.rpg, RPG_UNIT, RPG_UNIT);
 
         this.gameLoopCallback = gameLoopCallback;
-
     }
 
-    public Bus(byte[] rpg, final PPU ppu, final APU apu, JoyPad joyPad, JoyPad joyPad1) {
-        this(NMapper.NROM, rpg, ppu, apu, null, joyPad, joyPad1);
+    public Bus(NameMirror mirror, byte[] rpgrom, byte[] chrom) {
+        this(NMapper.NROM, mirror, rpgrom, chrom, null);
     }
 
     /**
@@ -137,15 +144,6 @@ public class Bus implements Component {
         return b;
     }
 
-    public boolean pollPPUNMI() {
-        return this.ppu.getIsNMI().getAndSet(false);
-    }
-
-
-    public boolean pollAPUIRQ() {
-        return this.apu.interrupt();
-    }
-
     /**
      * 向内存中写入一字节数据
      */
@@ -220,7 +218,7 @@ public class Bus implements Component {
             if (this.mapper == NMapper.NROM)
                 throw new RuntimeException("RPG-ROM belong only memory area.");
             else if (this.mapper == NMapper.UX_ROM)
-                System.arraycopy(this.rpgRom, Byte.toUnsignedInt(b) * RPG_UNIT, this.rpg, 0, RPG_UNIT);
+                System.arraycopy(this.rpgrom, Byte.toUnsignedInt(b) * RPG_UNIT, this.rpg, 0, RPG_UNIT);
             else
                 throw new RuntimeException("un-support mapper:" + this.mapper + "");
         }
@@ -263,16 +261,22 @@ public class Bus implements Component {
 
     @Override
     public void tick(int cycle) {
-        var nmi = this.ppu.getIsNMI();
-        var before = nmi.get();
-        //同步PPU时钟
         for (int i = 0; i < cycle; i++) {
             this.apu.tick();
             this.ppu.tick();
         }
-        var after = nmi.get();
-        if (!before && after && gameLoopCallback != null) {
+    }
+
+    /**
+     *
+     * {@link APU} AND {@link  PPU} trigger IRQ AND NMI interrupt.
+     *
+     * @param interrupt interrupt type
+     */
+    public void interrupt(CPUInterrupt interrupt) {
+        if (interrupt == CPUInterrupt.NMI && this.gameLoopCallback != null) {
             this.gameLoopCallback.accept(this.ppu, this.joyPad, this.joyPad1);
         }
+        this.cpu.interrupt(interrupt);
     }
 }

@@ -11,24 +11,24 @@ import lombok.Data;
 import java.io.File;
 
 @Data
-public class NESFile {
+public class Cartridge {
     private final static int HEADER_SIZE = 16;
 
 
-    private final int rgbSize;
-    private final int chSize;
     private final int flag6;
     private final int flag7;
     private final int flag8;
-    private final byte[] rgb;
-    private final byte[] ch;
+    private final int chSize;
+    private final int rgbSize;
+    private final byte[] chrom;
+    private final byte[] rgbrom;
     private final byte[] train;
     private final NMapper mapper;
     private final NESFormat format;
     private final byte[] cellaneous;
     private final NameMirror mirrors;
 
-    public NESFile(byte[] buffer) {
+    public Cartridge(byte[] buffer) {
         var headers = new byte[HEADER_SIZE];
         //从原始数据中复制Header数据
         System.arraycopy(buffer, 0, headers, 0, HEADER_SIZE);
@@ -58,18 +58,18 @@ public class NESFile {
 
         var trainSize = this.trainAreaSize();
 
-        ch = new byte[chSize];
-        rgb = new byte[rgbSize];
+        chrom = new byte[chSize];
+        rgbrom = new byte[rgbSize];
         train = new byte[trainSize];
 
         if (trainSize > 0) {
             System.arraycopy(buffer, HEADER_SIZE, train, 0, trainSize);
         }
         var offset = HEADER_SIZE + trainSize;
-        System.arraycopy(buffer, offset, rgb, 0, rgbSize);
+        System.arraycopy(buffer, offset, rgbrom, 0, rgbSize);
         if (chSize > 0) {
             offset += rgbSize;
-            System.arraycopy(buffer, offset, ch, 0, chSize);
+            System.arraycopy(buffer, offset, chrom, 0, chSize);
         }
 
         var left = buffer.length - chSize - rgbSize - trainSize - HEADER_SIZE;
@@ -82,7 +82,7 @@ public class NESFile {
         }
     }
 
-    public NESFile(File file) {
+    public Cartridge(File file) {
         this(IOUtil.readFileAllByte(file));
     }
 

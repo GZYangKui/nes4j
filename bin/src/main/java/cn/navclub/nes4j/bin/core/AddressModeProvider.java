@@ -9,8 +9,9 @@ import lombok.Setter;
  * <a href="http://www.emulator101.com/6502-addressing-modes.html">6502 address mode</a>
  */
 public class AddressModeProvider {
-    private final CPU cpu;
     private final Bus bus;
+    private final CPU cpu;
+
 
     public AddressModeProvider(CPU cpu, Bus bus) {
         this.cpu = cpu;

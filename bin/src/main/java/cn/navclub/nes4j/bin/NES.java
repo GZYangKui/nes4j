@@ -22,36 +22,36 @@ public class NES {
 
     private final Bus bus;
     private final CPU cpu;
-    private final PPU ppu;
-    private final APU apu;
-    private final NESFile file;
-    private final JoyPad joyPad;
-    private final JoyPad joyPad1;
+    private final Cartridge cartridge;
+
     private volatile boolean stop;
 
 
     private NES(NESBuilder builder) {
         if (builder.buffer != null) {
-            this.file = new NESFile(builder.buffer);
+            this.cartridge = new Cartridge(builder.buffer);
         } else {
-            this.file = new NESFile(builder.file);
+            this.cartridge = new Cartridge(builder.file);
         }
-        this.apu = new APU();
-        this.joyPad = new JoyPad();
-        this.joyPad1 = new JoyPad();
-        this.ppu = new PPU(file.getCh(), file.getMirrors());
-        this.bus = new Bus(file.getMapper(), file.getRgb(), ppu, apu, builder.gameLoopCallback, joyPad, joyPad1);
+
+
+        this.bus = new Bus(
+                cartridge.getMapper(),
+                cartridge.getMirrors(),
+                cartridge.getRgbrom(),
+                cartridge.getChrom(),
+                builder.gameLoopCallback
+        );
         this.cpu = new CPU(this.bus, builder.stackRest, builder.pcReset);
+        this.bus.setCpu(this.cpu);
     }
 
-    public NES(byte[] rpg, byte[] ch, int pcReset, int stackReset) {
-        this.file = null;
-        this.apu = new APU();
-        this.joyPad = new JoyPad();
-        this.joyPad1 = new JoyPad();
-        this.ppu = new PPU(ch, NameMirror.VERTICAL);
-        this.bus = new Bus(rpg, ppu, apu, joyPad, joyPad1);
+    public NES(byte[] rpgrom, byte[] chrom, int pcReset, int stackReset) {
+        this.cartridge = null;
+
+        this.bus = new Bus(NameMirror.VERTICAL, rpgrom, chrom);
         this.cpu = new CPU(this.bus, stackReset, pcReset);
+        this.bus.setCpu(this.cpu);
     }
 
     public NES(byte[] rpg, byte[] ch) {
@@ -75,7 +75,7 @@ public class NES {
 
     public void stop() {
         this.stop = true;
-        this.apu.stop();
+        this.bus.getApu().stop();
     }
 
     private boolean loop() {

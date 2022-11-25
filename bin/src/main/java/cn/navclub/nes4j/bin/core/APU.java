@@ -29,19 +29,20 @@ public class APU implements Component {
         }
     }
 
+    @Getter
+    private final Bus bus;
     private final DMChannel dmc;
     private final NoiseChannel noise;
     private final PulseChannel pulse;
     private final PulseChannel pulse1;
     private final TriangleChannel triangle;
     private final FrameCounter frameCounter;
-    @Getter
-    @Setter
-    private Bus bus;
+
     private int index;
     private final float[] samples;
 
-    public APU() {
+    public APU(Bus bus) {
+        this.bus = bus;
         this.samples = new float[4096];
         this.dmc = new DMChannel(this);
         this.noise = new NoiseChannel(this);
@@ -231,13 +232,4 @@ public class APU implements Component {
      * @param samples 音频样本
      */
     private native void play(float[] samples);
-
-    /**
-     *
-     *  判断当前模块是否触发IRQ中断
-     *
-     */
-    public boolean interrupt() {
-        return this.frameCounter.interrupt() || this.dmc.interrupt();
-    }
 }
