@@ -15,9 +15,6 @@ public class Bus implements Component {
     private static final int RPG_ROM_END = 0xFFFF;
     private static final int RAM_MIRROR_END = 0x1fff;
     private static final int RPG_UNIT = 16 * 1024;
-    //CPU clock cycle counter
-    @Getter
-    private long cycles;
     @Getter
     private final APU apu;
     @Getter
@@ -29,11 +26,16 @@ public class Bus implements Component {
     private final JoyPad joyPad;
     //Player2
     private final JoyPad joyPad1;
+    //Cartridge info
+    private final Cartridge cartridge;
     @Getter
     private final TCallback<PPU, JoyPad, JoyPad> gameLoopCallback;
-    @Setter
-    private CPU cpu;
-    private final Cartridge cartridge;
+
+    protected CPU cpu;
+    @Getter
+    //CPU clock cycle counter
+    private long cycles;
+
 
     public Bus(Cartridge cartridge, TCallback<PPU, JoyPad, JoyPad> gameLoopCallback) {
 
@@ -274,5 +276,11 @@ public class Bus implements Component {
             }
             this.gameLoopCallback.accept(this.ppu, this.joyPad, this.joyPad1);
         }
+    }
+
+    @Override
+    public void stop() {
+        this.apu.stop();
+        this.ppu.stop();
     }
 }

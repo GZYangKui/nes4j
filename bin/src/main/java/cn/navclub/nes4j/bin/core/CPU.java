@@ -14,6 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 public class CPU {
     //栈开始位置
     public static final int STACK = 0x0100;
+    //程序计数器重置地址
+    private static final int PC_RESET = 0xfffc;
+    //程序栈重置地址
+    private static final int STACK_RESET = 0xfd;
 
     //累加寄存器
     private int ra;
@@ -23,8 +27,6 @@ public class CPU {
     private int ry;
     //程序计数器
     private int pc;
-    private int pcReset;
-    private int stackReset;
     //栈指针寄存器,始终指向栈顶
     private int sp;
     private final Bus bus;
@@ -32,11 +34,9 @@ public class CPU {
     private final SRegister status;
     private final AddressModeProvider modeProvider;
 
-    public CPU(final Bus bus, int stackReset, int pcReset) {
+    public CPU(final Bus bus) {
         this.bus = bus;
-        this.sp = stackReset;
-        this.pcReset = pcReset;
-        this.stackReset = stackReset;
+        this.bus.cpu = this;
         this.status = new SRegister();
         this.modeProvider = new AddressModeProvider(this, this.bus);
     }
@@ -49,9 +49,9 @@ public class CPU {
         this.rx = 0;
         this.ry = 0;
         this.ra = 0;
+        this.sp = STACK;
         this.status.reset();
-        this.sp = this.stackReset;
-        this.pc = this.bus.readInt(this.pcReset);
+        this.pc = this.bus.readInt(PC_RESET);
     }
 
 
@@ -73,8 +73,8 @@ public class CPU {
     }
 
     public int popInt() {
-        var lsb = Byte.toUnsignedInt(this.popByte());
-        var msb = Byte.toUnsignedInt(this.popByte());
+        var lsb = this.popByte() & 0xff;
+        var msb = this.popByte() & 0xff;
         return lsb | msb << 8;
     }
 
@@ -652,7 +652,6 @@ public class CPU {
             var addr = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
             this.bus.writeUSByte(addr, data);
         }
-
 
         this.bus.tick(instruction6502.getCycle());
 
