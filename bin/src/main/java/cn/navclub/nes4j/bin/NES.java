@@ -73,7 +73,7 @@ public class NES {
 
     private boolean loop() {
         var temp = this.cpu.getPc();
-        var rpgSize = this.bus.rpgSize() + 0x8000;
+        var rpgSize = this.cartridge.getRgbSize() + 0x8000;
         if (temp >= 0xC000 && rpgSize <= 0xC000) {
             temp = 0x8000 + (temp - 0xC000);
         }

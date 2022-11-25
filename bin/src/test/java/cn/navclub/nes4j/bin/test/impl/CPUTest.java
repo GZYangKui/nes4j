@@ -643,10 +643,10 @@ public class CPUTest extends BaseTest {
     }
 
     CPU createInstance(byte[] rpg) {
-        return this.createInstance(rpg, null);
+        return this.createInstance(rpg, new byte[]{});
     }
 
     NES createNES(byte[] rpg) {
-        return this.createOriginNES(rpg, null, null);
+        return this.createOriginNES(rpg, new byte[32 * 1024], null);
     }
 }

@@ -6,7 +6,6 @@ import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.enums.CPUStatus;
 import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Data;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -359,18 +358,19 @@ public class CPU {
 
     public void next() {
         var openCode = this.bus.read(this.pc);
-        var pcState = (++this.pc);
+        var state = (++this.pc);
 
         if (openCode == 0x00) {
             this.interrupt(CPUInterrupt.BRK);
+            return;
         }
 
         var instruction6502 = CPUInstruction.getInstance(openCode);
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 
-//        log.info("({}){}(0x{}) {}", pcState - 1, instruction,
-//                Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502));
+        log.info("({}){}(0x{}) {}", state - 1, instruction,
+                Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502));
 
         if (instruction == CPUInstruction.JMP) {
             this.pc = this.modeProvider.getAbsAddr(mode);
@@ -379,8 +379,8 @@ public class CPU {
         if (instruction == CPUInstruction.RTI) {
             this.status.setBits(this.popByte());
 
-            this.status.clear(CPUStatus.BK);
             this.status.set(CPUStatus.BK2);
+            this.status.clear(CPUStatus.BK);
 
             this.pc = this.popInt();
         }
@@ -657,7 +657,7 @@ public class CPU {
         this.bus.tick(instruction6502.getCycle());
 
         //根据是否发生重定向来判断是否需要更改程序计数器的值
-        if (this.pc == pcState) {
+        if (this.pc == state) {
             this.pc += (instruction6502.getBytes() - 1);
         }
     }

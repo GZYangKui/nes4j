@@ -85,18 +85,18 @@ public class PPU implements Component {
         }
 
         //每条扫描线条耗时341个PPU时钟约113.667个CPU时钟
-        if (this.spriteHit(this.cycles)) {
+        if (this.spriteHit()) {
             this.status.set(PStatus.SPRITE_ZERO_HIT);
         }
 
         this.scanLine += 1;
-        this.cycles = this.cycles - 341;
+        this.cycles %= 341;
 
         if (this.scanLine == 241) {
             this.status.set(PStatus.V_BLANK_OCCUR);
             this.status.clear(PStatus.SPRITE_ZERO_HIT);
             if (this.control.generateVBlankNMI()) {
-                this.cpuNMInterrupt();
+                this.nmiInterrupt();
             }
         }
 
@@ -207,26 +207,21 @@ public class PPU implements Component {
         return ramIndex;
     }
 
-    private boolean spriteHit(long cycle) {
-        var x = Byte.toUnsignedInt(this.oam[3]);
-        var y = Byte.toUnsignedInt(this.oam[0]);
-        return y + 5 == this.scanLine && x <= cycle && this.mask.contain(MaskFlag.SHOW_SPRITES);
+    private boolean spriteHit() {
+        var x = this.oam[3] & 0xff;
+        var y = this.oam[0] & 0xff;
+        return y + 5 == this.scanLine && x <= this.cycles && this.mask.contain(MaskFlag.SHOW_SPRITES);
     }
 
     private void inc() {
         this.addr.inc(this.control.VRamIncrement());
     }
 
-    public int getAddrVal() {
-        return this.addr.get();
-    }
-
-
     public void writeCtr(byte b) {
         var temp = this.control.generateVBlankNMI();
         this.control.update(b);
         if (!temp && this.control.generateVBlankNMI() && this.status.contain(PStatus.V_BLANK_OCCUR)) {
-            this.cpuNMInterrupt();
+            this.nmiInterrupt();
         }
     }
 
@@ -243,7 +238,7 @@ public class PPU implements Component {
      * Output one frame video sign.
      *
      */
-    private void cpuNMInterrupt() {
+    private void nmiInterrupt() {
         if (this.nmi) {
             return;
         }

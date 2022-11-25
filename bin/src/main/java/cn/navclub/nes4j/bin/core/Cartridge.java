@@ -176,9 +176,9 @@ public class Cartridge {
         this.chSize = this.calChSize(headers);
         this.rgbSize = this.calRgbSize(headers);
 
-        var flag6 = Byte.toUnsignedInt(headers[6]);
-        var flag7 = Byte.toUnsignedInt(headers[7]);
-        var flag8 = Byte.toUnsignedInt(headers[8]);
+        var flag6 = headers[6] & 0xff;
+        var flag7 = headers[7] & 0xff;
+        var flag8 = headers[8] & 0xff;
         this.mirrors = NameMirror.values()[flag6 & 1];
 
         var mapper = (flag7 & 0b1111_0000) | ((flag6 & 0b1111_0000) >> 4);

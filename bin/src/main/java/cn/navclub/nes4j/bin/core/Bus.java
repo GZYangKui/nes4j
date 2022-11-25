@@ -3,7 +3,6 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.Component;
 import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.enums.NMapper;
-import cn.navclub.nes4j.bin.enums.NameMirror;
 import cn.navclub.nes4j.bin.function.TCallback;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +17,7 @@ public class Bus implements Component {
     private static final int RPG_UNIT = 16 * 1024;
     //CPU clock cycle counter
     @Getter
-    private long cycle;
+    private long cycles;
     @Getter
     private final APU apu;
     @Getter
@@ -47,11 +46,12 @@ public class Bus implements Component {
 
 
         this.ppu = new PPU(this, cartridge.getChrom(), cartridge.getMirrors());
+
         if (cartridge.getMapper() == NMapper.NROM) {
             System.arraycopy(this.cartridge.getRgbrom(), 0, this.rpgrom, 0, RPG_UNIT);
         }
 
-        System.arraycopy(this.cartridge.getRgbrom(), ((this.rpgSize() / RPG_UNIT) - 1) * RPG_UNIT, rpgrom, RPG_UNIT, RPG_UNIT);
+        System.arraycopy(this.cartridge.getRgbrom(), ((this.cartridge.getRgbSize() / RPG_UNIT) - 1) * RPG_UNIT, rpgrom, RPG_UNIT, RPG_UNIT);
 
         this.gameLoopCallback = gameLoopCallback;
     }
@@ -73,19 +73,12 @@ public class Bus implements Component {
 
     private byte readRPGData(int address) {
         address -= 0x8000;
-        if (rpgSize() == 0x4000 && address >= 0x4000) {
+        if (this.cartridge.getRgbSize() == 0x4000 && address >= 0x4000) {
             address %= 0x4000;
         }
         return this.rpgrom[address];
     }
 
-
-    /**
-     * Get Cartridge rpg-rom size
-     */
-    public int rpgSize() {
-        return this.rpgrom.length;
-    }
 
     @Override
     public byte read(int address) {
@@ -209,12 +202,15 @@ public class Bus implements Component {
         //Write to cpu memory
         else if (address >= RPG_ROM && address <= RPG_ROM_END) {
             var mapper = this.cartridge.getMapper();
-            if (mapper == NMapper.NROM)
-                throw new RuntimeException("RPG-ROM belong only memory area.");
-            else if (mapper == NMapper.UX_ROM)
-                System.arraycopy(this.rpgrom, (b & 0xff) * RPG_UNIT, this.rpgrom, 0, RPG_UNIT);
-            else
-                throw new RuntimeException("un-support mapper:" + mapper + "");
+            switch (mapper) {
+                case NROM -> throw new RuntimeException("RPG-ROM belong only memory area.");
+                case UX_ROM -> {
+                    var bank = b & 0x0f;
+                    var srcPos = bank * RPG_UNIT;
+                    System.arraycopy(this.cartridge.getRgbrom(), srcPos, this.rpgrom, 0, RPG_UNIT);
+                }
+                default -> throw new RuntimeException("un-support mapper:" + mapper + "");
+            }
         }
 
     }
@@ -255,7 +251,7 @@ public class Bus implements Component {
 
     @Override
     public void tick(int cycle) {
-        this.cycle += cycle;
+        this.cycles += cycle;
         for (int i = 0; i < cycle; i++) {
             this.ppu.tick();
             this.apu.tick();
@@ -269,7 +265,13 @@ public class Bus implements Component {
      * @param interrupt interrupt type
      */
     public void interrupt(CPUInterrupt interrupt) {
+        this.cpu.interrupt(interrupt);
         if (interrupt == CPUInterrupt.NMI && this.gameLoopCallback != null) {
+            try {
+                Thread.sleep(3);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             this.gameLoopCallback.accept(this.ppu, this.joyPad, this.joyPad1);
         }
     }
