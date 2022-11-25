@@ -22,15 +22,15 @@ public class Bus implements Component {
     @Getter
     private final PPU ppu;
     private final byte[] ram;
+    //Dynamic change rpg rom
     private final byte[] rpg;
+    //Cartridge rpg rom
     private final byte[] rpgrom;
-    @Getter
-    private final int rpgSize;
-    //player1
+    //Player1
     private final JoyPad joyPad;
-    //player2
+    //Player2
     private final JoyPad joyPad1;
-    //cartridge mapper
+    //Cartridge mapper
     private final NMapper mapper;
     @Getter
     private final TCallback<PPU, JoyPad, JoyPad> gameLoopCallback;
@@ -41,7 +41,6 @@ public class Bus implements Component {
     public Bus(NMapper mapper, NameMirror mirror, byte[] rpgrom, byte[] chrom, TCallback<PPU, JoyPad, JoyPad> gameLoopCallback) {
         this.mapper = mapper;
         this.rpgrom = rpgrom;
-        this.rpgSize = rpgrom.length;
 
         this.ram = new byte[2048];
         this.joyPad = new JoyPad();
@@ -54,7 +53,7 @@ public class Bus implements Component {
             System.arraycopy(this.rpgrom, 0, this.rpg, 0, RPG_UNIT);
         }
 
-        System.arraycopy(this.rpgrom, ((this.rpgSize / RPG_UNIT) - 1) * RPG_UNIT, this.rpg, RPG_UNIT, RPG_UNIT);
+        System.arraycopy(this.rpgrom, ((this.rpgSize() / RPG_UNIT) - 1) * RPG_UNIT, this.rpg, RPG_UNIT, RPG_UNIT);
 
         this.gameLoopCallback = gameLoopCallback;
     }
@@ -80,7 +79,7 @@ public class Bus implements Component {
 
     private byte readRPGData(int address) {
         address -= 0x8000;
-        if (rpgSize == 0x4000 && address >= 0x4000) {
+        if (rpgSize() == 0x4000 && address >= 0x4000) {
             address %= 0x4000;
         }
         return this.rpg[address];
@@ -88,10 +87,10 @@ public class Bus implements Component {
 
 
     /**
-     * 获取当前rpg大小
+     * Get Cartridge rpg-rom size
      */
     public int rpgSize() {
-        return this.rpgSize;
+        return this.rpgrom.length;
     }
 
     @Override
