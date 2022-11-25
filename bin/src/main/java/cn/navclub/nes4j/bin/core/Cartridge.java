@@ -6,7 +6,8 @@ import cn.navclub.nes4j.bin.enums.NMapper;
 import cn.navclub.nes4j.bin.enums.NameMirror;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import cn.navclub.nes4j.bin.util.IOUtil;
-import lombok.Data;
+
+import lombok.Getter;
 
 import java.io.File;
 
@@ -151,14 +152,10 @@ import java.io.File;
  * Otherwise, iNES 0.7 or archaic iNES.
  *
  */
-@Data
+@Getter
 public class Cartridge {
     private final static int HEADER_SIZE = 16;
 
-
-    private final int flag6;
-    private final int flag7;
-    private final int flag8;
     private final int chSize;
     private final int rgbSize;
     private final byte[] chrom;
@@ -179,16 +176,16 @@ public class Cartridge {
         this.chSize = this.calChSize(headers);
         this.rgbSize = this.calRgbSize(headers);
 
-        this.flag6 = Byte.toUnsignedInt(headers[6]);
-        this.flag7 = Byte.toUnsignedInt(headers[7]);
-        this.flag8 = Byte.toUnsignedInt(headers[8]);
+        var flag6 = Byte.toUnsignedInt(headers[6]);
+        var flag7 = Byte.toUnsignedInt(headers[7]);
+        var flag8 = Byte.toUnsignedInt(headers[8]);
         this.mirrors = NameMirror.values()[flag6 & 1];
 
-        var mapper = (this.flag7 & 0b1111_0000) | ((this.flag6 & 0b1111_0000) >> 4);
+        var mapper = (flag7 & 0b1111_0000) | ((flag6 & 0b1111_0000) >> 4);
 
         //NES2.0包含12位
         if (this.format == NESFormat.NES_20) {
-            mapper |= ((this.flag8 & 0b0000_1111) << 8);
+            mapper |= ((flag8 & 0b0000_1111) << 8);
         }
 
         if (mapper >= NMapper.values().length) {
@@ -197,7 +194,7 @@ public class Cartridge {
             this.mapper = NMapper.values()[mapper];
         }
 
-        var trainSize = this.trainAreaSize();
+        var trainSize = this.trainAreaSize(flag6);
 
         chrom = new byte[chSize];
         rgbrom = new byte[rgbSize];
@@ -221,6 +218,18 @@ public class Cartridge {
         } else {
             this.cellaneous = new byte[0];
         }
+    }
+
+    public Cartridge(NameMirror mirror, byte[] chrom, byte[] rgbrom) {
+        this.chrom = chrom;
+        this.mirrors = mirror;
+        this.rgbrom = rgbrom;
+        this.train = new byte[0];
+        this.mapper = NMapper.NROM;
+        this.format = NESFormat.INES;
+        this.cellaneous = new byte[0];
+        this.chSize = this.chrom.length;
+        this.rgbSize = this.rgbrom.length;
     }
 
     public Cartridge(File file) {
@@ -277,8 +286,9 @@ public class Cartridge {
     /**
      * 判断是否存在Trainer area
      */
-    public int trainAreaSize() {
-        var has = (this.flag6 & 0b0000_0100) > 0;
+    public int trainAreaSize(int flag6) {
+        var has = (flag6 & 0b0000_0100) > 0;
         return has ? 512 : 0;
     }
+
 }

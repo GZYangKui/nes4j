@@ -35,21 +35,14 @@ public class NES {
         }
 
 
-        this.bus = new Bus(
-                cartridge.getMapper(),
-                cartridge.getMirrors(),
-                cartridge.getRgbrom(),
-                cartridge.getChrom(),
-                builder.gameLoopCallback
-        );
+        this.bus = new Bus(this.cartridge, builder.gameLoopCallback);
         this.cpu = new CPU(this.bus, builder.stackRest, builder.pcReset);
         this.bus.setCpu(this.cpu);
     }
 
     public NES(byte[] rpgrom, byte[] chrom, int pcReset, int stackReset) {
-        this.cartridge = null;
-
-        this.bus = new Bus(NameMirror.VERTICAL, rpgrom, chrom);
+        this.cartridge = new Cartridge(NameMirror.VERTICAL, chrom, rpgrom);
+        this.bus = new Bus(cartridge, null);
         this.cpu = new CPU(this.bus, stackReset, pcReset);
         this.bus.setCpu(this.cpu);
     }

@@ -16,50 +16,44 @@ public class Bus implements Component {
     private static final int RPG_ROM_END = 0xFFFF;
     private static final int RAM_MIRROR_END = 0x1fff;
     private static final int RPG_UNIT = 16 * 1024;
-
+    //CPU clock cycle counter
+    @Getter
+    private long cycle;
     @Getter
     private final APU apu;
     @Getter
     private final PPU ppu;
     private final byte[] ram;
     //Dynamic change rpg rom
-    private final byte[] rpg;
-    //Cartridge rpg rom
     private final byte[] rpgrom;
     //Player1
     private final JoyPad joyPad;
     //Player2
     private final JoyPad joyPad1;
-    //Cartridge mapper
-    private final NMapper mapper;
     @Getter
     private final TCallback<PPU, JoyPad, JoyPad> gameLoopCallback;
-
     @Setter
     private CPU cpu;
+    private final Cartridge cartridge;
 
-    public Bus(NMapper mapper, NameMirror mirror, byte[] rpgrom, byte[] chrom, TCallback<PPU, JoyPad, JoyPad> gameLoopCallback) {
-        this.mapper = mapper;
-        this.rpgrom = rpgrom;
+    public Bus(Cartridge cartridge, TCallback<PPU, JoyPad, JoyPad> gameLoopCallback) {
 
         this.ram = new byte[2048];
         this.joyPad = new JoyPad();
+        this.cartridge = cartridge;
         this.joyPad1 = new JoyPad();
         this.apu = new APU(this);
-        this.rpg = new byte[RPG_UNIT * 2];
-        this.ppu = new PPU(this, chrom, mirror);
+        this.rpgrom = new byte[RPG_UNIT * 2];
 
-        if (mapper == NMapper.NROM) {
-            System.arraycopy(this.rpgrom, 0, this.rpg, 0, RPG_UNIT);
+
+        this.ppu = new PPU(this, cartridge.getChrom(), cartridge.getMirrors());
+        if (cartridge.getMapper() == NMapper.NROM) {
+            System.arraycopy(this.cartridge.getRgbrom(), 0, this.rpgrom, 0, RPG_UNIT);
         }
 
-        System.arraycopy(this.rpgrom, ((this.rpgSize() / RPG_UNIT) - 1) * RPG_UNIT, this.rpg, RPG_UNIT, RPG_UNIT);
+        System.arraycopy(this.cartridge.getRgbrom(), ((this.rpgSize() / RPG_UNIT) - 1) * RPG_UNIT, rpgrom, RPG_UNIT, RPG_UNIT);
 
         this.gameLoopCallback = gameLoopCallback;
-    }
-
-    public Bus(NameMirror mirror, byte[] rpgrom, byte[] chrom) {
-        this(NMapper.NROM, mirror, rpgrom, chrom, null);
     }
 
     /**
@@ -82,7 +76,7 @@ public class Bus implements Component {
         if (rpgSize() == 0x4000 && address >= 0x4000) {
             address %= 0x4000;
         }
-        return this.rpg[address];
+        return this.rpgrom[address];
     }
 
 
@@ -214,12 +208,13 @@ public class Bus implements Component {
 
         //Write to cpu memory
         else if (address >= RPG_ROM && address <= RPG_ROM_END) {
-            if (this.mapper == NMapper.NROM)
+            var mapper = this.cartridge.getMapper();
+            if (mapper == NMapper.NROM)
                 throw new RuntimeException("RPG-ROM belong only memory area.");
-            else if (this.mapper == NMapper.UX_ROM)
-                System.arraycopy(this.rpgrom, Byte.toUnsignedInt(b) * RPG_UNIT, this.rpg, 0, RPG_UNIT);
+            else if (mapper == NMapper.UX_ROM)
+                System.arraycopy(this.rpgrom, (b & 0xff) * RPG_UNIT, this.rpgrom, 0, RPG_UNIT);
             else
-                throw new RuntimeException("un-support mapper:" + this.mapper + "");
+                throw new RuntimeException("un-support mapper:" + mapper + "");
         }
 
     }
@@ -260,9 +255,10 @@ public class Bus implements Component {
 
     @Override
     public void tick(int cycle) {
+        this.cycle += cycle;
         for (int i = 0; i < cycle; i++) {
-            this.apu.tick();
             this.ppu.tick();
+            this.apu.tick();
         }
     }
 
@@ -276,6 +272,5 @@ public class Bus implements Component {
         if (interrupt == CPUInterrupt.NMI && this.gameLoopCallback != null) {
             this.gameLoopCallback.accept(this.ppu, this.joyPad, this.joyPad1);
         }
-        this.cpu.interrupt(interrupt);
     }
 }

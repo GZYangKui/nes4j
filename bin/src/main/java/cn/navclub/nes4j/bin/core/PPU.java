@@ -39,7 +39,7 @@ public class PPU implements Component {
     private int oamAddr;
     private int scanLine;
     private byte readByteBuf;
-    private int cycles;
+    private long cycles;
     //Mirrors
     @Getter
     @Setter
@@ -207,7 +207,7 @@ public class PPU implements Component {
         return ramIndex;
     }
 
-    private boolean spriteHit(int cycle) {
+    private boolean spriteHit(long cycle) {
         var x = Byte.toUnsignedInt(this.oam[3]);
         var y = Byte.toUnsignedInt(this.oam[0]);
         return y + 5 == this.scanLine && x <= cycle && this.mask.contain(MaskFlag.SHOW_SPRITES);

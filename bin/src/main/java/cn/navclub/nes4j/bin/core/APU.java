@@ -7,7 +7,6 @@ import cn.navclub.nes4j.bin.apu.impl.NoiseChannel;
 import cn.navclub.nes4j.bin.apu.impl.PulseChannel;
 import cn.navclub.nes4j.bin.apu.impl.TriangleChannel;
 import lombok.Getter;
-import lombok.Setter;
 
 /**
  * <a href="https://www.nesdev.org/wiki/APU">APU Document</a>
