@@ -39,7 +39,7 @@ public class DMChannel extends Channel {
     private int timePeriod;
     @Getter
     @Setter
-    private boolean interrupt;
+    private boolean IRQInterrupt;
 
 
     public DMChannel(APU apu) {
@@ -50,7 +50,7 @@ public class DMChannel extends Channel {
     public void write(int address, byte b) {
         if (address == 0x4010) {
             this.loop = (b & 0x40) != 0;
-            this.interrupt = (b & 0x80) != 0;
+            this.IRQInterrupt = (b & 0x80) != 0;
             this.timePeriod = (FREQ_TABLE[b & 0x0f]);
         }
         //
@@ -126,13 +126,5 @@ public class DMChannel extends Channel {
             return 0;
         }
         return this.value;
-    }
-
-    public boolean interrupt() {
-        var irq = this.interrupt;
-        if (irq) {
-            this.interrupt = false;
-        }
-        return irq;
     }
 }

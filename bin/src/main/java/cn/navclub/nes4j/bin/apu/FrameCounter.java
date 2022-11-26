@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.apu;
 
 import cn.navclub.nes4j.bin.Component;
+import cn.navclub.nes4j.bin.core.APU;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,14 +26,16 @@ public class FrameCounter implements Component {
     @Getter
     @Setter
     private boolean output;
+    private final APU apu;
 
     private final int[][] sequencers = new int[][]{
             {7457, 7456, 7458, 7458},
             {7457, 7456, 7458, 14910}
     };
 
-    public FrameCounter() {
+    public FrameCounter(APU apu) {
         this.index = 1;
+        this.apu = apu;
     }
 
     @Override
@@ -60,15 +63,13 @@ public class FrameCounter implements Component {
                 this.index += 1;
             }
             this.cycle %= stepValue;
+            //
+            // At any time if the interrupt flag is set and the IRQ disable is clear, the
+            // CPU's IRQ line is asserted.
+            //
+            if (this.index == 4 && this.mode == 0 && !this.IRQDisable) {
+                this.apu.IRQInterrupt();
+            }
         }
-    }
-
-    public boolean interrupt() {
-        var is = !this.IRQDisable && this.interrupt;
-        //Clear interrupt avoid repeat invoke interrupt
-        if (is) {
-            this.interrupt = false;
-        }
-        return is;
     }
 }

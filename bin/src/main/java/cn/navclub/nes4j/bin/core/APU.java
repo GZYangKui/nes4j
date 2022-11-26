@@ -4,6 +4,7 @@ import cn.navclub.nes4j.bin.Component;
 import cn.navclub.nes4j.bin.Player;
 import cn.navclub.nes4j.bin.apu.FrameCounter;
 import cn.navclub.nes4j.bin.apu.impl.*;
+import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import lombok.Getter;
 
 import java.util.ServiceLoader;
@@ -50,7 +51,7 @@ public class APU implements Component {
         this.dmc = new DMChannel(this);
         this.noise = new NoiseChannel(this);
         this.triangle = new TriangleChannel(this);
-        this.frameCounter = new FrameCounter();
+        this.frameCounter = new FrameCounter(this);
         this.pulse = new PulseChannel(this, PulseChannel.PulseIndex.PULSE_0);
         this.pulse1 = new PulseChannel(this, PulseChannel.PulseIndex.PULSE_1);
     }
@@ -82,7 +83,7 @@ public class APU implements Component {
             if (dmcEnable && this.dmc.getCurrentLength() == 0) {
                 this.dmc.reset();
             }
-            this.dmc.setInterrupt(false);
+            this.dmc.setIRQInterrupt(false);
         }
         //0x4000-0x4003 Square Channel1
         else if (address >= 0x4000 && address <= 0x4003) {
@@ -139,7 +140,7 @@ public class APU implements Component {
         value |= (c3 > 0 ? 0x04 : 0x00);
         value |= (this.dmc.getCurrentLength() > 0 ? 0x10 : 0x00);
         value |= interrupt ? 0x40 : 0x00;
-        value |= this.dmc.isInterrupt() ? 0x80 : 0x00;
+        value |= this.dmc.isIRQInterrupt() ? 0x80 : 0x00;
 
         this.frameCounter.setInterrupt(false);
 
@@ -194,6 +195,11 @@ public class APU implements Component {
                 this.player.output(output);
             }
         }
+        // At any time, if the interrupt flag is set, the CPU's IRQ line is continuously asserted
+        // until the interrupt flag is cleared. The processor will continue on from where it was stalled.
+        if (this.dmc.isIRQInterrupt()) {
+            this.IRQInterrupt();
+        }
     }
 
     /**
@@ -231,6 +237,10 @@ public class APU implements Component {
 
 
         return tndOut + seqOut;
+    }
+
+    public void IRQInterrupt() {
+        this.bus.interrupt(CPUInterrupt.IRQ);
     }
 
     @Override
