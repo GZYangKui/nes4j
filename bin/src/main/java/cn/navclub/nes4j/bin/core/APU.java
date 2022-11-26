@@ -1,19 +1,25 @@
 package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.Component;
+import cn.navclub.nes4j.bin.Player;
 import cn.navclub.nes4j.bin.apu.FrameCounter;
-import cn.navclub.nes4j.bin.apu.impl.DMChannel;
-import cn.navclub.nes4j.bin.apu.impl.NoiseChannel;
-import cn.navclub.nes4j.bin.apu.impl.PulseChannel;
-import cn.navclub.nes4j.bin.apu.impl.TriangleChannel;
+import cn.navclub.nes4j.bin.apu.impl.*;
 import lombok.Getter;
+
+import java.util.ServiceLoader;
 
 /**
  * <a href="https://www.nesdev.org/wiki/APU">APU Document</a>
  */
 public class APU implements Component {
-    private static final float[] PULSE_TABLE;
     private static final float[] TND_TABLE;
+    private static final float[] PULSE_TABLE;
+
+    private static final ServiceLoader<Player> SERVICE_LOADER;
+
+    static {
+        SERVICE_LOADER = ServiceLoader.load(Player.class);
+    }
 
 
     static {
@@ -37,12 +43,10 @@ public class APU implements Component {
     private final TriangleChannel triangle;
     private final FrameCounter frameCounter;
 
-    private int index;
-    private final float[] samples;
+    private DefaultPlayer player;
 
     public APU(Bus bus) {
         this.bus = bus;
-        this.samples = new float[4096];
         this.dmc = new DMChannel(this);
         this.noise = new NoiseChannel(this);
         this.triangle = new TriangleChannel(this);
@@ -175,10 +179,19 @@ public class APU implements Component {
         }
 
         if ((this.cycle / 2) % 41 == 0) {
-            this.samples[index++] = this.lookupSample();
-            if (this.index >= this.samples.length) {
-                this.index = 0;
-                this.play(this.samples);
+            var output = this.lookupSample();
+            var iterator = SERVICE_LOADER.iterator();
+            var custom = false;
+            if (iterator.hasNext()) {
+                custom = true;
+                var player = iterator.next();
+                player.output(output);
+            }
+            if (!custom) {
+                if (this.player == null) {
+                    this.player = new DefaultPlayer();
+                }
+                this.player.output(output);
             }
         }
     }
@@ -220,15 +233,11 @@ public class APU implements Component {
         return tndOut + seqOut;
     }
 
-    /**
-     * 调用Native模块关闭音频相关资源
-     */
-    public synchronized native void stop();
-
-    /**
-     * 调用Native模块播放音频样本
-     *
-     * @param samples 音频样本
-     */
-    private native void play(float[] samples);
+    @Override
+    public void stop() {
+        if (this.player == null) {
+            return;
+        }
+        this.player.stop();
+    }
 }

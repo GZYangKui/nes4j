@@ -14,8 +14,12 @@ typedef struct LinkedList0 LinkedList;
 typedef struct SoundHardware0 SoundHardware;
 
 struct SoundHardware0 {
+    int id;
+    int rate;
+    int latency;
+    int channel;
+    String device;
     Object context;
-    int hash_code;
 };
 
 struct LinkedList0 {

@@ -4,7 +4,16 @@
 #include "include/sys_sound.h"
 
 int main(int argc, char **argv) {
-    SoundHardware *hardware = Nes4j_find_hardware(1, True);
+    SoundHardware config = {
+            1, 44100, 500000, 1, "default"
+    };
+
+    SoundHardware *hardware = NULL;
+    bool success = Nes4j_init_hardware(&config, &hardware);
+    if (!success) {
+        fprintf(stderr, "Sound hardware init fail.");
+        return 0;
+    }
     int i = 0;
     float buffer[1];
     usize length = sizeof(buffer) / sizeof(int);

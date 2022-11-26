@@ -21,7 +21,25 @@ public interface Component extends CycleDriver {
     /**
      * 组件停止时触发资源清除工作
      */
-    default void stop(){
+    default void stop() {
+
+    }
+
+    /**
+     *
+     * 组件快照,用于存档使用
+     *
+     */
+    default byte[] snapshot() {
+        return null;
+    }
+
+    /**
+     *
+     * 加载组件快照,用于恢复存档
+     *
+     */
+    default void load(byte[] snapshot){
 
     }
 }

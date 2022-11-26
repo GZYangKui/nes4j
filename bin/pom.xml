@@ -36,7 +36,7 @@
                 <configuration>
                     <compilerArgs>
                         <arg>-h</arg>
-                        <arg>${project.basedir}/src/native/include</arg>
+                        <arg>${project.basedir}/src/native/include/jni</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>

@@ -5,10 +5,17 @@
 
 /**
  *
- * 查询音频实例如果不存在是否创建由{@param auto_create}决定
+ * 查询音频实例
  *
  */
-extern SoundHardware *Nes4j_find_hardware(int has_code, bool auto_create);
+extern SoundHardware *Nes4j_find_hardware(int id);
+
+/**
+ * 初始化音频硬件参数
+ *
+ * @return 如果初始化成功则返回{@code True},否则返回{@code False}
+ */
+extern bool Nes4j_init_hardware(SoundHardware *, SoundHardware **);
 
 
 /**
