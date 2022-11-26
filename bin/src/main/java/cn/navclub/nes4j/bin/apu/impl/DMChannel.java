@@ -103,6 +103,7 @@ public class DMChannel extends Channel {
     public void stepReader() {
         if (this.currentLength > 0 && this.bitCount == 0) {
             this.bitCount = 8;
+            this.apu.getBus().setStall(4);
             this.shiftReg = this.apu.getBus().read(this.currentAddress);
             this.currentAddress++;
             if (this.currentAddress == 0) {

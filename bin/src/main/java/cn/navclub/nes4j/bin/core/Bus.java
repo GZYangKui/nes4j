@@ -30,7 +30,9 @@ public class Bus implements Component {
     private final Cartridge cartridge;
     @Getter
     private final TCallback<PPU, JoyPad, JoyPad> gameLoopCallback;
-
+    //CPU延迟时钟
+    @Getter
+    private int stall;
     protected CPU cpu;
     @Getter
     //CPU clock cycle counter
@@ -253,6 +255,9 @@ public class Bus implements Component {
 
     @Override
     public void tick(int cycle) {
+        if (this.stall > 0) {
+            this.stall--;
+        }
         this.cycles += cycle;
         for (int i = 0; i < cycle; i++) {
             this.ppu.tick();
@@ -276,6 +281,10 @@ public class Bus implements Component {
             }
             this.gameLoopCallback.accept(this.ppu, this.joyPad, this.joyPad1);
         }
+    }
+
+    public void setStall(int stall) {
+        this.stall += stall;
     }
 
     @Override

@@ -6,6 +6,7 @@ import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.enums.CPUStatus;
 import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Data;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 
