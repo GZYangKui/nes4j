@@ -358,6 +358,9 @@ public class CPU {
 
 
     public void next() {
+        if (this.pc < 0x8000 || this.pc >= 0x10000) {
+            throw new RuntimeException("Text memory area except in 0x8000 to 0xffff current 0x" + Integer.toHexString(this.pc));
+        }
         var openCode = this.bus.read(this.pc);
         var state = (++this.pc);
 

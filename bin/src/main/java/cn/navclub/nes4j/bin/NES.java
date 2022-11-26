@@ -36,15 +36,10 @@ public class NES {
     public void execute() {
         this.cpu.reset();
         while (!stop) {
-            if (this.bus.getStall() > 0) {
+            if (this.bus.getStall() > 0)
                 this.bus.tick(1);
-                continue;
-            }
-            this.cpu.next();
-            var pc = this.cpu.getPc();
-            if (pc < 0x8000 || pc >= 0x10000) {
-                throw new RuntimeException("Text memory area outbound except 0x8000-0xffff current 0x" + Integer.toHexString(pc));
-            }
+            else
+                this.cpu.next();
         }
     }
 

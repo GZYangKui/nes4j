@@ -27,6 +27,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import org.controlsfx.dialog.ExceptionDialog;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -101,12 +102,7 @@ public class GameWorld extends Stage {
         this.getScene().getStylesheets().add(FXResource.loadStyleSheet("common.css"));
         this.show();
 
-        this.setOnCloseRequest(event -> {
-            this.fpsTimer.stop();
-            if (this.instance != null) {
-                this.instance.stop();
-            }
-        });
+        this.setOnCloseRequest(event -> this.dispose(null));
 
         this.execute(file);
         this.fpsTimer.start();
@@ -166,10 +162,24 @@ public class GameWorld extends Stage {
                     .build();
             this.instance.execute();
         }).whenComplete((r, t) -> {
-            if (t != null) {
-                t.printStackTrace();
+            if (t == null) {
+                return;
             }
+            Platform.runLater(() -> this.dispose(t));
         });
+    }
+
+    private void dispose(Throwable t) {
+        if (this.instance != null) {
+            this.instance.stop();
+        }
+        if (t != null) {
+            var dialog = new ExceptionDialog(t);
+            dialog.setHeaderText(NES4J.localeValue("nes4j.game.error"));
+            dialog.showAndWait();
+            this.close();
+        }
+        this.fpsTimer.stop();
     }
 
     private void gameLoopCallback(PPU ppu, JoyPad joyPad, JoyPad joyPad1) {

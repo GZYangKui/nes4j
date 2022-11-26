@@ -66,7 +66,10 @@ public class Render {
 
     public void render(PPU ppu, Frame frame) {
         var mask = ppu.getMask();
-        if (mask.contain(MaskFlag.SHOW_BACKGROUND)) {
+        var sprite = mask.contain(MaskFlag.SHOW_SPRITES);
+        var background = mask.contain(MaskFlag.SHOW_BACKGROUND);
+        //Render background
+        if (background) {
             var vram = ppu.getVram();
             var mirror = ppu.getMirrors();
 
@@ -103,10 +106,8 @@ public class Render {
                         frame, secondNameTable, new Camera(0, 0, 256, scrollY), 0, 240 - scrollY);
             }
         }
-
-        if (mask.contain(MaskFlag.SHOW_SPRITES)) {
-
-
+        //Render sprite
+        if (sprite) {
             var oam = ppu.getOam();
             var length = oam.length;
             for (int i = length - 4; i >= 0; i = i - 4) {
