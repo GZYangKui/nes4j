@@ -15,6 +15,7 @@ public class DefaultPlayer implements Player {
     public void output(float sample) {
         this.samples[this.index++] = sample;
         if (this.index >= this.samples.length) {
+            this.index = 0;
             this.play(samples);
         }
     }
