@@ -23,6 +23,7 @@ public class PPU implements Component {
     //The data necessary for render the screen
     @Getter
     private final byte[] vram;
+    @Getter
     private final MKRegister mask;
     @Getter
     private final SRegister status;
@@ -210,7 +211,12 @@ public class PPU implements Component {
     private boolean spriteHit() {
         var x = this.oam[3] & 0xff;
         var y = this.oam[0] & 0xff;
-        return y + 5 == this.scanLine && x <= this.cycles && this.mask.contain(MaskFlag.SHOW_SPRITES);
+        //
+        // Set when a nonzero pixel of sprite 0 overlaps a nonzero background pixel;
+        // Sprite 0 hit does not trigger in any area where the background or sprites are hidden.
+        //
+        var show = this.mask.contain(MaskFlag.SHOW_SPRITES) && this.mask.contain(MaskFlag.SHOW_BACKGROUND);
+        return show && y + 5 == this.scanLine && x <= this.cycles;
     }
 
     private void inc() {

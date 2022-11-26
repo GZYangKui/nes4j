@@ -369,8 +369,8 @@ public class CPU {
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 
-        log.info("({}){}(0x{}) {}", state - 1, instruction,
-                Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502));
+//        log.info("({}){}(0x{}) {}", state - 1, instruction,
+//                Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502));
 
         if (instruction == CPUInstruction.JMP) {
             this.pc = this.modeProvider.getAbsAddr(mode);

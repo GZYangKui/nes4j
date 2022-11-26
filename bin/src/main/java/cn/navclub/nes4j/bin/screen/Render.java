@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.screen;
 
 import cn.navclub.nes4j.bin.core.PPU;
+import cn.navclub.nes4j.bin.enums.MaskFlag;
 import cn.navclub.nes4j.bin.enums.NameMirror;
 import lombok.Getter;
 
@@ -64,89 +65,95 @@ public class Render {
     }
 
     public void render(PPU ppu, Frame frame) {
-        var vram = ppu.getVram();
-        var mirror = ppu.getMirrors();
+        var mask = ppu.getMask();
+        if (mask.contain(MaskFlag.SHOW_BACKGROUND)) {
+            var vram = ppu.getVram();
+            var mirror = ppu.getMirrors();
 
-        var ctr = ppu.getControl();
-        var nameTable = ctr.nameTableAddr();
+            var ctr = ppu.getControl();
+            var nameTable = ctr.nameTableAddr();
 
-        var scrollX = ppu.getScroll().getX();
-        var scrollY = ppu.getScroll().getY();
+            var scrollX = ppu.getScroll().getX();
+            var scrollY = ppu.getScroll().getY();
 
-        var firstNameTable = new byte[0x400];
-        var secondNameTable = new byte[0x400];
+            var firstNameTable = new byte[0x400];
+            var secondNameTable = new byte[0x400];
 
-        if ((mirror == NameMirror.VERTICAL && (nameTable == 0x2000 || nameTable == 0x2800))
-                || (mirror == NameMirror.HORIZONTAL && (nameTable == 0x2000 || nameTable == 0x2400))) {
-            System.arraycopy(vram, 0, firstNameTable, 0, 0x400);
-            System.arraycopy(vram, 0x400, secondNameTable, 0, 0x400);
-        } else if ((mirror == NameMirror.VERTICAL && (nameTable == 0x2400 || nameTable == 0x2c00))
-                || (mirror == NameMirror.HORIZONTAL && (nameTable == 0x2800 || nameTable == 0x2c00))) {
-            System.arraycopy(vram, 0x400, firstNameTable, 0, 0x400);
-            System.arraycopy(vram, 0, secondNameTable, 0, 0x400);
-        } else {
-            throw new RuntimeException("Not support mirror type:" + mirror);
+            if ((mirror == NameMirror.VERTICAL && (nameTable == 0x2000 || nameTable == 0x2800))
+                    || (mirror == NameMirror.HORIZONTAL && (nameTable == 0x2000 || nameTable == 0x2400))) {
+                System.arraycopy(vram, 0, firstNameTable, 0, 0x400);
+                System.arraycopy(vram, 0x400, secondNameTable, 0, 0x400);
+            } else if ((mirror == NameMirror.VERTICAL && (nameTable == 0x2400 || nameTable == 0x2c00))
+                    || (mirror == NameMirror.HORIZONTAL && (nameTable == 0x2800 || nameTable == 0x2c00))) {
+                System.arraycopy(vram, 0x400, firstNameTable, 0, 0x400);
+                System.arraycopy(vram, 0, secondNameTable, 0, 0x400);
+            } else {
+                throw new RuntimeException("Not support mirror type:" + mirror);
+            }
+
+
+            //Render first screen background
+            renderNameTable(ppu, frame, firstNameTable, new Camera(scrollX, scrollY, 256, 240), -scrollX, -scrollY);
+
+            if (scrollX > 0) {
+                renderNameTable(ppu,
+                        frame, secondNameTable, new Camera(0, 0, scrollX, 240), 256 - scrollX, 0);
+            } else if (scrollY > 0) {
+                renderNameTable(ppu,
+                        frame, secondNameTable, new Camera(0, 0, 256, scrollY), 0, 240 - scrollY);
+            }
         }
 
-
-        //Render first screen background
-        renderNameTable(ppu, frame, firstNameTable, new Camera(scrollX, scrollY, 256, 240), -scrollX, -scrollY);
-
-        if (scrollX > 0) {
-            renderNameTable(ppu,
-                    frame, secondNameTable, new Camera(0, 0, scrollX, 240), 256 - scrollX, 0);
-        } else if (scrollY > 0) {
-            renderNameTable(ppu,
-                    frame, secondNameTable, new Camera(0, 0, 256, scrollY), 0, 240 - scrollY);
-        }
+        if (mask.contain(MaskFlag.SHOW_SPRITES)) {
 
 
-        var oam = ppu.getOam();
-        var length = oam.length;
-        for (int i = length - 4; i >= 0; i = i - 4) {
-            var idx = Byte.toUnsignedInt(oam[i + 1]);
-            var tx = Byte.toUnsignedInt(oam[i + 3]);
-            var ty = Byte.toUnsignedInt(oam[i]);
+            var oam = ppu.getOam();
+            var length = oam.length;
+            for (int i = length - 4; i >= 0; i = i - 4) {
+                var idx = Byte.toUnsignedInt(oam[i + 1]);
+                var tx = Byte.toUnsignedInt(oam[i + 3]);
+                var ty = Byte.toUnsignedInt(oam[i]);
 
-            var vFlip = ((Byte.toUnsignedInt(oam[i + 2])) >> 7 & 1) == 1;
-            var hFlip = ((Byte.toUnsignedInt(oam[i + 2])) >> 6 & 1) == 1;
+                var vFlip = ((Byte.toUnsignedInt(oam[i + 2])) >> 7 & 1) == 1;
+                var hFlip = ((Byte.toUnsignedInt(oam[i + 2])) >> 6 & 1) == 1;
 
-            var pIdx = (Byte.toUnsignedInt(oam[i + 2])) & 0b11;
+                var pIdx = (Byte.toUnsignedInt(oam[i + 2])) & 0b11;
 
-            var sp = spritePalette(ppu, pIdx);
-            var bank = ppu.getControl().spritePattern();
+                var sp = spritePalette(ppu, pIdx);
+                var bank = ppu.getControl().spritePattern();
 
-            var tile = new byte[16];
-            System.arraycopy(ppu.getCh(), bank + idx * 16, tile, 0, 16);
+                var tile = new byte[16];
+                System.arraycopy(ppu.getCh(), bank + idx * 16, tile, 0, 16);
 
-            for (int y = 0; y < 8; y++) {
-                var upper = Byte.toUnsignedInt(tile[y]);
-                var lower = Byte.toUnsignedInt(tile[y + 8]);
-                for (int x = 7; x >= 0; x--) {
-                    var value = (1 & lower) << 1 | (1 & upper);
-                    upper >>= 1;
-                    lower >>= 1;
-                    var rgb = switch (value) {
-                        case 1 -> sysPalette[sp[1]];
-                        case 2 -> sysPalette[sp[2]];
-                        case 3 -> sysPalette[sp[3]];
-                        default -> new int[0];
-                    };
-                    if (rgb.length == 0) {
-                        continue;
-                    }
+                for (int y = 0; y < 8; y++) {
+                    var upper = Byte.toUnsignedInt(tile[y]);
+                    var lower = Byte.toUnsignedInt(tile[y + 8]);
+                    for (int x = 7; x >= 0; x--) {
+                        var value = (1 & lower) << 1 | (1 & upper);
+                        upper >>= 1;
+                        lower >>= 1;
+                        var rgb = switch (value) {
+                            case 1 -> sysPalette[sp[1]];
+                            case 2 -> sysPalette[sp[2]];
+                            case 3 -> sysPalette[sp[3]];
+                            default -> new int[0];
+                        };
+                        if (rgb.length == 0) {
+                            continue;
+                        }
 
-                    if (!hFlip && !vFlip) {
-                        frame.updatePixel(tx + x, ty + y, rgb);
-                    }
-                    if (hFlip && !vFlip) {
-                        frame.updatePixel(tx + 7 - x, ty + y, rgb);
-                    }
-                    if (!hFlip && vFlip) {
-                        frame.updatePixel(tx + x, ty + 7 - y, rgb);
-                    }
-                    if (hFlip && vFlip) {
-                        frame.updatePixel(tx + 7 - x, ty + 7 - y, rgb);
+                        if (!hFlip && !vFlip) {
+                            frame.updatePixel(tx + x, ty + y, rgb);
+                        }
+                        if (hFlip && !vFlip) {
+                            frame.updatePixel(tx + 7 - x, ty + y, rgb);
+                        }
+                        if (!hFlip && vFlip) {
+                            frame.updatePixel(tx + x, ty + 7 - y, rgb);
+                        }
+                        if (hFlip && vFlip) {
+                            frame.updatePixel(tx + 7 - x, ty + 7 - y, rgb);
+                        }
                     }
                 }
             }
