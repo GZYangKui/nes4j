@@ -68,6 +68,7 @@ public class FrameCounter implements Component {
             // CPU's IRQ line is asserted.
             //
             if (this.index == 4 && this.mode == 0 && !this.IRQDisable) {
+                this.interrupt = true;
                 this.apu.IRQInterrupt();
             }
         }

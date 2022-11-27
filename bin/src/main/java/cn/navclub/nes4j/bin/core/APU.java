@@ -83,6 +83,7 @@ public class APU implements Component {
             if (dmcEnable && this.dmc.getCurrentLength() == 0) {
                 this.dmc.reset();
             }
+            this.dmc.setEnable(dmcEnable);
             this.dmc.setIRQInterrupt(false);
         }
         //0x4000-0x4003 Square Channel1
@@ -125,6 +126,7 @@ public class APU implements Component {
         //    IRQ from DMC
         //    frame interrupt
         //    DMC sample bytes remaining > 0
+        //    noise length counter > 0
         //    triangle length counter > 0
         //    square 2 length counter > 0
         //    square 1 length counter > 0
@@ -132,15 +134,17 @@ public class APU implements Component {
         var value = 0;
         var c0 = pulse.getLengthCounter().getCounter();
         var c1 = pulse1.getLengthCounter().getCounter();
-        var c3 = triangle.getLengthCounter().getCounter();
-        var interrupt = this.frameCounter.isInterrupt();
+        var c2 = triangle.getLengthCounter().getCounter();
+        var c3 = this.noise.getLengthCounter().getCounter();
 
-        value |= (c0 > 0 ? 0x01 : 0x00);
-        value |= (c1 > 0 ? 0x02 : 0x00);
-        value |= (c3 > 0 ? 0x04 : 0x00);
-        value |= (this.dmc.getCurrentLength() > 0 ? 0x10 : 0x00);
-        value |= interrupt ? 0x40 : 0x00;
-        value |= this.dmc.isIRQInterrupt() ? 0x80 : 0x00;
+
+        value |= (c0 > 0 ? 1 : 0);
+        value |= (c1 > 0 ? 1 << 1 : 0);
+        value |= (c2 > 0 ? 1 << 2 : 0);
+        value |= (c3 > 0 ? 1 << 3 : 0);
+        value |= (this.dmc.getCurrentLength() > 0 ? 1 << 4 : 0);
+        value |= this.frameCounter.isInterrupt() ? 1 << 6 : 0;
+        value |= this.dmc.isIRQInterrupt() ? 1 << 7 : 0;
 
         this.frameCounter.setInterrupt(false);
 
