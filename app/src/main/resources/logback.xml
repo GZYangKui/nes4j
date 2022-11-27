@@ -30,6 +30,6 @@
 
     <root level="info" additivity="false">
         <appender-ref ref="console"/>
-        <!--        <appender-ref ref="FILE"/>-->
+<!--        <appender-ref ref="FILE"/>-->
     </root>
 </configuration>

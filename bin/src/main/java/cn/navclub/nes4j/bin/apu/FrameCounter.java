@@ -69,7 +69,7 @@ public class FrameCounter implements Component {
             //
             if (this.index == 4 && this.mode == 0 && !this.IRQDisable) {
                 this.interrupt = true;
-                this.apu.IRQInterrupt();
+                this.apu.fireIRQ();
             }
         }
     }

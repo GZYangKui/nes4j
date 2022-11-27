@@ -97,7 +97,7 @@ public class PPU implements Component {
             this.status.set(PStatus.V_BLANK_OCCUR);
             this.status.clear(PStatus.SPRITE_ZERO_HIT);
             if (this.control.generateVBlankNMI()) {
-                this.nmiInterrupt();
+                this.fireNMI();
             }
         }
 
@@ -227,7 +227,7 @@ public class PPU implements Component {
         var temp = this.control.generateVBlankNMI();
         this.control.update(b);
         if (!temp && this.control.generateVBlankNMI() && this.status.contain(PStatus.V_BLANK_OCCUR)) {
-            this.nmiInterrupt();
+            this.fireNMI();
         }
     }
 
@@ -244,7 +244,7 @@ public class PPU implements Component {
      * Output one frame video sign.
      *
      */
-    private void nmiInterrupt() {
+    private void fireNMI() {
         if (this.nmi) {
             return;
         }

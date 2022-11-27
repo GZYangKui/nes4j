@@ -8,6 +8,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 
 @Slf4j
 public class Bus implements Component {
@@ -37,17 +40,16 @@ public class Bus implements Component {
     @Getter
     //CPU clock cycle counter
     private long cycles;
+    private CPUInterrupt interrupt;
 
 
     public Bus(Cartridge cartridge, TCallback<PPU, JoyPad, JoyPad> gameLoopCallback) {
-
         this.ram = new byte[2048];
         this.joyPad = new JoyPad();
         this.cartridge = cartridge;
         this.joyPad1 = new JoyPad();
         this.apu = new APU(this);
         this.rpgrom = new byte[RPG_UNIT * 2];
-
 
         this.ppu = new PPU(this, cartridge.getChrom(), cartridge.getMirrors());
 
@@ -272,7 +274,6 @@ public class Bus implements Component {
      * @param interrupt interrupt type
      */
     public void interrupt(CPUInterrupt interrupt) {
-        this.cpu.interrupt(interrupt);
         if (interrupt == CPUInterrupt.NMI && this.gameLoopCallback != null) {
             try {
                 Thread.sleep(3);
@@ -281,6 +282,18 @@ public class Bus implements Component {
             }
             this.gameLoopCallback.accept(this.ppu, this.joyPad, this.joyPad1);
         }
+        if (this.interrupt == CPUInterrupt.NMI) {
+            return;
+        }
+        this.interrupt = interrupt;
+    }
+
+    public CPUInterrupt getInterrupt() {
+        var temp = interrupt;
+        if (temp != null) {
+            this.interrupt = null;
+        }
+        return temp;
     }
 
     public void setStall(int stall) {

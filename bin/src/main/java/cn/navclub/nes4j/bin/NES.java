@@ -38,8 +38,16 @@ public class NES {
         while (!stop) {
             if (this.bus.getStall() > 0)
                 this.bus.tick(1);
-            else
+            else {
+                //fire ppu or apu interrupt
+                this.cpu.interrupt(this.bus.getInterrupt());
+                var programCounter = this.cpu.getPc();
+                //Check program counter whether in legal memory area
+                if (programCounter < 0x8000 || programCounter >= 0x10000) {
+                    throw new RuntimeException("Text memory area except in 0x8000 to 0xffff current 0x" + Integer.toHexString(programCounter));
+                }
                 this.cpu.next();
+            }
         }
     }
 

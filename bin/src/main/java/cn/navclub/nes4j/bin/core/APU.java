@@ -202,7 +202,7 @@ public class APU implements Component {
         // At any time, if the interrupt flag is set, the CPU's IRQ line is continuously asserted
         // until the interrupt flag is cleared. The processor will continue on from where it was stalled.
         if (this.dmc.isIRQInterrupt()) {
-            this.IRQInterrupt();
+            this.fireIRQ();
         }
     }
 
@@ -243,7 +243,7 @@ public class APU implements Component {
         return tndOut + seqOut;
     }
 
-    public void IRQInterrupt() {
+    public void fireIRQ() {
         this.bus.interrupt(CPUInterrupt.IRQ);
     }
 
