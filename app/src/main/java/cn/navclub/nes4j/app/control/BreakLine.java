@@ -4,6 +4,8 @@ import cn.navclub.nes4j.app.view.DebuggerView;
 import cn.navclub.nes4j.bin.debug.OpenCode;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import lombok.Getter;
 
 public class BreakLine extends HBox {
@@ -31,11 +33,15 @@ public class BreakLine extends HBox {
 
         label.setOnMouseClicked(event -> {
             view.point(this);
-            if (!this.drag)
-                this.label.getStyleClass().add("break-label-drag");
-            else
-                this.label.getStyleClass().remove("break-label-drag");
-
+            this.label.setGraphic(null);
+            if (!this.drag) {
+                var w = this.label.getWidth();
+                var h = this.label.getHeight();
+                var min = Math.min(w, h);
+                var redis = min / 2.0 - .5;
+                var circle = new Circle(redis, Color.RED);
+                this.label.setGraphic(circle);
+            }
             this.drag = !drag;
         });
     }
