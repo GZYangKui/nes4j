@@ -20,10 +20,7 @@ public class APU implements Component {
 
     static {
         SERVICE_LOADER = ServiceLoader.load(Player.class);
-    }
 
-
-    static {
         TND_TABLE = new float[203];
         PULSE_TABLE = new float[31];
 
@@ -43,8 +40,6 @@ public class APU implements Component {
     private final PulseChannel pulse1;
     private final TriangleChannel triangle;
     private final FrameCounter frameCounter;
-
-    private DefaultPlayer player;
 
     public APU(Bus bus) {
         this.bus = bus;
@@ -183,20 +178,12 @@ public class APU implements Component {
             this.triangle.getLinearCounter().tick();
         }
 
-        if ((this.cycle / 2) % 41 == 0) {
+        if ((this.cycle / 2) % 40 == 0) {
             var output = this.lookupSample();
             var iterator = SERVICE_LOADER.iterator();
-            var custom = false;
             if (iterator.hasNext()) {
-                custom = true;
                 var player = iterator.next();
                 player.output(output);
-            }
-            if (!custom) {
-                if (this.player == null) {
-                    this.player = new DefaultPlayer();
-                }
-                this.player.output(output);
             }
         }
         // At any time, if the interrupt flag is set, the CPU's IRQ line is continuously asserted
@@ -249,9 +236,8 @@ public class APU implements Component {
 
     @Override
     public void stop() {
-        if (this.player == null) {
-            return;
+        for (Player player : SERVICE_LOADER) {
+            player.stop();
         }
-        this.player.stop();
     }
 }

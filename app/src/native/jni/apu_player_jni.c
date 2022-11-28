@@ -1,5 +1,5 @@
 #include <malloc.h>
-#include "../include/jni/cn_navclub_nes4j_bin_apu_impl_DefaultPlayer.h"
+#include "../include/jni/cn_navclub_nes4j_app_audio_NativePlayer.h"
 
 #include "../include/sys_sound.h"
 #include "../include/jni/jni_util.h"
@@ -7,7 +7,7 @@
 static SoundHardware *Nes4j_hardware_instance(JNIEnv *, jobject);
 
 JNIEXPORT void JNICALL
-Java_cn_navclub_nes4j_bin_apu_impl_DefaultPlayer_play(JNIEnv *env, jobject this, jfloatArray array) {
+Java_cn_navclub_nes4j_app_audio_NativePlayer_play(JNIEnv *env, jobject this, jfloatArray array) {
     SoundHardware *hardware = Nes4j_hardware_instance(env, this);
     if (hardware == NULL) {
         fprintf(stderr, "Call before Please init SoundHardware.\n");
@@ -24,14 +24,14 @@ Java_cn_navclub_nes4j_bin_apu_impl_DefaultPlayer_play(JNIEnv *env, jobject this,
     (*env)->ReleaseFloatArrayElements(env, array, temp, JNI_ABORT);
 }
 
-JNIEXPORT void JNICALL Java_cn_navclub_nes4j_bin_apu_impl_DefaultPlayer_stop(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_cn_navclub_nes4j_app_audio_NativePlayer_stop(JNIEnv *env, jobject this) {
     SoundHardware *hardware = Nes4j_hardware_instance(env, this);
     if (hardware != NULL)
         Nes4j_apu_stop(hardware);
 }
 
 JNIEXPORT void JNICALL
-Java_cn_navclub_nes4j_bin_apu_impl_DefaultPlayer_config(JNIEnv *env, jobject this, jstring device, jint channel,
+Java_cn_navclub_nes4j_app_audio_NativePlayer_config(JNIEnv *env, jobject this, jstring device, jint channel,
                                                         jint rate, jint latency) {
     SoundHardware *hardware = Nes4j_hardware_instance(env, this);
     if (hardware) {

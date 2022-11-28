@@ -9,4 +9,13 @@ public interface Player {
      * @param sample Audio sample
      */
     void output(float sample);
+
+    /**
+     *
+     * When game was close will call this method release resource
+     *
+     */
+    default void stop() {
+
+    }
 }

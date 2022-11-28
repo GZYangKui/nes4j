@@ -1,13 +1,13 @@
-package cn.navclub.nes4j.bin.apu.impl;
+package cn.navclub.nes4j.app.audio;
 
 import cn.navclub.nes4j.bin.Player;
 
-public class DefaultPlayer implements Player {
+public class NativePlayer implements Player {
     private final float[] samples;
     private int index;
 
-    public DefaultPlayer() {
-        this.samples = new float[4096];
+    public NativePlayer() {
+        this.samples = new float[735*2];
         this.config("default", 1, 44100, 50000);
     }
 

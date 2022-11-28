@@ -5,6 +5,7 @@ import cn.navclub.nes4j.app.control.NesGameItem;
 import cn.navclub.nes4j.app.dialog.DHandle;
 import cn.navclub.nes4j.app.util.JsonUtil;
 import cn.navclub.nes4j.app.util.StrUtil;
+import cn.navclub.nes4j.bin.Player;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.ListView;
@@ -20,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.ResourceBundle;
+import java.util.ServiceLoader;
 
 @Slf4j
 public class NES4J extends Application {
@@ -30,6 +32,7 @@ public class NES4J extends Application {
 
 
     static {
+        System.loadLibrary("nes4j");
         System.setProperty("java.util.PropertyResourceBundle.encoding", "UTF-8");
         RESOURCE_BUNDLE = ResourceBundle.getBundle("cn.navclub.nes4j.app.language.nes4j");
     }
