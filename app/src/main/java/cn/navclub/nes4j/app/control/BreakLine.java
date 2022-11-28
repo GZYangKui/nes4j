@@ -27,12 +27,12 @@ public class BreakLine extends HBox {
         this.instruct = new Label();
         this.operator = new Label();
 
-        label.getStyleClass().add("break-label");
-
+        this.label.setAlignment(Pos.CENTER);
+        this.label.getStyleClass().add("break-label");
         this.getChildren().addAll(label, address, instruct, operator);
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-        label.setOnMouseClicked(event -> {
+        this.label.setOnMouseClicked(event -> {
             event.consume();
             view.point(this);
             this.label.setGraphic(null);
@@ -43,7 +43,6 @@ public class BreakLine extends HBox {
                 var redis = min / 2.0 / 1.5;
                 var circle = new Circle(redis, Color.RED);
                 this.label.setGraphic(circle);
-                this.label.setAlignment(Pos.CENTER);
             }
             this.drag = !drag;
         });
