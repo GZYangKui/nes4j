@@ -11,6 +11,7 @@ import java.io.File;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
@@ -22,9 +23,11 @@ public class NES {
 
     private final Bus bus;
     private final CPU cpu;
+    private final Thread thread;
     private final Cartridge cartridge;
-    private volatile boolean stop;
     private final Debugger debugger;
+
+    private volatile boolean stop;
 
 
     private NES(NESBuilder builder) {
@@ -33,7 +36,9 @@ public class NES {
         } else {
             this.cartridge = new Cartridge(builder.file);
         }
+
         this.debugger = builder.debugger;
+        this.thread = Thread.currentThread();
         this.bus = new Bus(this.cartridge, builder.gameLoopCallback);
         this.cpu = new CPU(this.bus);
 
@@ -43,7 +48,7 @@ public class NES {
         }
     }
 
-    public void execute() throws Exception {
+    public void execute() {
         this.cpu.reset();
         while (!stop) {
             if (this.bus.getStall() > 0)
@@ -54,9 +59,7 @@ public class NES {
                 var programCounter = this.cpu.getPc();
                 if (this.debugger != null && this.debugger.hack(this.bus)) {
                     //lock current program process
-                    synchronized (this) {
-                        this.wait();
-                    }
+                    LockSupport.park();
                 }
                 //Check program counter whether in legal memory area
                 if (programCounter < 0x8000 || programCounter >= 0x10000) {
@@ -78,7 +81,10 @@ public class NES {
      *
      */
     public synchronized void release() {
-        this.notify();
+        if (this.thread == null) {
+            return;
+        }
+        LockSupport.unpark(this.thread);
     }
 
     public static class NESBuilder {

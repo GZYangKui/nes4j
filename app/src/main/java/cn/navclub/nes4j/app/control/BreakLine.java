@@ -2,6 +2,7 @@ package cn.navclub.nes4j.app.control;
 
 import cn.navclub.nes4j.app.view.DebuggerView;
 import cn.navclub.nes4j.bin.debug.OpenCode;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
@@ -39,9 +40,10 @@ public class BreakLine extends HBox {
                 var w = this.label.getWidth();
                 var h = this.label.getHeight();
                 var min = Math.min(w, h);
-                var redis = min / 2.0 - .5;
+                var redis = min / 2.0 / 1.5;
                 var circle = new Circle(redis, Color.RED);
                 this.label.setGraphic(circle);
+                this.label.setAlignment(Pos.CENTER);
             }
             this.drag = !drag;
         });
