@@ -8,8 +8,10 @@ GridPane {
 }
 
 .top-box {
-    -fx-padding: .2em 1.5em;
+    -fx-padding: .2em;
     -fx-spacing: .5em;
+    -fx-border-width: 0 0 .05em 0;
+    -fx-border-color: #b8b8b8;
 }
 
 .top-box .button {

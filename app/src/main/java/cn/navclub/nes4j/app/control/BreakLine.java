@@ -32,6 +32,7 @@ public class BreakLine extends HBox {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
         label.setOnMouseClicked(event -> {
+            event.consume();
             view.point(this);
             this.label.setGraphic(null);
             if (!this.drag) {

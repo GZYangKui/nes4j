@@ -276,7 +276,7 @@ public class Bus implements Component {
     public void interrupt(CPUInterrupt interrupt) {
         if (interrupt == CPUInterrupt.NMI && this.gameLoopCallback != null) {
             try {
-                Thread.sleep(3);
+                Thread.sleep(5);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
