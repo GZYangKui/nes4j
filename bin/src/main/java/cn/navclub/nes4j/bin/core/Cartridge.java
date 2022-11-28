@@ -174,7 +174,7 @@ public class Cartridge {
         this.format = this.parseFormat(headers);
 
         this.chSize = this.calChSize(headers);
-        this.rgbSize = this.calRgbSize(headers);
+        var rgbSize = this.calRgbSize(headers);
 
         var flag6 = headers[6] & 0xff;
         var flag7 = headers[7] & 0xff;
@@ -197,14 +197,20 @@ public class Cartridge {
         var trainSize = this.trainAreaSize(flag6);
 
         chrom = new byte[chSize];
-        rgbrom = new byte[rgbSize];
         train = new byte[trainSize];
+        rgbrom = new byte[Math.max(rgbSize, 32 * 1024)];
 
         if (trainSize > 0) {
             System.arraycopy(buffer, HEADER_SIZE, train, 0, trainSize);
         }
         var offset = HEADER_SIZE + trainSize;
         System.arraycopy(buffer, offset, rgbrom, 0, rgbSize);
+
+        //When rpg-rom size less than 32kb copy first part fill second part
+        if (rgbSize == 0x4000) {
+            System.arraycopy(rgbrom, 0, rgbrom, rgbSize, rgbSize);
+        }
+
         if (chSize > 0) {
             offset += rgbSize;
             System.arraycopy(buffer, offset, chrom, 0, chSize);
@@ -218,6 +224,7 @@ public class Cartridge {
         } else {
             this.cellaneous = new byte[0];
         }
+        this.rgbSize = this.rgbrom.length;
     }
 
     public Cartridge(NameMirror mirror, byte[] chrom, byte[] rgbrom) {

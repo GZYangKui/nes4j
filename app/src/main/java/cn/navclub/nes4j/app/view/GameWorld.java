@@ -60,9 +60,9 @@ public class GameWorld extends Stage {
         this.menuBar = new MenuBar();
         this.frameLabel = new Label();
         this.fpsTimer = this.createFPSTimer();
-        this.debuggerView = new DebuggerView();
         this.ctx = canvas.getGraphicsContext2D();
         this.eventQueue = new LinkedBlockingDeque<>();
+        this.debuggerView = new DebuggerView(this);
 
         var view = new Menu(NES4J.localeValue("nes4j.view"));
         var tool = new Menu(NES4J.localeValue("nes4j.tool"));
@@ -109,8 +109,11 @@ public class GameWorld extends Stage {
 
         this.setOnCloseRequest(event -> this.dispose(null));
 
-        this.execute(file);
         this.fpsTimer.start();
+
+        var thread = new Thread(this.execute(file));
+        thread.setName("Nes4j-game-thread");
+        thread.start();
 
         debug.setOnAction((event) -> this.debuggerView.show());
 
@@ -160,21 +163,20 @@ public class GameWorld extends Stage {
     }
 
 
-    private void execute(File file) {
-        CompletableFuture.runAsync(() -> {
-            this.instance = NES.NESBuilder
-                    .newBuilder()
-                    .file(file)
-                    .debugger(this.debuggerView)
-                    .gameLoopCallback(this::gameLoopCallback)
-                    .build();
-            this.instance.execute();
-        }).whenComplete((r, t) -> {
-            if (t == null) {
-                return;
+    private Runnable execute(File file) {
+        return () -> {
+            try {
+                this.instance = NES.NESBuilder
+                        .newBuilder()
+                        .file(file)
+                        .debugger(this.debuggerView)
+                        .gameLoopCallback(this::gameLoopCallback)
+                        .build();
+                this.instance.execute();
+            } catch (Exception e) {
+                Platform.runLater(() -> this.dispose(e));
             }
-            Platform.runLater(() -> this.dispose(t));
-        });
+        };
     }
 
     private void dispose(Throwable t) {

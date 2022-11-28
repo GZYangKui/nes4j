@@ -35,6 +35,8 @@ public class CPU {
     @Getter
     //栈指针寄存器,始终指向栈顶
     private int sp;
+    //指令计数器
+    private int counter;
     private final Bus bus;
     //cpu状态
     private final SRegister status;
@@ -362,7 +364,7 @@ public class CPU {
     }
 
     public void next() {
-
+        this.counter++;
         var openCode = this.bus.read(this.pc);
         var state = (++this.pc);
 

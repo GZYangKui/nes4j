@@ -1,7 +1,37 @@
 @import "common.css";
 
+GridPane {
+    -fx-vgap: 1em;
+    -fx-hgap: 1em;
+    -fx-alignment: CENTER;
+    -fx-padding: .5em;
+}
+
+.top-box {
+    -fx-padding: .2em 1.5em;
+    -fx-spacing: .5em;
+}
+
+.top-box .button {
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+
+.list-view .list-cell {
+    -fx-padding: 0 .5em 0 0;
+}
 
 .break-line {
     -fx-spacing: .5em;
     -fx-alignment: CENTER-LEFT;
+}
+
+.break-line .break-label {
+    -fx-pref-width: 1.5em;
+    -fx-pref-height: 1.5em;
+    -fx-background-color: #b8b8b8;
+}
+
+.break-line .break-label-drag {
+    -fx-background-color: red !important;
 }

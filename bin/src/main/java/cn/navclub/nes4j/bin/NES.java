@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -21,7 +22,6 @@ public class NES {
 
     private final Bus bus;
     private final CPU cpu;
-    private final Lock lock;
     private final Cartridge cartridge;
     private volatile boolean stop;
     private final Debugger debugger;
@@ -33,17 +33,17 @@ public class NES {
         } else {
             this.cartridge = new Cartridge(builder.file);
         }
-        this.lock = new ReentrantLock();
         this.debugger = builder.debugger;
         this.bus = new Bus(this.cartridge, builder.gameLoopCallback);
         this.cpu = new CPU(this.bus);
 
         if (this.debugger != null) {
+            this.debugger.inject(this);
             CompletableFuture.runAsync(() -> this.debugger.buffer(cartridge.getRgbrom(), 0));
         }
     }
 
-    public void execute() {
+    public void execute() throws Exception {
         this.cpu.reset();
         while (!stop) {
             if (this.bus.getStall() > 0)
@@ -52,9 +52,11 @@ public class NES {
                 //fire ppu or apu interrupt
                 this.cpu.interrupt(this.bus.getInterrupt());
                 var programCounter = this.cpu.getPc();
-                if (this.debugger != null && this.debugger.debug(this.cpu)) {
+                if (this.debugger != null && this.debugger.hack(this.bus)) {
                     //lock current program process
-                    this.lock.lock();
+                    synchronized (this) {
+                        this.wait();
+                    }
                 }
                 //Check program counter whether in legal memory area
                 if (programCounter < 0x8000 || programCounter >= 0x10000) {
@@ -75,8 +77,8 @@ public class NES {
      * 在debug模式下用于执行下一个断点所用
      *
      */
-    public void release() {
-        this.lock.unlock();
+    public synchronized void release() {
+        this.notify();
     }
 
     public static class NESBuilder {

@@ -36,6 +36,7 @@ public class Bus implements Component {
     //CPU延迟时钟
     @Getter
     private int stall;
+    @Getter
     protected CPU cpu;
     @Getter
     //CPU clock cycle counter
@@ -56,7 +57,6 @@ public class Bus implements Component {
         if (cartridge.getMapper() == NMapper.NROM) {
             System.arraycopy(this.cartridge.getRgbrom(), 0, this.rpgrom, 0, RPG_UNIT);
         }
-
         System.arraycopy(this.cartridge.getRgbrom(), ((this.cartridge.getRgbSize() / RPG_UNIT) - 1) * RPG_UNIT, rpgrom, RPG_UNIT, RPG_UNIT);
 
         this.gameLoopCallback = gameLoopCallback;
@@ -77,13 +77,13 @@ public class Bus implements Component {
         return address;
     }
 
-    private byte readRPGData(int address) {
-        address -= 0x8000;
-        if (this.cartridge.getRgbSize() == 0x4000 && address >= 0x4000) {
-            address %= 0x4000;
-        }
-        return this.rpgrom[address];
-    }
+//    private byte readRPGData(int address) {
+//        address -= 0x8000;
+//        if (this.cartridge.getRgbSize() == 0x4000 && address >= 0x4000) {
+//            address %= 0x4000;
+//        }
+//        return this.rpgrom[address];
+//    }
 
 
     @Override
@@ -127,7 +127,7 @@ public class Bus implements Component {
         }
         //Read rpg-rom data
         else if (address >= RPG_ROM && address <= RPG_ROM_END) {
-            b = this.readRPGData(address);
+            b = this.rpgrom[address - 0x8000];
         }
         //Default return 0
         else {
