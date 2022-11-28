@@ -6,7 +6,7 @@ import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.enums.CPUStatus;
 import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Data;
-import lombok.Setter;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -21,13 +21,18 @@ public class CPU {
     private static final int STACK_RESET = 0xfd;
 
     //累加寄存器
+    @Getter
     private int ra;
     //X寄存器
+    @Getter
     private int rx;
     //Y寄存器
+    @Getter
     private int ry;
     //程序计数器
+    @Getter
     private int pc;
+    @Getter
     //栈指针寄存器,始终指向栈顶
     private int sp;
     private final Bus bus;
@@ -50,8 +55,8 @@ public class CPU {
         this.rx = 0;
         this.ry = 0;
         this.ra = 0;
-        this.sp = STACK;
         this.status.reset();
+        this.sp = STACK_RESET;
         this.pc = this.bus.readInt(PC_RESET);
     }
 
@@ -337,7 +342,7 @@ public class CPU {
     }
 
     public void interrupt(CPUInterrupt interrupt) {
-        if (interrupt != CPUInterrupt.NMI && this.status.contain(CPUStatus.ID)) {
+        if (interrupt == null || (interrupt != CPUInterrupt.NMI && this.status.contain(CPUStatus.ID))) {
             return;
         }
 
@@ -356,11 +361,8 @@ public class CPU {
         this.pc = this.bus.readInt(interrupt.getVector());
     }
 
-
     public void next() {
-        if (this.pc < 0x8000 || this.pc >= 0x10000) {
-            throw new RuntimeException("Text memory area except in 0x8000 to 0xffff current 0x" + Integer.toHexString(this.pc));
-        }
+
         var openCode = this.bus.read(this.pc);
         var state = (++this.pc);
 
@@ -373,8 +375,17 @@ public class CPU {
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 
-//        log.info("({}){}(0x{}) {}", state - 1, instruction,
-//                Integer.toHexString(Byte.toUnsignedInt(openCode)), formatInstruction(instruction6502));
+//        log.info("({}){}(0x{}) {} ra:{} rx:{} ry:{} sp:{} status:{}",
+//                state - 1,
+//                instruction,
+//                Integer.toHexString(Byte.toUnsignedInt(openCode)),
+//                formatInstruction(instruction6502),
+//                this.ra,
+//                this.rx,
+//                this.ry,
+//                this.sp,
+//                this.status
+//        );
 
         if (instruction == CPUInstruction.JMP) {
             this.pc = this.modeProvider.getAbsAddr(mode);

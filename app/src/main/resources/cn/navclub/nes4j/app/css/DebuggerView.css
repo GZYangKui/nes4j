@@ -1,0 +1,7 @@
+@import "common.css";
+
+
+.break-line {
+    -fx-spacing: .5em;
+    -fx-alignment: CENTER-LEFT;
+}

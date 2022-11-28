@@ -1,12 +1,16 @@
 package cn.navclub.nes4j.bin;
 
 import cn.navclub.nes4j.bin.core.*;
+import cn.navclub.nes4j.bin.debug.Debugger;
 import cn.navclub.nes4j.bin.enums.NameMirror;
 import cn.navclub.nes4j.bin.function.TCallback;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @Getter
@@ -17,9 +21,10 @@ public class NES {
 
     private final Bus bus;
     private final CPU cpu;
+    private final Lock lock;
     private final Cartridge cartridge;
-
     private volatile boolean stop;
+    private final Debugger debugger;
 
 
     private NES(NESBuilder builder) {
@@ -28,9 +33,14 @@ public class NES {
         } else {
             this.cartridge = new Cartridge(builder.file);
         }
-
+        this.lock = new ReentrantLock();
+        this.debugger = builder.debugger;
         this.bus = new Bus(this.cartridge, builder.gameLoopCallback);
         this.cpu = new CPU(this.bus);
+
+        if (this.debugger != null) {
+            CompletableFuture.runAsync(() -> this.debugger.buffer(cartridge.getRgbrom(), 0));
+        }
     }
 
     public void execute() {
@@ -42,6 +52,10 @@ public class NES {
                 //fire ppu or apu interrupt
                 this.cpu.interrupt(this.bus.getInterrupt());
                 var programCounter = this.cpu.getPc();
+                if (this.debugger != null && this.debugger.debug(this.cpu)) {
+                    //lock current program process
+                    this.lock.lock();
+                }
                 //Check program counter whether in legal memory area
                 if (programCounter < 0x8000 || programCounter >= 0x10000) {
                     throw new RuntimeException("Text memory area except in 0x8000 to 0xffff current 0x" + Integer.toHexString(programCounter));
@@ -56,13 +70,28 @@ public class NES {
         this.bus.stop();
     }
 
+    /**
+     *
+     * 在debug模式下用于执行下一个断点所用
+     *
+     */
+    public void release() {
+        this.lock.unlock();
+    }
+
     public static class NESBuilder {
         private File file;
         private byte[] buffer;
+        private Debugger debugger;
         private TCallback<PPU, JoyPad, JoyPad> gameLoopCallback;
 
         public NESBuilder buffer(byte[] buffer) {
             this.buffer = buffer;
+            return this;
+        }
+
+        public NESBuilder debugger(Debugger debugger) {
+            this.debugger = debugger;
             return this;
         }
 

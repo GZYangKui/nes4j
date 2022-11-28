@@ -43,6 +43,7 @@ public class GameWorld extends Stage {
     private final Label frameLabel;
     private final MenuBar menuBar;
     private final AnimationTimer fpsTimer;
+    private final DebuggerView debuggerView;
     //使用队列模式在GameLoop和UILoop之间共享事件
     private final BlockingQueue<GameEventWrap> eventQueue;
 
@@ -59,22 +60,26 @@ public class GameWorld extends Stage {
         this.menuBar = new MenuBar();
         this.frameLabel = new Label();
         this.fpsTimer = this.createFPSTimer();
+        this.debuggerView = new DebuggerView();
         this.ctx = canvas.getGraphicsContext2D();
         this.eventQueue = new LinkedBlockingDeque<>();
 
         var view = new Menu(NES4J.localeValue("nes4j.view"));
+        var tool = new Menu(NES4J.localeValue("nes4j.tool"));
         var emulator = new Menu(NES4J.localeValue("nes4j.emulator"));
 
+        var debug = new MenuItem(NES4J.localeValue("nes4j.debug"));
         var softRest = new MenuItem(NES4J.localeValue("nes4j.reset"));
         var pausePlay = new MenuItem(NES4J.localeValue("nes4j.pplay"));
         var palette = new MenuItem(NES4J.localeValue("nes4j.palette"));
 
         palette.setOnAction(this::systemPalette);
 
+        tool.getItems().add(debug);
         view.getItems().addAll(palette);
         emulator.getItems().addAll(pausePlay, softRest);
 
-        menuBar.getMenus().addAll(emulator, view);
+        menuBar.getMenus().addAll(emulator, view, tool);
 
         var stackPane = new StackPane();
 
@@ -106,6 +111,8 @@ public class GameWorld extends Stage {
 
         this.execute(file);
         this.fpsTimer.start();
+
+        debug.setOnAction((event) -> this.debuggerView.show());
 
         this.getScene().addEventHandler(KeyEvent.ANY, event -> {
             var code = event.getCode();
@@ -158,6 +165,7 @@ public class GameWorld extends Stage {
             this.instance = NES.NESBuilder
                     .newBuilder()
                     .file(file)
+                    .debugger(this.debuggerView)
                     .gameLoopCallback(this::gameLoopCallback)
                     .build();
             this.instance.execute();
