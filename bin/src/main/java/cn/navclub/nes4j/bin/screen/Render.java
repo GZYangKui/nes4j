@@ -111,14 +111,30 @@ public class Render {
             var oam = ppu.getOam();
             var length = oam.length;
             for (int i = length - 4; i >= 0; i = i - 4) {
-                var idx = oam[i + 1] & 0xff;
-                var tx = oam[i + 3] & 0xff;
+                //Y position of top of sprite
                 var ty = oam[i] & 0xff;
+                //Tile index number
+                var idx = oam[i + 1] & 0xff;
+                //X position of left side of sprite.
+                var tx = oam[i + 3] & 0xff;
 
-                var vFlip = ((oam[i + 2] & 0xff) >> 7 & 1) == 1;
-                var hFlip = ((oam[i + 2] & 0xff) >> 6 & 1) == 1;
 
-                var pIdx = (oam[i + 2] & 0xff) & 0b11;
+                //
+                //76543210
+                //||||||||
+                //||||||++- Palette (4 to 7) of sprite
+                //|||+++--- Unimplemented (read 0)
+                //||+------ Priority (0: in front of background; 1: behind background)
+                //|+------- Flip sprite horizontally
+                //+-------- Flip sprite vertically
+                //
+                //
+                var attr = oam[i + 2] & 0xff;
+
+                var pIdx = attr & 0x03;
+                var vFlip = (attr >> 7 & 1) == 1;
+                var hFlip = (attr >> 6 & 1) == 1;
+                var front = (attr & 0x20) >> 5 == 1;
 
                 var sp = spritePalette(ppu, pIdx);
                 var bank = ppu.getControl().spritePattern();

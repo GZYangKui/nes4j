@@ -208,7 +208,28 @@ public class PPU implements Component {
             ramIndex -= 0x800;
         return ramIndex;
     }
-
+    //
+    //
+    // Sprite zero hits
+    // Sprites are conventionally numbered 0 to 63. Sprite 0 is the sprite controlled by OAM addresses $00-$03, sprite 1 is controlled by $04-$07, ..., and sprite 63 is controlled by $FC-$FF.
+    //
+    // While the PPU is drawing the picture, when an opaque pixel of sprite 0 overlaps an opaque pixel of the background, this is a sprite zero hit. The PPU detects this condition and sets bit 6 of PPUSTATUS ($2002) to 1 starting at this pixel, letting the CPU know how far along the PPU is in drawing the picture.
+    //
+    // Sprite 0 hit does not happen:
+    //
+    // If background or sprite rendering is disabled in PPUMASK ($2001)
+    // At x=0 to x=7 if the left-side clipping window is enabled (if bit 2 or bit 1 of PPUMASK is 0).
+    // At x=255, for an obscure reason related to the pixel pipeline.
+    // At any pixel where the background or sprite pixel is transparent (2-bit color index from the CHR pattern is %00).
+    // If sprite 0 hit has already occurred this frame. Bit 6 of PPUSTATUS ($2002) is cleared to 0 at dot 1 of the pre-render line. This means only the first sprite 0 hit in a frame can be detected.
+    // Sprite 0 hit happens regardless of the following:
+    //
+    // Sprite priority. Sprite 0 can still hit the background from behind.
+    // The pixel colors. Only the CHR pattern bits are relevant, not the actual rendered colors, and any CHR color index except %00 is considered opaque.
+    // The palette. The contents of the palette are irrelevant to sprite 0 hits. For example: a black ($0F) sprite pixel can hit a black ($0F) background as long as neither is the transparent color index %00.
+    // The PAL PPU blanking on the left and right edges at x=0, x=1, and x=254 (see Overscan).
+    //
+    //
     private boolean spriteHit() {
         var x = this.oam[3] & 0xff;
         var y = this.oam[0] & 0xff;
