@@ -111,14 +111,14 @@ public class Render {
             var oam = ppu.getOam();
             var length = oam.length;
             for (int i = length - 4; i >= 0; i = i - 4) {
-                var idx = Byte.toUnsignedInt(oam[i + 1]);
-                var tx = Byte.toUnsignedInt(oam[i + 3]);
-                var ty = Byte.toUnsignedInt(oam[i]);
+                var idx = oam[i + 1] & 0xff;
+                var tx = oam[i + 3] & 0xff;
+                var ty = oam[i] & 0xff;
 
-                var vFlip = ((Byte.toUnsignedInt(oam[i + 2])) >> 7 & 1) == 1;
-                var hFlip = ((Byte.toUnsignedInt(oam[i + 2])) >> 6 & 1) == 1;
+                var vFlip = ((oam[i + 2] & 0xff) >> 7 & 1) == 1;
+                var hFlip = ((oam[i + 2] & 0xff) >> 6 & 1) == 1;
 
-                var pIdx = (Byte.toUnsignedInt(oam[i + 2])) & 0b11;
+                var pIdx = (oam[i + 2] & 0xff) & 0b11;
 
                 var sp = spritePalette(ppu, pIdx);
                 var bank = ppu.getControl().spritePattern();
@@ -127,8 +127,8 @@ public class Render {
                 System.arraycopy(ppu.getCh(), bank + idx * 16, tile, 0, 16);
 
                 for (int y = 0; y < 8; y++) {
-                    var upper = Byte.toUnsignedInt(tile[y]);
-                    var lower = Byte.toUnsignedInt(tile[y + 8]);
+                    var upper = tile[y] & 0xff;
+                    var lower = tile[y + 8] & 0xff;
                     for (int x = 7; x >= 0; x--) {
                         var value = (1 & lower) << 1 | (1 & upper);
                         upper >>= 1;
