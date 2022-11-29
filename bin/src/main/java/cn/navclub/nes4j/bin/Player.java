@@ -1,5 +1,6 @@
 package cn.navclub.nes4j.bin;
 
+
 @FunctionalInterface
 public interface Player {
     /**
@@ -17,5 +18,14 @@ public interface Player {
      */
     default void stop() {
 
+    }
+
+    static Player newInstance(Class<? extends Player> clazz) {
+        try {
+            return clazz.getConstructor().newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

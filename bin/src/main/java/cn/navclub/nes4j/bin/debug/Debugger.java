@@ -11,7 +11,7 @@ public interface Debugger {
      *
      * @return 如果返回 {@code true} 则阻塞当前处理器,否则继续执行
      */
-    boolean hack(Bus bus);
+    boolean hack(NES context);
 
     /**
      *

@@ -1,5 +1,6 @@
 package cn.navclub.nes4j.app.control;
 
+import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.CPU;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
@@ -70,14 +71,14 @@ public class CPUControlPane extends Tab {
     }
 
 
-    public void update(CPU cpu, long cycles) {
-        this.cycles.setText(Long.toString(cycles));
-
+    public void update(NES context) {
+        var cpu = context.getCpu();
         this.pc.setText(Long.toHexString(cpu.getPc()));
         this.x.setText(Integer.toHexString(cpu.getRx()));
         this.y.setText(Integer.toHexString(cpu.getRy()));
         this.a.setText(Integer.toHexString(cpu.getRa()));
-        this.instructions.setText(Integer.toString(cpu.getCounter()));
+        this.cycles.setText(Long.toString(context.getCycles()));
+        this.instructions.setText(Long.toString(context.getInstructions()));
 
     }
 

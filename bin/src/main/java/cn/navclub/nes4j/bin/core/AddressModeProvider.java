@@ -11,6 +11,9 @@ import lombok.Setter;
 public class AddressModeProvider {
     private final Bus bus;
     private final CPU cpu;
+    @Getter
+    @Setter
+    private int cycles;
 
 
     public AddressModeProvider(CPU cpu, Bus bus) {
@@ -73,6 +76,6 @@ public class AddressModeProvider {
         if (!pageCross) {
             return;
         }
-        this.bus.tick(1);
+        this.cycles++;
     }
 }

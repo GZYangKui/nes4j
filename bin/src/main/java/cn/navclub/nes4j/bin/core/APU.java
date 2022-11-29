@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.Component;
+import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.Player;
 import cn.navclub.nes4j.bin.apu.FrameCounter;
 import cn.navclub.nes4j.bin.apu.impl.*;
@@ -16,11 +17,7 @@ public class APU implements Component {
     private static final float[] TND_TABLE;
     private static final float[] PULSE_TABLE;
 
-    private static final ServiceLoader<Player> SERVICE_LOADER;
-
     static {
-        SERVICE_LOADER = ServiceLoader.load(Player.class);
-
         TND_TABLE = new float[203];
         PULSE_TABLE = new float[31];
 
@@ -33,20 +30,22 @@ public class APU implements Component {
     }
 
     @Getter
-    private final Bus bus;
+    private final NES context;
     private final DMChannel dmc;
+    private final Player player;
     private final NoiseChannel noise;
     private final PulseChannel pulse;
     private final PulseChannel pulse1;
     private final TriangleChannel triangle;
     private final FrameCounter frameCounter;
 
-    public APU(Bus bus) {
-        this.bus = bus;
+    public APU(NES context) {
+        this.context = context;
         this.dmc = new DMChannel(this);
         this.noise = new NoiseChannel(this);
         this.triangle = new TriangleChannel(this);
         this.frameCounter = new FrameCounter(this);
+        this.player = Player.newInstance(context.getPlayer());
         this.pulse = new PulseChannel(this, PulseChannel.PulseIndex.PULSE_0);
         this.pulse1 = new PulseChannel(this, PulseChannel.PulseIndex.PULSE_1);
     }
@@ -180,10 +179,8 @@ public class APU implements Component {
 
         if ((this.cycle / 2) % 40 == 0) {
             var output = this.lookupSample();
-            var iterator = SERVICE_LOADER.iterator();
-            if (iterator.hasNext()) {
-                var player = iterator.next();
-                player.output(output);
+            if (this.player != null) {
+                this.player.output(output);
             }
         }
         // At any time, if the interrupt flag is set, the CPU's IRQ line is continuously asserted
@@ -231,13 +228,13 @@ public class APU implements Component {
     }
 
     public void fireIRQ() {
-        this.bus.interrupt(CPUInterrupt.IRQ);
+        this.context.interrupt(CPUInterrupt.IRQ);
     }
 
     @Override
     public void stop() {
-        for (Player player : SERVICE_LOADER) {
-            player.stop();
+        if (this.player != null) {
+            this.player.stop();
         }
     }
 }

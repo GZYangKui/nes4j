@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.Component;
+import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.impl.CTRegister;
 import cn.navclub.nes4j.bin.core.impl.MKRegister;
 import cn.navclub.nes4j.bin.enums.CPUInterrupt;
@@ -47,14 +48,14 @@ public class PPU implements Component {
     private NameMirror mirrors;
     @Getter
     private final PPUScroll scroll;
-    private final Bus bus;
+    private final NES context;
     private boolean nmi;
 
-    public PPU(final Bus bus, byte[] ch, NameMirror mirrors) {
-        this.bus = bus;
+    public PPU(final NES context, byte[] ch, NameMirror mirrors) {
         this.oamAddr = 0;
         this.scanLine = 0;
         this.readByteBuf = 0;
+        this.context = context;
         this.mirrors = mirrors;
         this.oam = new byte[256];
         this.vram = new byte[2048];
@@ -69,8 +70,8 @@ public class PPU implements Component {
         System.arraycopy(ch, 0, this.ch, 0, Math.min(this.ch.length, ch.length));
     }
 
-    public PPU(Bus bus, NameMirror mirrors) {
-        this(bus, new byte[2048], mirrors);
+    public PPU(NES context, NameMirror mirrors) {
+        this(context, new byte[2048], mirrors);
     }
 
     /**
@@ -249,6 +250,6 @@ public class PPU implements Component {
             return;
         }
         this.nmi = true;
-        this.bus.interrupt(CPUInterrupt.NMI);
+        this.context.interrupt(CPUInterrupt.NMI);
     }
 }

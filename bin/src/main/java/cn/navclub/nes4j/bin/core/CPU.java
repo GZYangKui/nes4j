@@ -35,8 +35,6 @@ public class CPU {
     @Getter
     //栈指针寄存器,始终指向栈顶
     private int sp;
-    //指令计数器
-    private int counter;
     private final Bus bus;
     //cpu状态
     private final SRegister status;
@@ -363,31 +361,20 @@ public class CPU {
         this.pc = this.bus.readInt(interrupt.getVector());
     }
 
-    public void next() {
-        this.counter++;
+    public int next() {
+        this.modeProvider.setCycles(0);
         var openCode = this.bus.read(this.pc);
         var state = (++this.pc);
 
         if (openCode == 0x00) {
             this.interrupt(CPUInterrupt.BRK);
-            return;
+            return 0;
         }
 
         var instruction6502 = CPUInstruction.getInstance(openCode);
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 
-//        log.info("({}){}(0x{}) {} ra:{} rx:{} ry:{} sp:{} status:{}",
-//                state - 1,
-//                instruction,
-//                Integer.toHexString(Byte.toUnsignedInt(openCode)),
-//                formatInstruction(instruction6502),
-//                this.ra,
-//                this.rx,
-//                this.ry,
-//                this.sp,
-//                this.status
-//        );
 
         if (instruction == CPUInstruction.JMP) {
             this.pc = this.modeProvider.getAbsAddr(mode);
@@ -670,12 +657,12 @@ public class CPU {
             this.bus.writeUSByte(addr, data);
         }
 
-        this.bus.tick(instruction6502.getCycle());
-
         //根据是否发生重定向来判断是否需要更改程序计数器的值
         if (this.pc == state) {
             this.pc += (instruction6502.getBytes() - 1);
         }
+
+        return instruction6502.getCycle() + this.modeProvider.getCycles();
     }
 
     /**

@@ -2,6 +2,7 @@ package cn.navclub.nes4j.app.view;
 
 import cn.navclub.nes4j.app.FXResource;
 import cn.navclub.nes4j.app.NES4J;
+import cn.navclub.nes4j.app.audio.NativePlayer;
 import cn.navclub.nes4j.app.dialog.DPalette;
 import cn.navclub.nes4j.app.event.GameEventWrap;
 import cn.navclub.nes4j.app.model.KeyMapper;
@@ -169,6 +170,7 @@ public class GameWorld extends Stage {
                 this.instance = NES.NESBuilder
                         .newBuilder()
                         .file(file)
+                        .player(NativePlayer.class)
                         .debugger(this.debuggerView)
                         .gameLoopCallback(this::gameLoopCallback)
                         .build();

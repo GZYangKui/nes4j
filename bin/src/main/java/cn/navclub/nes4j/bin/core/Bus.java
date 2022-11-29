@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.Component;
+import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.enums.NMapper;
 import cn.navclub.nes4j.bin.function.TCallback;
@@ -18,10 +19,7 @@ public class Bus implements Component {
     private static final int RPG_ROM_END = 0xFFFF;
     private static final int RAM_MIRROR_END = 0x1fff;
     private static final int RPG_UNIT = 16 * 1024;
-    @Getter
-    private final APU apu;
-    @Getter
-    private final PPU ppu;
+    private final NES context;
     private final byte[] ram;
     //Dynamic change rpg rom
     private final byte[] rpgrom;
@@ -29,37 +27,34 @@ public class Bus implements Component {
     private final JoyPad joyPad;
     //Player2
     private final JoyPad joyPad1;
-    //Cartridge info
-    private final Cartridge cartridge;
-    @Getter
-    private final TCallback<PPU, JoyPad, JoyPad> gameLoopCallback;
-    //CPU延迟时钟
-    @Getter
-    private int stall;
     @Getter
     protected CPU cpu;
     @Getter
     //CPU clock cycle counter
     private long cycles;
-    private CPUInterrupt interrupt;
+    private final PPU ppu;
+    private final APU apu;
+    private final Cartridge cartridge;
 
+    public Bus(NES context, JoyPad joyPad, JoyPad joyPad1) {
+        this.context = context;
 
-    public Bus(Cartridge cartridge, TCallback<PPU, JoyPad, JoyPad> gameLoopCallback) {
+        this.joyPad = joyPad;
+        this.joyPad1 = joyPad1;
+
         this.ram = new byte[2048];
-        this.joyPad = new JoyPad();
-        this.cartridge = cartridge;
-        this.joyPad1 = new JoyPad();
-        this.apu = new APU(this);
+
+
+        this.apu = context.getApu();
+        this.ppu = context.getPpu();
+
         this.rpgrom = new byte[RPG_UNIT * 2];
 
-        this.ppu = new PPU(this, cartridge.getChrom(), cartridge.getMirrors());
-
+        this.cartridge = context.getCartridge();
         if (cartridge.getMapper() == NMapper.NROM) {
             System.arraycopy(this.cartridge.getRgbrom(), 0, this.rpgrom, 0, RPG_UNIT);
         }
         System.arraycopy(this.cartridge.getRgbrom(), ((this.cartridge.getRgbSize() / RPG_UNIT) - 1) * RPG_UNIT, rpgrom, RPG_UNIT, RPG_UNIT);
-
-        this.gameLoopCallback = gameLoopCallback;
     }
 
     /**
@@ -252,52 +247,6 @@ public class Bus implements Component {
         var lsb = this.read(address);
         var msb = this.read(address + 1);
         return (lsb & 0xff) | ((msb & 0xff) << 8);
-    }
-
-
-    @Override
-    public void tick(int cycle) {
-        if (this.stall > 0) {
-            this.stall--;
-        }
-        this.cycles += cycle;
-        for (int i = 0; i < cycle; i++) {
-            this.ppu.tick();
-            this.apu.tick();
-        }
-    }
-
-    /**
-     *
-     * {@link APU} AND {@link  PPU} trigger IRQ AND NMI interrupt.
-     *
-     * @param interrupt interrupt type
-     */
-    public void interrupt(CPUInterrupt interrupt) {
-        if (interrupt == CPUInterrupt.NMI && this.gameLoopCallback != null) {
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            this.gameLoopCallback.accept(this.ppu, this.joyPad, this.joyPad1);
-        }
-        if (this.interrupt == CPUInterrupt.NMI) {
-            return;
-        }
-        this.interrupt = interrupt;
-    }
-
-    public CPUInterrupt getInterrupt() {
-        var temp = interrupt;
-        if (temp != null) {
-            this.interrupt = null;
-        }
-        return temp;
-    }
-
-    public void setStall(int stall) {
-        this.stall += stall;
     }
 
     @Override

@@ -103,11 +103,11 @@ public class DebuggerView extends Stage implements Debugger {
     }
 
     @Override
-    public boolean hack(Bus bus) {
+    public boolean hack(NES context) {
         if (!this.isShowing()) {
             return false;
         }
-        var cpu = bus.getCpu();
+        var cpu = context.getCpu();
         var programCounter = cpu.getPc();
         var debug = this.debuggers.containsKey(programCounter);
         debug = debug || this.stepInto;
@@ -119,7 +119,7 @@ public class DebuggerView extends Stage implements Debugger {
                     this.listView.scrollTo(index);
                     //Select debug line
                     this.listView.getSelectionModel().select(index);
-                    this.controlPane.update(cpu, bus.getCycles());
+                    this.controlPane.update(context);
                 });
             }
         }

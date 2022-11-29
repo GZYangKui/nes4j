@@ -14,6 +14,8 @@ module cn.navclub.nes4j.app {
     requires com.fasterxml.jackson.core;
     requires com.fasterxml.jackson.databind;
 
+    exports cn.navclub.nes4j.app.audio to cn.navclub.nes4j.bin;
+
     opens cn.navclub.nes4j.app;
     opens cn.navclub.nes4j.app.view;
 
@@ -21,5 +23,4 @@ module cn.navclub.nes4j.app {
     opens cn.navclub.nes4j.app.model to javafx.base, com.fasterxml.jackson.databind;
 
     uses cn.navclub.nes4j.bin.Player;
-    provides cn.navclub.nes4j.bin.Player with cn.navclub.nes4j.app.audio.NativePlayer;
 }

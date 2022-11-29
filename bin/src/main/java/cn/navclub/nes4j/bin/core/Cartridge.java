@@ -179,6 +179,8 @@ public class Cartridge {
         var flag6 = headers[6] & 0xff;
         var flag7 = headers[7] & 0xff;
         var flag8 = headers[8] & 0xff;
+
+
         this.mirrors = NameMirror.values()[flag6 & 1];
 
         var mapper = (flag7 & 0b1111_0000) | ((flag6 & 0b1111_0000) >> 4);
