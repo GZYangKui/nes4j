@@ -18,9 +18,6 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 @Getter
 public class NES {
-    static {
-        System.loadLibrary("nes4j");
-    }
 
     private final Bus bus;
     private final CPU cpu;
