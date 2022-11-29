@@ -18,9 +18,9 @@ JNIEXPORT void JNICALL Java_cn_navclub_nes4j_app_audio_NativePlayer_stop
 /*
  * Class:     cn_navclub_nes4j_app_audio_NativePlayer
  * Method:    play
- * Signature: ([F)V
+ * Signature: ([F)J
  */
-JNIEXPORT void JNICALL Java_cn_navclub_nes4j_app_audio_NativePlayer_play
+JNIEXPORT jlong JNICALL Java_cn_navclub_nes4j_app_audio_NativePlayer_play
   (JNIEnv *, jobject, jfloatArray);
 
 /*

@@ -6,7 +6,7 @@
 #include "alsa/asoundlib.h"
 #include "include/memory.h"
 
-static void Nes4j_apu_play_linux(SoundHardware *hardware, const float *sample, usize length);
+static usize Nes4j_apu_play_linux(SoundHardware *hardware, const float *sample, usize length);
 
 #endif
 
@@ -52,10 +52,12 @@ extern bool Nes4j_init_hardware(SoundHardware *config, SoundHardware **dst) {
     return True;
 }
 
-extern void Nes4j_apu_play(SoundHardware *hardware, const float *sample, usize length) {
+extern usize Nes4j_apu_play(SoundHardware *hardware, const float *sample, usize length) {
+    usize size = 0;
 #ifdef __linux__
-    Nes4j_apu_play_linux(hardware, sample, length);
+    size = Nes4j_apu_play_linux(hardware, sample, length);
 #endif
+    return size;
 }
 
 extern void Nes4j_apu_stop(SoundHardware *hardware) {
@@ -89,19 +91,21 @@ extern void Nes4j_apu_stop(SoundHardware *hardware) {
 }
 
 
-static void Nes4j_apu_play_linux(SoundHardware *hardware, const float *sample, usize length) {
+static usize Nes4j_apu_play_linux(SoundHardware *hardware, const float *sample, usize length) {
     snd_pcm_sframes_t frames;
     snd_pcm_t *t = hardware->context;
+    snd_pcm_sframes_t left = snd_pcm_avail(t);
+    if (left <= 0) {
+        return 0;
+    }
     frames = snd_pcm_writei(t, sample, length);
     if (frames < 0)
         frames = snd_pcm_recover(t, frames, 0);
     if (frames < 0) {
-        printf("snd_pcm_writei failed：%s\n", snd_strerror(frames));
-        return;
+        fprintf(stderr, "snd_pcm_writei failed：%s\n", snd_strerror(frames));
+        return 0;
     }
-    if (frames > 0 && frames < length) {
-        printf("Short write (expected %li, wrote %li)\n", length, frames);
-    }
+    return frames;
 }
 
 

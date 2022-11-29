@@ -6,6 +6,7 @@ import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.enums.NameMirror;
 import cn.navclub.nes4j.bin.function.TCallback;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -32,6 +33,8 @@ public class NES {
 
     //CPU延迟时钟
     private int stall;
+    @Setter
+    private int speed;
     private long cycles;
     @Getter
     private long instructions;
@@ -47,7 +50,7 @@ public class NES {
         } else {
             this.cartridge = new Cartridge(builder.file);
         }
-
+        this.speed = 3;
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
@@ -74,13 +77,10 @@ public class NES {
         this.cpu.reset();
         while (!stop) {
             final int cycles;
-            if (this.stall > 0)
-            {
+            if (this.stall > 0) {
                 this.stall--;
                 cycles = 1;
-            }
-            else
-            {
+            } else {
                 //fire ppu or apu interrupt
                 this.cpu.interrupt(this.getInterrupt());
                 var programCounter = this.cpu.getPc();
@@ -120,7 +120,7 @@ public class NES {
     public void interrupt(CPUInterrupt interrupt) {
         if (interrupt == CPUInterrupt.NMI && this.gameLoopCallback != null) {
             try {
-                Thread.sleep(5);
+                Thread.sleep(this.speed);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

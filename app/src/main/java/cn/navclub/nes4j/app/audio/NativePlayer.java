@@ -29,8 +29,9 @@ public class NativePlayer implements Player {
      * 调用Native模块播放音频样本
      *
      * @param samples 音频样本
+     * @return 返回播放样本数量
      */
-    private native void play(float[] samples);
+    private native long play(float[] samples);
 
     /**
      * 配置音频输出

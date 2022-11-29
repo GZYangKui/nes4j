@@ -6,22 +6,23 @@
 
 static SoundHardware *Nes4j_hardware_instance(JNIEnv *, jobject);
 
-JNIEXPORT void JNICALL
+JNIEXPORT jlong JNICALL
 Java_cn_navclub_nes4j_app_audio_NativePlayer_play(JNIEnv *env, jobject this, jfloatArray array) {
     SoundHardware *hardware = Nes4j_hardware_instance(env, this);
     if (hardware == NULL) {
         fprintf(stderr, "Call before Please init SoundHardware.\n");
-        return;
+        return 0;
     }
     jint length = (*env)->GetArrayLength(env, array);
     jboolean copy = JNI_FALSE;
     jfloat *temp = (*env)->GetFloatArrayElements(env, array, &copy);
     if (!temp) {
         fprintf(stderr, "Get double array elements is NULL it was gc recovery?\n");
-        return;
+        return 0;
     }
-    Nes4j_apu_play(hardware, temp, length);
+    jlong size = Nes4j_apu_play(hardware, temp, length);
     (*env)->ReleaseFloatArrayElements(env, array, temp, JNI_ABORT);
+    return size;
 }
 
 JNIEXPORT void JNICALL Java_cn_navclub_nes4j_app_audio_NativePlayer_stop(JNIEnv *env, jobject this) {

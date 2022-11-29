@@ -23,7 +23,7 @@ extern bool Nes4j_init_hardware(SoundHardware *, SoundHardware **);
  * 播放音频
  *
  */
-extern void Nes4j_apu_play(SoundHardware *hardware, const float *sample, usize length);
+extern usize Nes4j_apu_play(SoundHardware *hardware, const float *sample, usize length);
 
 /**
  *

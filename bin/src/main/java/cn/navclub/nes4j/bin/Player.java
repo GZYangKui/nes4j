@@ -1,7 +1,6 @@
 package cn.navclub.nes4j.bin;
 
 
-@FunctionalInterface
 public interface Player {
     /**
      *

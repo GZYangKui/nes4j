@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Sound hardware init fail.");
         return 0;
     }
-    int i = 0;
+    usize i = 0;
     float buffer[1];
     usize length = sizeof(buffer) / sizeof(int);
     while (i < 16 * 1024) {
