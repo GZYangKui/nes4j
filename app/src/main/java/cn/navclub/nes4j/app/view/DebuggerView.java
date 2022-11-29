@@ -27,23 +27,39 @@ import java.util.Map;
 
 public class DebuggerView extends Stage implements Debugger {
     private final ListView<BreakLine> listView;
-    private final Map<Integer, Integer> breaks;
+    private final Map<Integer, Integer> map;
+    private final Map<Integer, Void> debuggers;
     private final CPUControlPane controlPane;
     private NES instance;
+    private boolean stepInto;
 
     public DebuggerView(final Window owner) {
-        var run = new Button();
+
         var topBox = new HBox();
         var tabPane = new TabPane();
-        this.breaks = new HashMap<>();
+        this.map = new HashMap<>();
+        this.debuggers = new HashMap<>();
         this.listView = new ListView<>();
         var borderPane = new BorderPane();
         this.controlPane = new CPUControlPane();
 
+        var run = new Button();
+        var rrun = new Button();
+        var stepOut = new Button();
+        var stepInto = new Button();
+
+        rrun.setTooltip(new Tooltip("re-run"));
+        stepOut.setTooltip(new Tooltip("step out"));
+        stepInto.setTooltip(new Tooltip("step into"));
         run.setTooltip(new Tooltip(NES4J.localeValue("nes4j.run")));
+
         run.setGraphic(new ImageView(FXResource.loadImage("run.png")));
+        rrun.setGraphic(new ImageView(FXResource.loadImage("rrun.png")));
+        stepOut.setGraphic(new ImageView(FXResource.loadImage("stepout.png")));
+        stepInto.setGraphic(new ImageView(FXResource.loadImage("stepinto.png")));
+
         topBox.getStyleClass().add("top-box");
-        topBox.getChildren().add(run);
+        topBox.getChildren().addAll(run, stepInto, stepOut, rrun);
 
         tabPane.getTabs().add(this.controlPane);
 
@@ -51,12 +67,23 @@ public class DebuggerView extends Stage implements Debugger {
         borderPane.setCenter(tabPane);
         borderPane.setLeft(this.listView);
 
-        run.setOnAction(event -> {
+
+        stepOut.setOnAction(event -> {
             if (this.instance == null) {
                 return;
             }
             this.instance.release();
         });
+
+        run.setOnAction(event -> {
+            if (this.instance == null) {
+                return;
+            }
+            this.stepInto = false;
+            this.instance.release();
+        });
+
+        stepInto.setOnAction((event) -> this.stepInto = true);
 
         var scene = new Scene(borderPane);
 
@@ -82,23 +109,35 @@ public class DebuggerView extends Stage implements Debugger {
         }
         var cpu = bus.getCpu();
         var programCounter = cpu.getPc();
-        var index = this.breaks.get(programCounter);
-        if (index != null) {
-            Platform.runLater(() -> {
-                //Select debug line
-                this.listView.getSelectionModel().select(index);
-                this.controlPane.update(cpu, bus.getCycles());
-            });
+        var debug = this.debuggers.containsKey(programCounter);
+        debug = debug || this.stepInto;
+        if (debug) {
+            var index = this.map.get(programCounter);
+            if (index != null) {
+                Platform.runLater(() -> {
+                    //scroll debug line
+                    this.listView.scrollTo(index);
+                    //Select debug line
+                    this.listView.getSelectionModel().select(index);
+                    this.controlPane.update(cpu, bus.getCycles());
+                });
+            }
         }
-        return index != null;
+        return debug;
     }
 
     @Override
-    public void buffer(byte[] buffer, int offset) {
+    public void buffer(byte[] buffer) {
+        if (this.map.size() != 0)
+            this.map.clear();
+
+        var index = 0;
         var openCodes = OpenCodeFormat.formatOpenCode(buffer);
         var list = new ArrayList<BreakLine>();
         for (OpenCode openCode : openCodes) {
+            this.map.put(openCode.index(), index);
             list.add(new BreakLine(this, openCode));
+            index++;
         }
         Platform.runLater(() -> this.listView.getItems().addAll(list));
     }
@@ -106,9 +145,9 @@ public class DebuggerView extends Stage implements Debugger {
     public void point(BreakLine line) {
         var index = line.getIndex();
         if (line.isDrag()) {
-            this.breaks.remove(index);
+            this.debuggers.remove(index);
         } else {
-            breaks.put(index, this.listView.getItems().indexOf(line));
+            debuggers.put(index, null);
         }
     }
 

@@ -44,7 +44,7 @@ public class NES {
 
         if (this.debugger != null) {
             this.debugger.inject(this);
-            CompletableFuture.runAsync(() -> this.debugger.buffer(cartridge.getRgbrom(), 0));
+            CompletableFuture.runAsync(() -> this.debugger.buffer(cartridge.getRgbrom()));
         }
     }
 

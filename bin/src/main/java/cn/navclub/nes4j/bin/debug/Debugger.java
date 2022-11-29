@@ -17,10 +17,9 @@ public interface Debugger {
      *
      * 当rpg-rom发生改变时调用该函数
      *
-     * @param buffer 改变后的rpg-rom数据
-     * @param offset 偏移量
+     * @param buffer rpg数据
      */
-    void buffer(byte[] buffer, int offset);
+    void buffer(byte[] buffer);
 
     /**
      *
