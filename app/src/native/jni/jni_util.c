@@ -12,7 +12,7 @@ extern void Nes4j_jni_runtime_exception(JNIEnv *env, String msg) {
 }
 
 extern void Nes4j_jni_throw_exception(JNIEnv *env, String class, String msg) {
-    jclass clazz = (*env)->FindClass(env, (const char *) clazz);
+    jclass clazz = (*env)->FindClass(env, (const char *) class);
     jint code = (*env)->ThrowNew(env, clazz, msg);
     if (code != 0) {
         fprintf(stderr, "JNI Throw exception fail errcode:%d\n", code);
