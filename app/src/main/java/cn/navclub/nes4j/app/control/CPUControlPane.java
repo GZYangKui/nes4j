@@ -1,7 +1,6 @@
 package cn.navclub.nes4j.app.control;
 
 import cn.navclub.nes4j.bin.NES;
-import cn.navclub.nes4j.bin.core.CPU;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;

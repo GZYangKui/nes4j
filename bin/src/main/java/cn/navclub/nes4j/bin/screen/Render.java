@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.screen;
 
 import cn.navclub.nes4j.bin.core.PPU;
+import cn.navclub.nes4j.bin.core.impl.CTRegister;
 import cn.navclub.nes4j.bin.enums.MaskFlag;
 import cn.navclub.nes4j.bin.enums.NameMirror;
 import lombok.Getter;
@@ -137,9 +138,17 @@ public class Render {
                 var front = (attr & 0x20) >> 5 == 1;
 
                 var sp = spritePalette(ppu, pIdx);
-                var bank = ppu.getControl().spritePattern();
+
 
                 var tile = new byte[16];
+                var ctrl = ppu.getControl();
+                final int bank;
+
+                if (ctrl.spriteSize() == 0x08)
+                    bank = ctrl.spritePattern8();
+                else
+                    bank = ctrl.spritePattern16(idx);
+
                 System.arraycopy(ppu.getCh(), bank + idx * 16, tile, 0, 16);
 
                 for (int y = 0; y < 8; y++) {

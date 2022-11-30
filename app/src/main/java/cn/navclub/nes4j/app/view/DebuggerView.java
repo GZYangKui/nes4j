@@ -4,8 +4,8 @@ import cn.navclub.nes4j.app.FXResource;
 import cn.navclub.nes4j.app.NES4J;
 import cn.navclub.nes4j.app.control.BreakLine;
 import cn.navclub.nes4j.app.control.CPUControlPane;
+import cn.navclub.nes4j.app.control.PPUControlPane;
 import cn.navclub.nes4j.bin.NES;
-import cn.navclub.nes4j.bin.core.Bus;
 import cn.navclub.nes4j.bin.debug.Debugger;
 import cn.navclub.nes4j.bin.debug.OpenCode;
 import cn.navclub.nes4j.bin.debug.OpenCodeFormat;
@@ -30,6 +30,7 @@ public class DebuggerView extends Stage implements Debugger {
     private final Map<Integer, Integer> map;
     private final Map<Integer, Void> debuggers;
     private final CPUControlPane controlPane;
+    private final PPUControlPane ppuControlPane;
     private NES instance;
     private boolean stepInto;
 
@@ -42,6 +43,7 @@ public class DebuggerView extends Stage implements Debugger {
         this.listView = new ListView<>();
         var borderPane = new BorderPane();
         this.controlPane = new CPUControlPane();
+        this.ppuControlPane = new PPUControlPane();
 
         var run = new Button();
         var rrun = new Button();
@@ -61,7 +63,7 @@ public class DebuggerView extends Stage implements Debugger {
         topBox.getStyleClass().add("top-box");
         topBox.getChildren().addAll(run, stepInto, stepOut, rrun);
 
-        tabPane.getTabs().add(this.controlPane);
+        tabPane.getTabs().addAll(this.controlPane, this.ppuControlPane);
 
         borderPane.setTop(topBox);
         borderPane.setCenter(tabPane);
@@ -120,6 +122,7 @@ public class DebuggerView extends Stage implements Debugger {
                     //Select debug line
                     this.listView.getSelectionModel().select(index);
                     this.controlPane.update(context);
+                    this.ppuControlPane.update(context);
                 });
             }
         }

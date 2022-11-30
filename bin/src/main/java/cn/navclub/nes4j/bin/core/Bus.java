@@ -30,8 +30,6 @@ public class Bus implements Component {
     @Getter
     protected CPU cpu;
     @Getter
-    //CPU clock cycle counter
-    private long cycles;
     private final PPU ppu;
     private final APU apu;
     private final Cartridge cartridge;

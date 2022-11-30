@@ -30,6 +30,7 @@ public class PPU implements Component {
     private final SRegister status;
     @Getter
     private final CTRegister control;
+    @Getter
     private final PPUAddress addr;
     //Save sprite info total 64 each 4 byte.
     @Getter
@@ -37,8 +38,9 @@ public class PPU implements Component {
     @Getter
     //https://www.nesdev.org/wiki/PPU_palettes
     private final byte[] paletteTable;
-
+    @Getter
     private int oamAddr;
+    @Getter
     private int scanLine;
     private byte readByteBuf;
     private long cycles;
@@ -208,6 +210,7 @@ public class PPU implements Component {
             ramIndex -= 0x800;
         return ramIndex;
     }
+
     //
     //
     // Sprite zero hits

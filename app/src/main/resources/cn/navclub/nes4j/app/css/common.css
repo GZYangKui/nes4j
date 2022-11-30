@@ -6,7 +6,6 @@
 /*设置全局字体和大小*/
 * {
     -fx-font-family: 'Gen Jyuu Gothic';
-    -fx-font-size: 1em;
 }
 
 ScrollPane, .list-view {

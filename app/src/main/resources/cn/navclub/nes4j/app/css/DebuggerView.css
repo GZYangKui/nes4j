@@ -3,7 +3,7 @@
 GridPane {
     -fx-vgap: 1em;
     -fx-hgap: 1em;
-    -fx-alignment: CENTER;
+    -fx-alignment: TOP-CENTER;
     -fx-padding: .5em;
 }
 

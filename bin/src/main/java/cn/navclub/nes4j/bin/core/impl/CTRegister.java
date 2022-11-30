@@ -50,8 +50,18 @@ public class CTRegister extends SRegister {
         return this.contain(PControl.VRAM_INCREMENT) ? 32 : 1;
     }
 
-    public int spritePattern() {
+    public int spritePattern8() {
         return this.contain(PControl.SPRITE_PATTERN_ADDR) ? 0x1000 : 0x000;
+    }
+
+    public int spritePattern16(int index) {
+        //
+        //
+        // 8x16 sprites use different pattern tables based on their index number. If the index number is
+        // even the sprite data is in the first pattern table at $0000, otherwise it is in the second pattern
+        // table at $1000.
+        //
+        return index % 2 == 0 ? 0x0000 : 0x1000;
     }
 
     public int bkNamePatternTable() {
@@ -59,7 +69,7 @@ public class CTRegister extends SRegister {
     }
 
     public int spriteSize() {
-        return this.contain(PControl.SPRITE_SIZE) ? 0x0F : 0x08;
+        return this.contain(PControl.SPRITE_SIZE) ? 0x10 : 0x08;
     }
 
     public int masterSlave() {
