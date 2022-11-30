@@ -1,7 +1,6 @@
 package cn.navclub.nes4j.bin.debug;
 
 import cn.navclub.nes4j.bin.NES;
-import cn.navclub.nes4j.bin.core.Bus;
 import cn.navclub.nes4j.bin.core.CPU;
 
 public interface Debugger {

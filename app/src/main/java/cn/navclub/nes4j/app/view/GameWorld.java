@@ -189,7 +189,7 @@ public class GameWorld extends Stage {
             var dialog = new ExceptionDialog(t);
             dialog.setHeaderText(NES4J.localeValue("nes4j.game.error"));
             dialog.showAndWait();
-            this.close();
+//            this.close();
         }
         this.fpsTimer.stop();
     }

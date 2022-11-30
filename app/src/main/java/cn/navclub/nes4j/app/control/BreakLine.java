@@ -2,6 +2,8 @@ package cn.navclub.nes4j.app.control;
 
 import cn.navclub.nes4j.app.view.DebuggerView;
 import cn.navclub.nes4j.bin.debug.OpenCode;
+import cn.navclub.nes4j.bin.enums.AddressMode;
+import cn.navclub.nes4j.bin.util.ByteUtil;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -9,7 +11,27 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import lombok.Getter;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static cn.navclub.nes4j.bin.util.ByteUtil.toHexStr;
+
 public class BreakLine extends HBox {
+    private final static Map<Integer, String> ALIAS = new HashMap<>();
+
+    static {
+        ALIAS.put(0x2000, "PPU_CTR");
+        ALIAS.put(0x2001, "PPU_MASK");
+        ALIAS.put(0x2002, "PPU_STATUS");
+        ALIAS.put(0x2003, "PPU_OAM_ADDR");
+        ALIAS.put(0x2005, "PPU_SCROLL");
+        ALIAS.put(0x4014, "OAM_DMA");
+        ALIAS.put(0x4017, "JOY2_FRAME");
+        ALIAS.put(0x4010, "DMC_RREQ");
+        ALIAS.put(0x2006, "PPU_ADDRESS");
+        ALIAS.put(0x2007, "PPU_DATA");
+    }
+
     public static final String DEFAULT_STYLE_CLASS = "break-line";
     @Getter
     private boolean drag;
@@ -50,7 +72,29 @@ public class BreakLine extends HBox {
 
     public BreakLine(DebuggerView view, OpenCode openCode) {
         this(view, openCode.index());
-        this.operator.setText(openCode.operator());
+        var operand = openCode.operand();
+        var mode = operand.mode();
+        var lsb = operand.lsb();
+        var msb = operand.msb();
+        var value = (lsb & 0xff | (msb & 0xff) << 8);
+        System.out.println(value);
+        final String text;
+        if (!ALIAS.containsKey(value)) {
+            var hexStr = "$%s%s".formatted(toHexStr(msb), toHexStr(lsb));
+            text = switch (mode) {
+                case Accumulator -> "A";
+                case Absolute -> hexStr;
+                case Absolute_X, Absolute_Y -> "%s,%s".formatted(hexStr, mode == AddressMode.Absolute_X ? "x" : "y");
+                case Immediate -> "$%s".formatted(toHexStr(lsb));
+                case Indirect -> "(%s)".formatted(hexStr);
+                case ZeroPage_X -> "($%s,x)".formatted(toHexStr(lsb));
+                case Indirect_Y -> "($%s),y".formatted(toHexStr(lsb));
+                default -> "";
+            };
+        } else {
+            text = ALIAS.get(value);
+        }
+        this.operator.setText(text);
         this.instruct.setText(openCode.instruction().name());
         this.address.setText(String.format(":%s:", Integer.toHexString(openCode.index())));
     }

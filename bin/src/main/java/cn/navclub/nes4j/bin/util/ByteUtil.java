@@ -30,6 +30,14 @@ public class ByteUtil {
         return arr[0] | arr[1] << 8 | arr[2] << 16 | arr[3] << 24;
     }
 
+    public static String toHexStr(byte b) {
+        var hex = Integer.toHexString(b & 0xff);
+        if (hex.length() == 1) {
+            hex = String.format("0%s", hex);
+        }
+        return hex;
+    }
+
     /**
      * 将反码还原为原码
      */

@@ -50,7 +50,7 @@ public class NES {
         } else {
             this.cartridge = new Cartridge(builder.file);
         }
-        this.speed = 3;
+        this.speed = 5;
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;

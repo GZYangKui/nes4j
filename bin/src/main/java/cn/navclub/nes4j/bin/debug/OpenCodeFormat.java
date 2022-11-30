@@ -1,9 +1,12 @@
 package cn.navclub.nes4j.bin.debug;
 
+import cn.navclub.nes4j.bin.enums.AddressMode;
 import cn.navclub.nes4j.bin.enums.CPUInstruction;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -12,6 +15,7 @@ import java.util.List;
  *
  */
 public class OpenCodeFormat {
+
     public static List<OpenCode> formatOpenCode(byte[] buffer) {
         var list = new ArrayList<OpenCode>();
         for (int i = 0; i < buffer.length; ) {
@@ -20,11 +24,13 @@ public class OpenCodeFormat {
                 i += 1;
                 var instance = CPUInstruction.getInstance(b);
                 var mode = instance.getAddressMode();
+
                 var operator = switch (mode) {
-                    case Accumulator -> "register a";
-                    case Immediate -> String.format("#$%s", toHexStr(buffer[i]));
-                    case Absolute -> String.format("$%s,$%s", toHexStr(buffer[i]), toHexStr(buffer[i + 1]));
-                    default -> "";
+                    case Immediate -> new Operand(AddressMode.Immediate, buffer[i], (byte) 0);
+                    case Accumulator -> new Operand(AddressMode.Accumulator, (byte) 0, (byte) 0);
+                    case Absolute, Absolute_X, Absolute_Y, Indirect -> new Operand(mode, buffer[i], buffer[i + 1]);
+                    case ZeroPage, ZeroPage_X, ZeroPage_Y, Indirect_Y, Indirect_X -> new Operand(mode, buffer[i], (byte) 0);
+                    default -> Operand.DEFAULT_OPERAND;
                 };
 
                 list.add(new OpenCode(0x8000 + i - 1, instance.getInstruction(), operator));
@@ -34,13 +40,5 @@ public class OpenCodeFormat {
             }
         }
         return list;
-    }
-
-    private static String toHexStr(byte b) {
-        var hex = Integer.toHexString(b & 0xff);
-        if (hex.length() == 1) {
-            hex = String.format("0%s", hex);
-        }
-        return hex;
     }
 }
