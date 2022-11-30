@@ -1,9 +1,24 @@
 .root {
     -nes4j-background-color: #fff;
+    -nes4j-list-cell-select-color: #1f68d0;
 }
 
+/*设置全局字体和大小*/
+* {
+    -fx-font-family: 'Gen Jyuu Gothic';
+    -fx-font-size: 1em;
+}
 
-ScrollPane, ListView {
+ScrollPane, .list-view {
     -fx-background-insets: 0;
     -fx-padding: 0;
 }
+
+.list-view .list-cell {
+    -fx-background-color: -nes4j-background-color;
+}
+
+.list-view .list-cell:selected {
+    -fx-background-color: -nes4j-list-cell-select-color;
+}
+

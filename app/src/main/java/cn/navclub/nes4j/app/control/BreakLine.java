@@ -77,7 +77,6 @@ public class BreakLine extends HBox {
         var lsb = operand.lsb();
         var msb = operand.msb();
         var value = (lsb & 0xff | (msb & 0xff) << 8);
-        System.out.println(value);
         final String text;
         if (!ALIAS.containsKey(value)) {
             var hexStr = "$%s%s".formatted(toHexStr(msb), toHexStr(lsb));
