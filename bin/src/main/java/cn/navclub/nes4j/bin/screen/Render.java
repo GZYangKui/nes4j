@@ -135,52 +135,62 @@ public class Render {
                 var pIdx = attr & 0x03;
                 var vFlip = (attr >> 7 & 1) == 1;
                 var hFlip = (attr >> 6 & 1) == 1;
-                var front = (attr & 0x20) >> 5 == 1;
 
                 var sp = spritePalette(ppu, pIdx);
 
 
-                var tile = new byte[16];
                 var ctrl = ppu.getControl();
-                final int bank;
+                var size = ctrl.spriteSize();
+                var tile = new byte[size + 8];
 
-                if (ctrl.spriteSize() == 0x08)
-                    bank = ctrl.spritePattern8();
-                else
-                    bank = ctrl.spritePattern16(idx);
+                var bank = size == 0x08 ? ctrl.spritePattern8() : ctrl.spritePattern16(idx);
 
-                System.arraycopy(ppu.getCh(), bank + idx * 16, tile, 0, 16);
+                if (size == 0x10) {
+                    idx = idx & 0xfe;
+                }
 
-                for (int y = 0; y < 8; y++) {
-                    var upper = tile[y] & 0xff;
-                    var lower = tile[y + 8] & 0xff;
-                    for (int x = 7; x >= 0; x--) {
-                        var value = (1 & lower) << 1 | (1 & upper);
-                        upper >>= 1;
-                        lower >>= 1;
-                        var rgb = switch (value) {
-                            case 1 -> sysPalette[sp[1]];
-                            case 2 -> sysPalette[sp[2]];
-                            case 3 -> sysPalette[sp[3]];
-                            default -> new int[0];
-                        };
-                        if (rgb.length == 0) {
-                            continue;
-                        }
 
-                        if (!hFlip && !vFlip) {
-                            frame.updatePixel(tx + x, ty + y, rgb);
-                        }
-                        if (hFlip && !vFlip) {
-                            frame.updatePixel(tx + 7 - x, ty + y, rgb);
-                        }
-                        if (!hFlip && vFlip) {
-                            frame.updatePixel(tx + x, ty + 7 - y, rgb);
-                        }
-                        if (hFlip && vFlip) {
-                            frame.updatePixel(tx + 7 - x, ty + 7 - y, rgb);
+                for (int k = 8; k <= size; k += 8) {
+                        System.arraycopy(ppu.getCh(), bank + idx * 16, tile, 0, 16);
+                    for (int y = 0; y < 8; y++) {
+                        var left = tile[y % 8] & 0xff;
+                        var right = tile[y + 8] & 0xff;
+                        //
+                        // The character is constructed pixel by pixel by taking one bit from the top left and
+                        // one from the top right to make a 2-bit colour. The other two bits of the colour are taken from
+                        // the attribute tables. The colours shown are not genuine NES colour palette values.
+                        //
+                        for (int x = 7; x >= 0; x--) {
+                            var value = (((1 & right) << 1) | (1 & left));
+                            left >>= 1;
+                            right >>= 1;
+                            var rgb = switch (value) {
+                                case 1 -> sysPalette[sp[1]];
+                                case 2 -> sysPalette[sp[2]];
+                                case 3 -> sysPalette[sp[3]];
+                                default -> new int[0];
+                            };
+
+                            if (rgb.length == 0) {
+                                continue;
+                            }
+
+                            if (!hFlip && !vFlip) {
+                                frame.updatePixel(tx + x, ty + y, rgb);
+                            }
+                            if (hFlip && !vFlip) {
+                                frame.updatePixel(tx + 7 - x, ty + y, rgb);
+                            }
+                            if (!hFlip && vFlip) {
+                                frame.updatePixel(tx + x, ty + 7 - y, rgb);
+                            }
+                            if (hFlip && vFlip) {
+                                frame.updatePixel(tx + 7 - x, ty + 7 - y, rgb);
+                            }
                         }
                     }
+                    ty += 8;
+                    idx += 1;
                 }
             }
         }

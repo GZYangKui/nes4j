@@ -61,7 +61,7 @@ public class CTRegister extends SRegister {
         // even the sprite data is in the first pattern table at $0000, otherwise it is in the second pattern
         // table at $1000.
         //
-        return index % 2 == 0 ? 0x0000 : 0x1000;
+        return (index & 0x01) == 0 ? 0x0000 : 0x1000;
     }
 
     public int bkNamePatternTable() {
@@ -70,10 +70,6 @@ public class CTRegister extends SRegister {
 
     public int spriteSize() {
         return this.contain(PControl.SPRITE_SIZE) ? 0x10 : 0x08;
-    }
-
-    public int masterSlave() {
-        return this.contain(PControl.MASTER_SLAVE) ? 1 : 0;
     }
 
     public boolean generateVBlankNMI() {
