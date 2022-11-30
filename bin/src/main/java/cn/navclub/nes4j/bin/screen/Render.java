@@ -98,7 +98,10 @@ public class Render {
 
             //Render first screen background
             renderNameTable(ppu, frame, firstNameTable, new Camera(scrollX, scrollY, 256, 240), -scrollX, -scrollY);
-
+            //
+            //  This does not apply to games which allow
+            // simultaneous horizontal and vertical scrolling.
+            //
             if (scrollX > 0) {
                 renderNameTable(ppu,
                         frame, secondNameTable, new Camera(0, 0, scrollX, 240), 256 - scrollX, 0);
@@ -149,9 +152,11 @@ public class Render {
                     idx = idx & 0xfe;
                 }
 
-
+                //
+                // Forum discuss about sprite size in 8*16 <a href="https://forums.nesdev.org/viewtopic.php?t=6194">detail</a>.
+                //
                 for (int k = 8; k <= size; k += 8) {
-                        System.arraycopy(ppu.getCh(), bank + idx * 16, tile, 0, 16);
+                    System.arraycopy(ppu.getCh(), bank + idx * 16, tile, 0, 16);
                     for (int y = 0; y < 8; y++) {
                         var left = tile[y % 8] & 0xff;
                         var right = tile[y + 8] & 0xff;
