@@ -84,6 +84,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.10.1</version>
                     <configuration>
+                        <encoding>UTF-8</encoding>
                         <annotationProcessorPaths>
                             <path>
                                 <groupId>org.projectlombok</groupId>
