@@ -1,8 +1,8 @@
 package cn.navclub.nes4j.app.dialog;
 
-import cn.navclub.nes4j.app.FXResource;
+import cn.navclub.nes4j.app.assets.FXResource;
 
-import cn.navclub.nes4j.app.NES4J;
+import cn.navclub.nes4j.app.Nes4j;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -50,7 +50,7 @@ public class DPalette extends Dialog<ButtonType> {
         this.getDialogPane().getStylesheets().add(STYLE_SHEET);
         this.getDialogPane().getButtonTypes().addAll(ButtonType.APPLY, ButtonType.CANCEL);
 
-        this.setTitle(NES4J.localeValue("nes4j.palette", true));
+        this.setTitle(Nes4j.localeValue("nes4j.palette", true));
     }
 
     private void initPalette() {

@@ -1,11 +1,11 @@
 package cn.navclub.nes4j.app;
 
+import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.config.NESConfig;
 import cn.navclub.nes4j.app.control.NesGameItem;
 import cn.navclub.nes4j.app.dialog.DHandle;
 import cn.navclub.nes4j.app.util.JsonUtil;
 import cn.navclub.nes4j.app.util.StrUtil;
-import cn.navclub.nes4j.bin.Player;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.ListView;
@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.ResourceBundle;
 
 @Slf4j
-public class NES4J extends Application {
+public class Nes4j extends Application {
     public static final ResourceBundle RESOURCE_BUNDLE;
     private static final String DEFAULT_CONFIG_PATH = "config/config.json";
 
@@ -33,7 +33,7 @@ public class NES4J extends Application {
     static {
         System.loadLibrary("nes4j");
         System.setProperty("java.util.PropertyResourceBundle.encoding", "UTF-8");
-        RESOURCE_BUNDLE = ResourceBundle.getBundle("cn.navclub.nes4j.app.language.nes4j");
+        RESOURCE_BUNDLE = ResourceBundle.getBundle("cn.navclub.nes4j.app.assets.language.nes4j");
     }
 
     private ListView<NesGameItem> listView;

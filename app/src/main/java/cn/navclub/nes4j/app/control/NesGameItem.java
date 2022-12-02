@@ -1,9 +1,8 @@
 package cn.navclub.nes4j.app.control;
 
-import cn.navclub.nes4j.app.FXResource;
+import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.util.StrUtil;
 import cn.navclub.nes4j.app.view.GameWorld;
-import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;

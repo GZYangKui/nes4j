@@ -4,6 +4,7 @@ import cn.navclub.nes4j.bin.core.PPU;
 import cn.navclub.nes4j.bin.core.impl.CTRegister;
 import cn.navclub.nes4j.bin.enums.MaskFlag;
 import cn.navclub.nes4j.bin.enums.NameMirror;
+import cn.navclub.nes4j.bin.util.PPUUtil;
 import lombok.Getter;
 
 public class Render {
@@ -71,11 +72,6 @@ public class Render {
         var background = mask.contain(MaskFlag.SHOW_BACKGROUND);
         //Render background
         if (background) {
-            var vram = ppu.getVram();
-            var mirror = ppu.getMirrors();
-
-            var ctr = ppu.getControl();
-            var nameTable = ctr.nameTableAddr();
 
             var scrollX = ppu.getScroll().getX();
             var scrollY = ppu.getScroll().getY();
@@ -83,17 +79,8 @@ public class Render {
             var firstNameTable = new byte[0x400];
             var secondNameTable = new byte[0x400];
 
-            if ((mirror == NameMirror.VERTICAL && (nameTable == 0x2000 || nameTable == 0x2800))
-                    || (mirror == NameMirror.HORIZONTAL && (nameTable == 0x2000 || nameTable == 0x2400))) {
-                System.arraycopy(vram, 0, firstNameTable, 0, 0x400);
-                System.arraycopy(vram, 0x400, secondNameTable, 0, 0x400);
-            } else if ((mirror == NameMirror.VERTICAL && (nameTable == 0x2400 || nameTable == 0x2c00))
-                    || (mirror == NameMirror.HORIZONTAL && (nameTable == 0x2800 || nameTable == 0x2c00))) {
-                System.arraycopy(vram, 0x400, firstNameTable, 0, 0x400);
-                System.arraycopy(vram, 0, secondNameTable, 0, 0x400);
-            } else {
-                throw new RuntimeException("Not support mirror type:" + mirror);
-            }
+            //Fill fist and second name table
+            PPUUtil.fillNameTable(ppu, firstNameTable, secondNameTable);
 
 
             //Render first screen background
@@ -144,7 +131,7 @@ public class Render {
 
                 var ctrl = ppu.getControl();
                 var size = ctrl.spriteSize();
-                var tile = new byte[size + 8];
+                var tile = new byte[16];
 
                 var bank = size == 0x08 ? ctrl.spritePattern8() : ctrl.spritePattern16(idx);
 
@@ -218,22 +205,23 @@ public class Render {
 
         var bank = ppu.getControl().bkNamePatternTable();
 
-        //渲染背景960个tile
+        var tile = new byte[16];
+
+        //渲染背景32*30=960个tile
         for (int i = 0; i < 0x3c0; i++) {
             var row = i / 32;
             var column = i % 32;
             var idx = nameTable[i] & 0xff;
-            var tile = new byte[16];
             var offset = bank + idx * 16;
             System.arraycopy(ppu.getCh(), offset, tile, 0, 16);
             var palette = bgPalette(ppu, attrTable, column, row);
             for (int y = 0; y < 8; y++) {
-                var upper = Byte.toUnsignedInt(tile[y]);
-                var lower = Byte.toUnsignedInt(tile[y + 8]);
+                var left = tile[y] & 0xff;
+                var right = tile[y + 8] & 0xff;
                 for (int x = 7; x >= 0; x--) {
-                    var value = ((1 & lower) << 1) | (1 & upper);
-                    upper >>= 1;
-                    lower >>= 1;
+                    var value = ((1 & right) << 1) | (1 & left);
+                    left >>= 1;
+                    right >>= 1;
                     var rgb = switch (value) {
                         case 0 -> sysPalette[ppu.getPaletteTable()[0]];
                         case 1 -> sysPalette[palette[1]];
@@ -246,7 +234,7 @@ public class Render {
                     var py = row * 8 + y;
                     var px = column * 8 + x;
 
-                    //判断是否显示范围
+                    //判断是否相机显示范围
                     if (px >= camera.x0() && px < camera.x1() && py >= camera.y0() && py < camera.y1()) {
                         frame.updatePixel(sx + px, sy + py, rgb);
                     }
@@ -254,4 +242,6 @@ public class Render {
             }
         }
     }
+
+
 }

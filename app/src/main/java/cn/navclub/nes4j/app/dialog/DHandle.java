@@ -1,7 +1,7 @@
 package cn.navclub.nes4j.app.dialog;
 
-import cn.navclub.nes4j.app.FXResource;
-import cn.navclub.nes4j.app.NES4J;
+import cn.navclub.nes4j.app.assets.FXResource;
+import cn.navclub.nes4j.app.Nes4j;
 import cn.navclub.nes4j.app.model.KeyMapper;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -114,7 +114,7 @@ public class DHandle extends Dialog<KeyMapper[]> {
 
         this.initTableView();
 
-        this.setTitle(NES4J.localeValue("nes4j.handle", true));
+        this.setTitle(Nes4j.localeValue("nes4j.handle", true));
     }
 
     private void initTableView() {

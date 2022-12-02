@@ -1,4 +1,4 @@
-package cn.navclub.nes4j.app;
+package cn.navclub.nes4j.app.assets;
 
 import javafx.scene.image.Image;
 

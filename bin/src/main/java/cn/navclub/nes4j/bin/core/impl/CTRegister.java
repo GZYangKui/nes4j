@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.core.impl;
 
 import cn.navclub.nes4j.bin.core.SRegister;
+import cn.navclub.nes4j.bin.enums.NameTMirror;
 import cn.navclub.nes4j.bin.enums.PControl;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,14 +37,8 @@ public class CTRegister extends SRegister {
     /**
      * Get current name table address
      */
-    public int nameTableAddr() {
-        return switch (this.bits & 0x03) {
-            case 0 -> 0x2000;
-            case 1 -> 0x2400;
-            case 2 -> 0x2800;
-            case 3 -> 0x2c00;
-            default -> 0;
-        };
+    public NameTMirror nameTableAddr() {
+        return NameTMirror.values()[this.bits & 0x03];
     }
 
     public int VRamIncrement() {

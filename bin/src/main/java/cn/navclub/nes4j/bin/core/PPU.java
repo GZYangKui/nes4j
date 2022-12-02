@@ -8,12 +8,11 @@ import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.enums.MaskFlag;
 import cn.navclub.nes4j.bin.enums.NameMirror;
 import cn.navclub.nes4j.bin.enums.PStatus;
+import cn.navclub.nes4j.bin.screen.Render;
 import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.security.PublicKey;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * <a href="https://www.nesdev.org/wiki/PPU_programmer_reference">PPU document</a>
@@ -108,6 +107,7 @@ public class PPU implements Component {
         if (this.scanLine >= 262) {
             this.nmi = false;
             this.scanLine = 0;
+            //Sprite 0 notify cpu VBL already end.
             this.status.clear(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT);
         }
     }
@@ -191,6 +191,7 @@ public class PPU implements Component {
 
     public byte readStatus() {
         var b = this.status.getBits();
+        //Due to every read ppu status clear VBL so can't judge VBL whether end need use sprite zero
         this.status.clear(PStatus.V_BLANK_OCCUR);
         this.addr.reset();
         this.scroll.reset();

@@ -1,7 +1,7 @@
 package cn.navclub.nes4j.app.view;
 
-import cn.navclub.nes4j.app.FXResource;
-import cn.navclub.nes4j.app.NES4J;
+import cn.navclub.nes4j.app.assets.FXResource;
+import cn.navclub.nes4j.app.Nes4j;
 import cn.navclub.nes4j.app.audio.NativePlayer;
 import cn.navclub.nes4j.app.dialog.DPalette;
 import cn.navclub.nes4j.app.event.GameEventWrap;
@@ -33,7 +33,6 @@ import org.controlsfx.dialog.ExceptionDialog;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class GameWorld extends Stage {
@@ -65,14 +64,14 @@ public class GameWorld extends Stage {
         this.eventQueue = new LinkedBlockingDeque<>();
         this.debuggerView = new DebuggerView(this);
 
-        var view = new Menu(NES4J.localeValue("nes4j.view"));
-        var tool = new Menu(NES4J.localeValue("nes4j.tool"));
-        var emulator = new Menu(NES4J.localeValue("nes4j.emulator"));
+        var view = new Menu(Nes4j.localeValue("nes4j.view"));
+        var tool = new Menu(Nes4j.localeValue("nes4j.tool"));
+        var emulator = new Menu(Nes4j.localeValue("nes4j.emulator"));
 
-        var debug = new MenuItem(NES4J.localeValue("nes4j.debug"));
-        var softRest = new MenuItem(NES4J.localeValue("nes4j.reset"));
-        var pausePlay = new MenuItem(NES4J.localeValue("nes4j.pplay"));
-        var palette = new MenuItem(NES4J.localeValue("nes4j.palette"));
+        var debug = new MenuItem(Nes4j.localeValue("nes4j.debug"));
+        var softRest = new MenuItem(Nes4j.localeValue("nes4j.reset"));
+        var pausePlay = new MenuItem(Nes4j.localeValue("nes4j.pplay"));
+        var palette = new MenuItem(Nes4j.localeValue("nes4j.palette"));
 
         palette.setOnAction(this::systemPalette);
 
@@ -124,7 +123,7 @@ public class GameWorld extends Stage {
             if (!(eventType == KeyEvent.KEY_PRESSED || eventType == KeyEvent.KEY_RELEASED)) {
                 return;
             }
-            for (KeyMapper keyMapper : NES4J.config.getMapper()) {
+            for (KeyMapper keyMapper : Nes4j.config.getMapper()) {
                 if (keyMapper.getKeyCode() == code) {
                     try {
                         this.eventQueue.put(new GameEventWrap(eventType, keyMapper.getButton()));
@@ -187,7 +186,7 @@ public class GameWorld extends Stage {
         }
         if (t != null) {
             var dialog = new ExceptionDialog(t);
-            dialog.setHeaderText(NES4J.localeValue("nes4j.game.error"));
+            dialog.setHeaderText(Nes4j.localeValue("nes4j.game.error"));
             dialog.showAndWait();
 //            this.close();
         }

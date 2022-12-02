@@ -21,6 +21,7 @@ module cn.navclub.nes4j.app {
 
     opens cn.navclub.nes4j.app.config to com.fasterxml.jackson.databind;
     opens cn.navclub.nes4j.app.model to javafx.base, com.fasterxml.jackson.databind;
+    opens cn.navclub.nes4j.app.assets;
 
     uses cn.navclub.nes4j.bin.Player;
 }

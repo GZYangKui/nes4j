@@ -4,6 +4,7 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.enums.NESFormat;
 import cn.navclub.nes4j.bin.enums.NMapper;
 import cn.navclub.nes4j.bin.enums.NameMirror;
+import cn.navclub.nes4j.bin.enums.NameTMirror;
 import cn.navclub.nes4j.bin.util.ByteUtil;
 import cn.navclub.nes4j.bin.util.IOUtil;
 
@@ -180,10 +181,7 @@ public class Cartridge {
         var flag7 = headers[7] & 0xff;
         var flag8 = headers[8] & 0xff;
 
-
-        this.mirrors = NameMirror.values()[flag6 & 1];
-
-        var mapper = (flag7 & 0b1111_0000) | ((flag6 & 0b1111_0000) >> 4);
+        var mapper = (flag7 & 0xf0) | ((flag6 & 0xf0) >> 4);
 
         //NES2.0包含12位
         if (this.format == NESFormat.NES_20) {
@@ -195,6 +193,20 @@ public class Cartridge {
         } else {
             this.mapper = NMapper.values()[mapper];
         }
+
+        NameMirror mirrors;
+        if (((flag6 >> 3) & 0x01) == 1) {
+            mirrors = NameMirror.FOUR_SCREEN;
+        } else {
+            mirrors = NameMirror.values()[flag6 & 1];
+        }
+
+        //UNROM 512 uses %....1..0 to indicate a 1-screen board, and %....1..1 to indicate a 4-screen board.
+        if (this.mapper == NMapper.UX_ROM && mirrors == NameMirror.FOUR_SCREEN && (flag6 & 0x01) == 0) {
+            mirrors = NameMirror.SINGLE_SCREEN;
+        }
+
+        this.mirrors = mirrors;
 
         var trainSize = this.trainAreaSize(flag6);
 
