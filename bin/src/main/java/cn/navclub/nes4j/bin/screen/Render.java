@@ -85,10 +85,8 @@ public class Render {
 
             //Render first screen background
             renderNameTable(ppu, frame, firstNameTable, new Camera(scrollX, scrollY, 256, 240), -scrollX, -scrollY);
-            //
-            //  This does not apply to games which allow
-            // simultaneous horizontal and vertical scrolling.
-            //
+
+            //  This does not apply to games which allow simultaneous horizontal and vertical scrolling.
             if (scrollX > 0) {
                 renderNameTable(ppu,
                         frame, secondNameTable, new Camera(0, 0, scrollX, 240), 256 - scrollX, 0);
@@ -97,6 +95,7 @@ public class Render {
                         frame, secondNameTable, new Camera(0, 0, 256, scrollY), 0, 240 - scrollY);
             }
         }
+
         //Render sprite
         if (sprite) {
             var oam = ppu.getOam();
