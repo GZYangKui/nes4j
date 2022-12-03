@@ -41,13 +41,13 @@ public class CPU {
     private final Bus bus;
     //cpu状态
     private final SRegister status;
-    private final AddressModeProvider modeProvider;
+    private final ADDRMProvider modeProvider;
 
     public CPU(final Bus bus) {
         this.bus = bus;
         this.bus.cpu = this;
         this.status = new SRegister();
-        this.modeProvider = new AddressModeProvider(this, this.bus);
+        this.modeProvider = new ADDRMProvider(this, this.bus);
     }
 
 

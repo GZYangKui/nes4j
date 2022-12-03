@@ -1,7 +1,6 @@
 package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.enums.AddressMode;
-import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,7 +9,7 @@ import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
 /**
  * <a href="http://www.emulator101.com/6502-addressing-modes.html">6502 address mode</a>
  */
-public class AddressModeProvider {
+public class ADDRMProvider {
     private final Bus bus;
     private final CPU cpu;
     @Getter
@@ -18,7 +17,7 @@ public class AddressModeProvider {
     private int cycles;
 
 
-    public AddressModeProvider(CPU cpu, Bus bus) {
+    public ADDRMProvider(CPU cpu, Bus bus) {
         this.cpu = cpu;
         this.bus = bus;
     }
