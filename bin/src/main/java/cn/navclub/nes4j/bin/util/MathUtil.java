@@ -44,11 +44,11 @@ public class MathUtil {
         return new Mathematics(l > 0, value, ((b ^ value) & (value ^ a) & 0x80) != 0);
     }
 
-    public static int unsignedAdd(int a, int b) {
+    public static int u8add(int a, int b) {
         return (a + b) & 0xff;
     }
 
-    public static int unsignedSub(int a, int b) {
+    public static int u8sbc(int a, int b) {
         return (a - b) & 0xff;
     }
 

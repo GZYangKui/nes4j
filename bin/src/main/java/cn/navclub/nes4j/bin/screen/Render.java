@@ -1,11 +1,11 @@
 package cn.navclub.nes4j.bin.screen;
 
 import cn.navclub.nes4j.bin.core.PPU;
-import cn.navclub.nes4j.bin.core.impl.CTRegister;
 import cn.navclub.nes4j.bin.enums.MaskFlag;
-import cn.navclub.nes4j.bin.enums.NameMirror;
 import cn.navclub.nes4j.bin.util.PPUUtil;
 import lombok.Getter;
+
+import static cn.navclub.nes4j.bin.util.PPUUtil.bgPalette;
 
 public class Render {
     private static final int[][] DEF_SYS_PALETTE;
@@ -35,36 +35,6 @@ public class Render {
         this.sysPalette = DEF_SYS_PALETTE;
     }
 
-    /**
-     * <a href="https://www.nesdev.org/wiki/PPU_attribute_tables">PPU attribute tables</a>
-     */
-
-    public byte[] bgPalette(PPU ppu, byte[] atrTable, int column, int row) {
-        var idx = 0;
-        var test = 3;
-        var a = column % 4 / 2;
-        var b = row % 4 / 2;
-        var attrByte = atrTable[row / 4 * 8 + column / 4] & 0xff;
-        if (a == 0 && b == 0)
-            idx = attrByte & test;
-        else if (a == 1 && b == 0)
-            idx = attrByte >> 2 & test;
-        else if (a == 0 && b == 1)
-            idx = attrByte >> 4 & test;
-        else if (a == 1 && b == 1)
-            idx = attrByte >> 6 & test;
-        else
-            throw new RuntimeException("Unknown background palette.");
-
-        var offset = 1 + idx * 4;
-
-        return new byte[]{
-                ppu.getPaletteTable()[0],
-                ppu.getPaletteTable()[offset],
-                ppu.getPaletteTable()[offset + 1],
-                ppu.getPaletteTable()[offset + 2]
-        };
-    }
 
     public void render(PPU ppu, Frame frame) {
         var mask = ppu.getMask();
@@ -83,10 +53,10 @@ public class Render {
             PPUUtil.fillNameTable(ppu, firstNameTable, secondNameTable);
 
 
-            //Render first screen background
+            //Render visible area left/top portion
             renderNameTable(ppu, frame, firstNameTable, new Camera(scrollX, scrollY, 256, 240), -scrollX, -scrollY);
 
-            //  This does not apply to games which allow simultaneous horizontal and vertical scrolling.
+            //Render visible area right/bottom portion
             if (scrollX > 0) {
                 renderNameTable(ppu,
                         frame, secondNameTable, new Camera(0, 0, scrollX, 240), 256 - scrollX, 0);
@@ -94,6 +64,7 @@ public class Render {
                 renderNameTable(ppu,
                         frame, secondNameTable, new Camera(0, 0, 256, scrollY), 0, 240 - scrollY);
             }
+
         }
 
         //Render sprite
@@ -222,7 +193,7 @@ public class Render {
                     left >>= 1;
                     right >>= 1;
                     var rgb = switch (value) {
-                        case 0 -> sysPalette[ppu.getPaletteTable()[0]];
+                        case 0 -> sysPalette[palette[0]];
                         case 1 -> sysPalette[palette[1]];
                         case 2 -> sysPalette[palette[2]];
                         case 3 -> sysPalette[palette[3]];

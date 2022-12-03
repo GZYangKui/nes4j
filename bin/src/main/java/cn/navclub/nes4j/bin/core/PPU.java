@@ -8,10 +8,12 @@ import cn.navclub.nes4j.bin.enums.CPUInterrupt;
 import cn.navclub.nes4j.bin.enums.MaskFlag;
 import cn.navclub.nes4j.bin.enums.NameMirror;
 import cn.navclub.nes4j.bin.enums.PStatus;
-import cn.navclub.nes4j.bin.screen.Render;
 import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Getter;
 import lombok.Setter;
+
+import static cn.navclub.nes4j.bin.util.ByteUtil.uint16;
+import static cn.navclub.nes4j.bin.util.ByteUtil.uint8;
 
 
 /**
@@ -50,6 +52,15 @@ public class PPU implements Component {
     @Getter
     private final PPUScroll scroll;
     private final NES context;
+    //Current VRAM address (15 bits)
+    private int v;
+    //Temporary VRAM address (15 bits); can also be thought of as the address of the top left onscreen tile.
+    private int t;
+    //First or second write toggle (1 bit)
+    private byte w;
+    //Fine X scroll (3 bits)
+    private byte x;
+
     private boolean nmi;
 
     public PPU(final NES context, byte[] ch, NameMirror mirrors) {
@@ -82,6 +93,7 @@ public class PPU implements Component {
     public void tick() {
         this.cycles += 3;
 
+
         //判断是否发生水平消隐(从当前行右侧回到下一行左侧)
         if (this.cycles < 341) {
             return;
@@ -112,34 +124,57 @@ public class PPU implements Component {
         }
     }
 
-    public void writeOam(byte[] arr) {
+    public void DMAWrite(byte[] arr) {
         for (byte b : arr) {
             this.oam[this.oamAddr] = b;
-            this.oamAddr = MathUtil.unsignedAdd(this.oamAddr, 1);
+            this.oamAddr = MathUtil.u8add(this.oamAddr, 1);
         }
     }
 
-    public void writeOamByte(byte b) {
+    public void OAMWrite(byte b) {
         this.oam[this.oamAddr] = b;
-        this.oamAddr = MathUtil.unsignedAdd(this.oamAddr, 1);
+        this.oamAddr = MathUtil.u8sbc(this.oamAddr, 1);
     }
 
     public byte readOam() {
         return this.oam[this.oamAddr];
     }
 
-    public void writeOamAddr(byte b) {
+    public void OAMAddrWrite(byte b) {
         this.oamAddr = (b & 0xff);
     }
 
-    public void writeAddr(byte b) {
+    public void AddrWrite(byte b) {
         this.addr.update(b);
+        if (this.w == 0) {
+            this.w = 1;
+            // t: .CDEFGH ........ <- d: ..CDEFGH
+            //        <unused>     <- d: AB......
+            // t: Z...... ........ <- 0 (bit Z is cleared)
+            // w:                  <- 1
+            this.t = uint16(this.t & 0x80ff | (uint8(b) & 0x3f) << 8);
+        } else {
+            //
+            // t: ....... ABCDEFGH <- d: ABCDEFGH
+            // v: <...all bits...> <- t: <...all bits...>
+            // w:                  <- 0
+            //
+            this.w = 0;
+            this.t = uint16(this.t & 0xff00 | uint8(b));
+            this.v = this.t;
+        }
     }
 
     @Override
     public byte read(int address) {
         var addr = this.addr.get();
         this.inc();
+
+        //
+        // After each write to $2007, the address is incremented by either 1 or 32 as dictated by
+        // bit 2 of $2000. The first read from $2007 is invalid and the data will actually be buffered and
+        // returned on the next read. This does not apply to colour palettes.
+        //
         var temp = this.readByteBuf;
 
         if (addr >= 0 && addr <= 0x1fff) {
@@ -195,6 +230,9 @@ public class PPU implements Component {
         this.status.clear(PStatus.V_BLANK_OCCUR);
         this.addr.reset();
         this.scroll.reset();
+
+        //w:                  <- 0
+        this.w = 0;
         return b;
     }
 
@@ -246,6 +284,7 @@ public class PPU implements Component {
     }
 
     private void inc() {
+        this.v += this.control.VRamIncrement();
         this.addr.inc(this.control.VRamIncrement());
     }
 
@@ -255,13 +294,28 @@ public class PPU implements Component {
         if (!temp && this.control.generateVBlankNMI() && this.status.contain(PStatus.V_BLANK_OCCUR)) {
             this.fireNMI();
         }
+
+        //t: ...GH.. ........ <- d: ......GH
+        this.t = uint16(this.t & 0xf3ff | (uint8(b) & 0x03) << 10);
     }
 
-    public void writeScroll(byte b) {
-        this.scroll.write(Byte.toUnsignedInt(b));
+    public void ScrollWrite(byte b) {
+        this.scroll.write(uint8(b));
+        if (this.w == 0) {
+            this.w = 1;
+            //t: ........ ..ABCDE <- d: ABCDE...
+            this.t = uint16(this.t & 0xffe0 | uint8(b) >> 3);
+            //x:              FGH <- d: .....FGH
+            this.x = (byte) (b & 0x07);
+        } else {
+            this.w = 0;
+            //t: FGH..AB CDE..... <- d: ABCDEFGH
+            this.t = uint16(this.t & 0x8fff | (((b & 0xff) & 0x07) << 12));
+            this.t = uint16(this.t & 0xfc1f | (((b & 0xff) & 0xf8) << 2));
+        }
     }
 
-    public void writeMask(byte b) {
+    public void MaskWrite(byte b) {
         this.mask.setBits(b);
     }
 

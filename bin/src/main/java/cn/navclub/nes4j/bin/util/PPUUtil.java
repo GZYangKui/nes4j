@@ -70,6 +70,91 @@ public class PPUUtil {
         }
     }
 
+    /**
+     *
+     *
+     * <p>
+     *     The attribute table is a 64-byte array at the end of each nametable that controls which palette is assigned to each part of the background.
+     * Each attribute table, starting at $23C0, $27C0, $2BC0, or $2FC0, is arranged as an 8x8 byte array:
+     * </p>
+     *
+     *<pre>
+     *        2xx0    2xx1    2xx2    2xx3    2xx4    2xx5    2xx6    2xx7
+     *      ,-------+-------+-------+-------+-------+-------+-------+-------.
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     * 2xC0:| - + - | - + - | - + - | - + - | - + - | - + - | - + - | - + - |
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     *      +-------+-------+-------+-------+-------+-------+-------+-------+
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     * 2xC8:| - + - | - + - | - + - | - + - | - + - | - + - | - + - | - + - |
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     *      +-------+-------+-------+-------+-------+-------+-------+-------+
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     * 2xD0:| - + - | - + - | - + - | - + - | - + - | - + - | - + - | - + - |
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     *      +-------+-------+-------+-------+-------+-------+-------+-------+
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     * 2xD8:| - + - | - + - | - + - | - + - | - + - | - + - | - + - | - + - |
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     *      +-------+-------+-------+-------+-------+-------+-------+-------+
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     * 2xE0:| - + - | - + - | - + - | - + - | - + - | - + - | - + - | - + - |
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     *      +-------+-------+-------+-------+-------+-------+-------+-------+
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     * 2xE8:| - + - | - + - | - + - | - + - | - + - | - + - | - + - | - + - |
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     *      +-------+-------+-------+-------+-------+-------+-------+-------+
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     * 2xF0:| - + - | - + - | - + - | - + - | - + - | - + - | - + - | - + - |
+     *      |   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     *      +-------+-------+-------+-------+-------+-------+-------+-------+
+     * 2xF8:|   .   |   .   |   .   |   .   |   .   |   .   |   .   |   .   |
+     *      `-------+-------+-------+-------+-------+-------+-------+-------'
+     *</pre>
+     *
+     * <p>
+     *  Each byte controls the palette of a 32×32 pixel or 4×4 tile part of the nametable and is divided
+     *into four 2-bit areas. Each area covers 16×16 pixels or 2×2 tiles, the size of a [?] block in Super Mario Bros.
+     *Given palette numbers topleft, topright, bottomleft, bottomright, each in the range 0 to 3, the value of the byte is
+     * </p>
+     *
+     * <b>
+     *     value = (bottomright << 6) | (bottomleft << 4) | (topright << 2) | (topleft << 0)
+     * </b>
+     *
+     * <p>
+     *     <a href="https://www.nesdev.org/wiki/PPU_attribute_tables">More detail for nametable render</a>
+     * </p>
+     *
+     * @return A byte array contain one backdrop color and four three-color subpalettes.
+     */
+    public static byte[] bgPalette(PPU ppu, byte[] atrTable, int column, int row) {
+        var idx = 0;
+        var test = 3;
+        var a = column % 4 / 2;
+        var b = row % 4 / 2;
+        var attrByte = atrTable[row / 4 * 8 + column / 4] & 0xff;
+        if (a == 0 && b == 0)
+            idx = attrByte & test;
+        else if (a == 1 && b == 0)
+            idx = attrByte >> 2 & test;
+        else if (a == 0 && b == 1)
+            idx = attrByte >> 4 & test;
+        else if (a == 1 && b == 1)
+            idx = attrByte >> 6 & test;
+
+        var offset = 1 + idx * 4;
+
+        return new byte[]{
+                ppu.getPaletteTable()[0],
+                ppu.getPaletteTable()[offset],
+                ppu.getPaletteTable()[offset + 1],
+                ppu.getPaletteTable()[offset + 2]
+        };
+    }
+
+
     //
     //
     // Sprite zero hits

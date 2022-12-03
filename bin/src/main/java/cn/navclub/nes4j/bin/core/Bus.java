@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static cn.navclub.nes4j.bin.util.ByteUtil.uint8;
+
 
 @Slf4j
 public class Bus implements Component {
@@ -147,7 +149,7 @@ public class Bus implements Component {
 
         //https://www.nesdev.org/wiki/PPU_programmer_reference#Mask_($2001)_%3E_write
         else if (address == 0x2001) {
-            this.ppu.writeMask(b);
+            this.ppu.MaskWrite(b);
         }
         //https://www.nesdev.org/wiki/PPU_programmer_reference#Status_($2002)_%3C_read
         else if (address == 0x2002) {
@@ -156,22 +158,22 @@ public class Bus implements Component {
 
         //https://www.nesdev.org/wiki/PPU_programmer_reference#OAM_address_($2003)_%3E_write
         else if (address == 0x2003) {
-            this.ppu.writeOamAddr(b);
+            this.ppu.OAMAddrWrite(b);
         }
 
         //https://www.nesdev.org/wiki/PPU_programmer_reference#OAM_data_($2004)_%3C%3E_read/write
         else if (address == 0x2004) {
-            this.ppu.writeOamByte(b);
+            this.ppu.OAMWrite(b);
         }
 
         //https://www.nesdev.org/wiki/PPU_programmer_reference#Scroll_($2005)_%3E%3E_write_x2
         else if (address == 0x2005) {
-            this.ppu.writeScroll(b);
+            this.ppu.ScrollWrite(b);
         }
 
         //https://www.nesdev.org/wiki/PPU_programmer_reference#Address_($2006)_%3E%3E_write_x2
         else if (address == 0x2006) {
-            this.ppu.writeAddr(b);
+            this.ppu.AddrWrite(b);
         }
 
         //https://www.nesdev.org/wiki/PPU_programmer_reference#Data_($2007)_%3C%3E_read/write
@@ -186,7 +188,7 @@ public class Bus implements Component {
             for (int i = 0; i < 0x100; i++) {
                 buffer[i] = this.read(msb + i);
             }
-            this.ppu.writeOam(buffer);
+            this.ppu.DMAWrite(buffer);
         }
         //Write to standard controller
         else if (address == 0x4016) {
@@ -217,25 +219,15 @@ public class Bus implements Component {
     /**
      * 向指定位置写入无符号字节
      */
-    public void writeUSByte(int address, int value) {
+    public void WriteU8(int address, int value) {
         this.write(address, (byte) value);
-    }
-
-    /**
-     * 向目标地址写入双字节
-     */
-    public void writeInt(int address, int value) {
-        var lsb = (byte) (value & 0xff);
-        var msb = (byte) (value >> 8 & 0xff);
-        this.write(address, lsb);
-        this.write(address + 1, msb);
     }
 
     /**
      * 读无符号字节
      */
-    public int readUSByte(int address) {
-        return this.read(address) & 0xff;
+    public int ReadU8(int address) {
+        return uint8(this.read(address));
     }
 
     /**

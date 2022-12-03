@@ -9,6 +9,9 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
+import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
+
 
 @Data
 @Slf4j
@@ -63,7 +66,7 @@ public class CPU {
 
     public void pushByte(byte data) {
         this.bus.write(STACK + this.sp, data);
-        this.sp = MathUtil.unsignedSub(this.sp, 1);
+        this.sp = u8sbc(this.sp, 1);
     }
 
     public void pushInt(int data) {
@@ -74,7 +77,7 @@ public class CPU {
     }
 
     public byte popByte() {
-        this.sp = MathUtil.unsignedAdd(this.sp, 1);
+        this.sp = MathUtil.u8add(this.sp, 1);
         return this.bus.read(STACK + this.sp);
     }
 
@@ -89,7 +92,7 @@ public class CPU {
      */
     private void lda(AddressMode mode) {
         var address = this.modeProvider.getAbsAddr(mode);
-        var value = this.bus.readUSByte(address);
+        var value = this.bus.ReadU8(address);
         this.raUpdate(value);
     }
 
@@ -117,7 +120,7 @@ public class CPU {
     private void logic(CPUInstruction instruction, AddressMode addressMode) {
         var address = this.modeProvider.getAbsAddr(addressMode);
         var a = this.ra;
-        var b = this.bus.readUSByte(address);
+        var b = this.bus.ReadU8(address);
         var c = switch (instruction) {
             case EOR -> a ^ b;
             case ORA -> a | b;
@@ -131,14 +134,14 @@ public class CPU {
         var addr = 0;
         var operand = mode == AddressMode.Accumulator
                 ? this.ra
-                : this.bus.readUSByte(addr = this.modeProvider.getAbsAddr(mode));
+                : this.bus.ReadU8(addr = this.modeProvider.getAbsAddr(mode));
 
         this.status.update(CPUStatus.CF, (operand & 1) == 1);
         operand >>= 1;
         if (mode == AddressMode.Accumulator) {
             this.raUpdate(operand);
         } else {
-            this.bus.writeUSByte(addr, operand);
+            this.bus.WriteU8(addr, operand);
             this.NZUpdate(operand);
         }
     }
@@ -152,7 +155,7 @@ public class CPU {
             value = this.ra;
         } else {
             addr = this.modeProvider.getAbsAddr(mode);
-            value = this.bus.readUSByte(addr);
+            value = this.bus.ReadU8(addr);
         }
         bit = value >> 7;
         value <<= 1;
@@ -161,7 +164,7 @@ public class CPU {
         if (updateRA) {
             this.raUpdate(value);
         } else {
-            this.bus.writeUSByte(addr, value);
+            this.bus.WriteU8(addr, value);
             this.NZUpdate(value);
         }
     }
@@ -172,7 +175,7 @@ public class CPU {
         var rora = mode == AddressMode.Accumulator;
         if (!rora) {
             addr = this.modeProvider.getAbsAddr(mode);
-            value = this.bus.readUSByte(addr);
+            value = this.bus.ReadU8(addr);
         }
         var oBit = value & 1;
         value >>= 1;
@@ -181,7 +184,7 @@ public class CPU {
         if (rora) {
             this.raUpdate(value);
         } else {
-            this.bus.writeUSByte(addr, value);
+            this.bus.WriteU8(addr, value);
             this.NZUpdate(value);
         }
     }
@@ -194,7 +197,7 @@ public class CPU {
             b = this.ra;
         } else {
             address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
-            b = this.bus.readUSByte(address);
+            b = this.bus.ReadU8(address);
         }
         //更新进位标识
         this.status.update(CPUStatus.CF, (b >> 7) == 1);
@@ -204,7 +207,7 @@ public class CPU {
             this.raUpdate(b);
         } else {
             this.NZUpdate(b);
-            this.bus.writeUSByte(address, b);
+            this.bus.WriteU8(address, b);
         }
     }
 
@@ -242,24 +245,24 @@ public class CPU {
             a = this.ry;
         }
         var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
-        var m = this.bus.readUSByte(address);
+        var m = this.bus.ReadU8(address);
         //设置Carry Flag
         this.status.update(CPUStatus.CF, a >= m);
         //更新cpu状态
-        this.NZUpdate(MathUtil.unsignedSub(a, m));
+        this.NZUpdate(u8sbc(a, m));
     }
 
     private void inc(CPUInstruction instruction, AddressMode mode) {
         final int result;
         if (instruction == CPUInstruction.INC) {
             var address = this.modeProvider.getAbsAddr(mode);
-            var m = this.bus.readUSByte(address);
-            result = MathUtil.unsignedAdd(m, 1);
-            this.bus.writeUSByte(address, result);
+            var m = this.bus.ReadU8(address);
+            result = MathUtil.u8add(m, 1);
+            this.bus.WriteU8(address, result);
         } else if (instruction == CPUInstruction.INX) {
-            this.rx = result = MathUtil.unsignedAdd(this.rx, 1);
+            this.rx = result = MathUtil.u8add(this.rx, 1);
         } else {
-            this.ry = result = MathUtil.unsignedAdd(this.ry, 1);
+            this.ry = result = MathUtil.u8add(this.ry, 1);
         }
         this.NZUpdate(result);
     }
@@ -286,7 +289,7 @@ public class CPU {
 
     private void loadXY(Instruction6502 instruction6502) {
         var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
-        var data = this.bus.readUSByte(address);
+        var data = this.bus.ReadU8(address);
         if (instruction6502.getInstruction() == CPUInstruction.LDX) {
             this.rx = data;
         } else {
@@ -314,7 +317,7 @@ public class CPU {
 
     private void bit(Instruction6502 instruction6502) {
         var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
-        var value = this.bus.readUSByte(address);
+        var value = this.bus.ReadU8(address);
         this.status.update(CPUStatus.ZF, (this.ra & value) == 0);
         this.status.update(CPUStatus.NF, (value >> 7) == 1);
         this.status.update(CPUStatus.OF, (value >> 6) == 1);
@@ -325,16 +328,16 @@ public class CPU {
         var value = switch (instruction) {
             case DEC -> {
                 var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
-                var b = MathUtil.unsignedSub(this.bus.readUSByte(address), 1);
-                this.bus.writeUSByte(address, b);
+                var b = u8sbc(this.bus.ReadU8(address), 1);
+                this.bus.WriteU8(address, b);
                 yield b;
             }
             case DEX -> {
-                this.rx = MathUtil.unsignedSub(this.rx, 1);
+                this.rx = u8sbc(this.rx, 1);
                 yield this.rx;
             }
             default -> {
-                this.ry = MathUtil.unsignedSub(this.ry, 1);
+                this.ry = u8sbc(this.ry, 1);
                 yield this.ry;
             }
         };
@@ -443,17 +446,17 @@ public class CPU {
         //刷新累加寄存器值到内存
         if (instruction == CPUInstruction.STA) {
             var addr = this.modeProvider.getAbsAddr(mode);
-            this.bus.writeUSByte(addr, this.ra);
+            this.bus.WriteU8(addr, this.ra);
         }
 
         //刷新y寄存器值到内存
         if (instruction == CPUInstruction.STY) {
-            this.bus.writeUSByte(this.modeProvider.getAbsAddr(mode), this.ry);
+            this.bus.WriteU8(this.modeProvider.getAbsAddr(mode), this.ry);
         }
 
         //刷新x寄存器值到内存中
         if (instruction == CPUInstruction.STX) {
-            this.bus.writeUSByte(this.modeProvider.getAbsAddr(mode), this.rx);
+            this.bus.WriteU8(this.modeProvider.getAbsAddr(mode), this.rx);
         }
 
         //清除进位标识
@@ -586,13 +589,13 @@ public class CPU {
         if (instruction == CPUInstruction.XAA) {
             this.raUpdate(this.rx);
             var addr = this.modeProvider.getAbsAddr(mode);
-            var b = this.bus.readUSByte(addr);
+            var b = this.bus.ReadU8(addr);
             this.raUpdate(b & this.ra);
         }
 
         if (instruction == CPUInstruction.ARR) {
             var addr = this.modeProvider.getAbsAddr(mode);
-            var b = this.bus.readUSByte(addr);
+            var b = this.bus.ReadU8(addr);
             this.raUpdate(b & this.ra);
             this.ror(AddressMode.Accumulator);
             var result = this.ra;
@@ -605,18 +608,18 @@ public class CPU {
 
         if (instruction == CPUInstruction.DCP) {
             var addr = this.modeProvider.getAbsAddr(mode);
-            var value = this.bus.readUSByte(addr);
-            value = MathUtil.unsignedSub(value, 1);
-            this.bus.writeUSByte(addr, value);
+            var value = this.bus.ReadU8(addr);
+            value = u8sbc(value, 1);
+            this.bus.WriteU8(addr, value);
             if (value <= this.ra) {
                 this.status.set(CPUStatus.CF);
             }
-            this.NZUpdate(MathUtil.unsignedSub(this.ra, value));
+            this.NZUpdate(u8sbc(this.ra, value));
         }
 
         if (instruction == CPUInstruction.LAS) {
             var addr = this.modeProvider.getAbsAddr(mode);
-            var value = this.bus.readUSByte(addr);
+            var value = this.bus.ReadU8(addr);
             value = value & this.sp;
             this.rx = value;
             this.sp = value;
@@ -625,7 +628,7 @@ public class CPU {
 
         if (instruction == CPUInstruction.LAX) {
             var addr = this.modeProvider.getAbsAddr(mode);
-            var value = this.bus.readUSByte(addr);
+            var value = this.bus.ReadU8(addr);
             this.raUpdate(value);
             this.rx = value;
         }
@@ -639,8 +642,8 @@ public class CPU {
 
         if (instruction == CPUInstruction.SHX) {
             var addr = this.modeProvider.getAbsAddr(mode);
-            var value = this.rx & MathUtil.unsignedAdd((addr >> 8) & 0xff, 1);
-            this.bus.writeUSByte(addr, value);
+            var value = this.rx & u8add((addr >> 8) & 0xff, 1);
+            this.bus.WriteU8(addr, value);
         }
 
         if (instruction == CPUInstruction.TAX || instruction == CPUInstruction.LXA) {
@@ -654,7 +657,7 @@ public class CPU {
         if (instruction == CPUInstruction.SAX) {
             var data = this.ra & this.rx;
             var addr = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
-            this.bus.writeUSByte(addr, data);
+            this.bus.WriteU8(addr, data);
         }
 
         //根据是否发生重定向来判断是否需要更改程序计数器的值
@@ -663,32 +666,5 @@ public class CPU {
         }
 
         return instruction6502.getCycle() + this.modeProvider.getCycles();
-    }
-
-    /**
-     * 格式化指令
-     */
-    private String formatInstruction(Instruction6502 instruction6502) {
-        var size = instruction6502.getBytes();
-        var mode = instruction6502.getAddressMode();
-        if (size == 1 || mode == null || mode == AddressMode.Implied) {
-            return "";
-        }
-        var value = switch (mode) {
-            case Accumulator -> this.ra;
-            case Immediate -> this.bus.readUSByte(this.modeProvider.getAbsAddr(mode));
-            default -> this.modeProvider.getAbsAddr(mode);
-        };
-
-        final String str;
-        //多个操作数
-        if (value > 0xff) {
-            var lsb = value & 0xff;
-            var msb = (value >>> 8) & 0xff;
-            str = String.format("(%d)0x%s,0x%s", value, Integer.toHexString(lsb), Integer.toHexString(msb));
-        } else {
-            str = String.format("(%d)0x%s", value, Integer.toHexString(value));
-        }
-        return str;
     }
 }

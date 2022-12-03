@@ -38,45 +38,16 @@ public class ByteUtil {
         return hex;
     }
 
-    /**
-     * 将反码还原为原码
-     */
-    public static byte origin(int b) {
-        if ((b & 0x80) == 0) {
-            return (byte) b;
-        }
-        var find = false;
-        for (int i = 0; i < 8; i++) {
-            var bit = (b & 1 << i) != 0 ? 1 : 0;
-            if (find) {
-                if (bit == 0) {
-                    b |= (1 << i);
-                } else {
-                    b &= (int) (0xff - Math.pow(2, i));
-                }
-            } else {
-                find = bit == 1;
-            }
-        }
-        return (byte) b;
+    public static int uint8(byte b) {
+        return (b & 0xff);
     }
 
-    /**
-     * 判断某个字节是否负数
-     */
-    public static boolean negative(int b) {
-        return (b & 0x80) != 0;
-    }
-
-    public static byte fixBit(byte b, int i) {
-        return fixBit(b, i, (byte) 1, (byte) 0);
+    public static int uint16(int i) {
+        return i & 0xffff;
     }
 
     public static byte fixBit(byte b, int i, byte ifPresent, byte ifAbsent) {
         return (b & (1 << i)) != 0 ? ifPresent : ifAbsent;
     }
 
-    public static int toInt16(byte[] arr) {
-        return (arr[1] << 8 | arr[0] & 0xff);
-    }
 }

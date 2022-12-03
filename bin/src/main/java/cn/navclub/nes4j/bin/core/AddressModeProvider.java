@@ -5,6 +5,8 @@ import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Getter;
 import lombok.Setter;
 
+import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
+
 /**
  * <a href="http://www.emulator101.com/6502-addressing-modes.html">6502 address mode</a>
  */
@@ -27,7 +29,7 @@ public class AddressModeProvider {
         var proCounter = this.cpu.getPc();
         return switch (mode) {
             case Immediate -> proCounter;
-            case ZeroPage -> this.bus.readUSByte(proCounter);
+            case ZeroPage -> this.bus.ReadU8(proCounter);
             case Absolute, Indirect -> {
                 var base = this.bus.readInt(proCounter);
                 if (mode == AddressMode.Indirect) {
@@ -35,8 +37,8 @@ public class AddressModeProvider {
                 }
                 yield base;
             }
-            case ZeroPage_X -> MathUtil.unsignedAdd(this.bus.readUSByte(proCounter), regX);
-            case ZeroPage_Y -> MathUtil.unsignedAdd(this.bus.readUSByte(proCounter), regY);
+            case ZeroPage_X -> u8add(this.bus.ReadU8(proCounter), regX);
+            case ZeroPage_Y -> u8add(this.bus.ReadU8(proCounter), regY);
             case Absolute_X -> {
                 var base = this.bus.readInt(proCounter);
                 var addr = base + regX;
@@ -50,12 +52,12 @@ public class AddressModeProvider {
                 yield addr;
             }
             case Indirect_X -> {
-                var base = this.bus.readUSByte(proCounter);
-                var ptr = MathUtil.unsignedAdd(base, regX);
+                var base = this.bus.ReadU8(proCounter);
+                var ptr = u8add(base, regX);
                 yield this.bus.readInt(ptr);
             }
             case Indirect_Y -> {
-                var base = this.bus.readUSByte(proCounter);
+                var base = this.bus.ReadU8(proCounter);
                 base = this.bus.readInt(base);
                 var addr = base + regY;
                 pageCross(base, addr);
