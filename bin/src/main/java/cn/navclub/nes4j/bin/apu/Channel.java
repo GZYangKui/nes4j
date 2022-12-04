@@ -1,7 +1,6 @@
 package cn.navclub.nes4j.bin.apu;
 
 import cn.navclub.nes4j.bin.Component;
-import cn.navclub.nes4j.bin.core.APU;
 import lombok.Getter;
 
 public abstract class Channel implements Component {

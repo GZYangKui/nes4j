@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.test;
 
-import cn.navclub.nes4j.bin.core.Cartridge;
+import cn.navclub.nes4j.bin.io.Cartridge;
 import cn.navclub.nes4j.bin.debug.OpenCodeFormat;
 import org.junit.jupiter.api.Test;
 

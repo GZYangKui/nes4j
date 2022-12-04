@@ -3,7 +3,7 @@ package cn.navclub.nes4j.app.config;
 import cn.navclub.nes4j.app.model.KeyMapper;
 import cn.navclub.nes4j.app.util.IOUtil;
 import cn.navclub.nes4j.app.util.JsonUtil;
-import cn.navclub.nes4j.bin.core.JoyPad;
+import cn.navclub.nes4j.bin.io.JoyPad;
 import javafx.scene.input.KeyCode;
 import lombok.Setter;
 

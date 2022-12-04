@@ -5,12 +5,14 @@ module cn.navclub.nes4j.bin {
     exports cn.navclub.nes4j.bin;
     exports cn.navclub.nes4j.bin.core;
     exports cn.navclub.nes4j.bin.util;
-    exports cn.navclub.nes4j.bin.core.impl;
-    exports cn.navclub.nes4j.bin.screen;
-    exports cn.navclub.nes4j.bin.enums;
+    exports cn.navclub.nes4j.bin.ppu;
+    exports cn.navclub.nes4j.bin.config;
     exports cn.navclub.nes4j.bin.debug;
     exports cn.navclub.nes4j.bin.function;
     exports cn.navclub.nes4j.bin.apu.impl;
+    exports cn.navclub.nes4j.bin.io;
+    exports cn.navclub.nes4j.bin.ppu.register;
+    exports cn.navclub.nes4j.bin.apu;
 
     uses cn.navclub.nes4j.bin.Player;
 }

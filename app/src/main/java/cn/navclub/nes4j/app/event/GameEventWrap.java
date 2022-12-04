@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.app.event;
 
-import cn.navclub.nes4j.bin.core.JoyPad;
+import cn.navclub.nes4j.bin.io.JoyPad;
 import javafx.event.EventType;
 import javafx.scene.input.KeyEvent;
 

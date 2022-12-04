@@ -4,7 +4,7 @@ import cn.navclub.nes4j.bin.apu.Channel;
 import cn.navclub.nes4j.bin.apu.LinearCounter;
 import cn.navclub.nes4j.bin.apu.Timer;
 import cn.navclub.nes4j.bin.apu.impl.sequencer.TriangleSequencer;
-import cn.navclub.nes4j.bin.core.APU;
+import cn.navclub.nes4j.bin.apu.APU;
 import lombok.Getter;
 
 public class TriangleChannel extends Channel {

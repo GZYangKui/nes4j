@@ -1,12 +1,10 @@
 package cn.navclub.nes4j.bin.debug;
 
-import cn.navclub.nes4j.bin.enums.AddressMode;
-import cn.navclub.nes4j.bin.enums.CPUInstruction;
+import cn.navclub.nes4j.bin.config.AddressMode;
+import cn.navclub.nes4j.bin.config.CPUInstruction;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  *

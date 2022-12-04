@@ -2,8 +2,7 @@ package cn.navclub.nes4j.app.control;
 
 import cn.navclub.nes4j.app.view.DebuggerView;
 import cn.navclub.nes4j.bin.debug.OpenCode;
-import cn.navclub.nes4j.bin.enums.AddressMode;
-import cn.navclub.nes4j.bin.util.ByteUtil;
+import cn.navclub.nes4j.bin.config.AddressMode;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;

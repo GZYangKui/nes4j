@@ -1,9 +1,7 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.enums.AddressMode;
-import cn.navclub.nes4j.bin.enums.CPUInstruction;
-import cn.navclub.nes4j.bin.enums.CPUInterrupt;
-import cn.navclub.nes4j.bin.enums.CPUStatus;
+import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.config.*;
 import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Data;
 import lombok.Getter;
@@ -39,15 +37,14 @@ public class CPU {
     //栈指针寄存器,始终指向栈顶
     private int sp;
     private final Bus bus;
+    private final AddrMProvider modeProvider;
     //cpu状态
-    private final SRegister status;
-    private final ADDRMProvider modeProvider;
+    private final StatusRegister<CPUStatus> status;
 
-    public CPU(final Bus bus) {
-        this.bus = bus;
-        this.bus.cpu = this;
-        this.status = new SRegister();
-        this.modeProvider = new ADDRMProvider(this, this.bus);
+    public CPU(NES context) {
+        this.bus = context.getBus();
+        this.status = new StatusRegister();
+        this.modeProvider = new AddrMProvider(this, this.bus);
     }
 
 
@@ -64,7 +61,7 @@ public class CPU {
     }
 
 
-    public void pushByte(byte data) {
+    public void push(byte data) {
         this.bus.write(STACK + this.sp, data);
         this.sp = u8sbc(this.sp, 1);
     }
@@ -72,18 +69,18 @@ public class CPU {
     public void pushInt(int data) {
         var lsb = data & 0xff;
         var msb = (data >> 8) & 0xff;
-        this.pushByte((byte) msb);
-        this.pushByte((byte) lsb);
+        this.push((byte) msb);
+        this.push((byte) lsb);
     }
 
-    public byte popByte() {
+    public byte pop() {
         this.sp = MathUtil.u8add(this.sp, 1);
         return this.bus.read(STACK + this.sp);
     }
 
     public int popInt() {
-        var lsb = this.popByte() & 0xff;
-        var msb = this.popByte() & 0xff;
+        var lsb = this.pop() & 0xff;
+        var msb = this.pop() & 0xff;
         return lsb | msb << 8;
     }
 
@@ -214,17 +211,17 @@ public class CPU {
     private void push(Instruction6502 instruction6502) {
         var instruction = instruction6502.getInstruction();
         if (instruction == CPUInstruction.PHA) {
-            this.pushByte((byte) this.ra);
+            this.push((byte) this.ra);
         } else {
             var flags = this.status._clone();
             flags.set(CPUStatus.BK, CPUStatus.BK2);
-            this.pushByte(flags.getBits());
+            this.push(flags.getBits());
         }
     }
 
     private void pull(Instruction6502 instruction6502) {
         var instruction = instruction6502.getInstruction();
-        var value = this.popByte();
+        var value = this.pop();
         if (instruction == CPUInstruction.PLA) {
             this.raUpdate(value);
         } else {
@@ -357,7 +354,7 @@ public class CPU {
         flag.set(CPUStatus.BK2);
         flag.update(CPUStatus.BK, interrupt == CPUInterrupt.BRK);
 
-        this.pushByte(flag.getBits());
+        this.push(flag.getBits());
 
         this.status.set(CPUStatus.ID);
         this.bus.tick(interrupt.getCycle());
@@ -384,7 +381,7 @@ public class CPU {
         }
 
         if (instruction == CPUInstruction.RTI) {
-            this.status.setBits(this.popByte());
+            this.status.setBits(this.pop());
 
             this.status.set(CPUStatus.BK2);
             this.status.clear(CPUStatus.BK);

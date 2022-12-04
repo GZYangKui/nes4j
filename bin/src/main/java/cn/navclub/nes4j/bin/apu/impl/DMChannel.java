@@ -1,7 +1,7 @@
 package cn.navclub.nes4j.bin.apu.impl;
 
 import cn.navclub.nes4j.bin.apu.Channel;
-import cn.navclub.nes4j.bin.core.APU;
+import cn.navclub.nes4j.bin.apu.APU;
 import lombok.Getter;
 import lombok.Setter;
 

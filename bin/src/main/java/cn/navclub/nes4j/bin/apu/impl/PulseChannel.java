@@ -4,7 +4,7 @@ import cn.navclub.nes4j.bin.apu.Channel;
 import cn.navclub.nes4j.bin.apu.Envelope;
 import cn.navclub.nes4j.bin.apu.SweepUnit;
 import cn.navclub.nes4j.bin.apu.impl.sequencer.SeqSequencer;
-import cn.navclub.nes4j.bin.core.APU;
+import cn.navclub.nes4j.bin.apu.APU;
 import lombok.Getter;
 
 public class PulseChannel extends Channel {

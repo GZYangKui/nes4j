@@ -3,7 +3,7 @@ package cn.navclub.nes4j.bin.apu.impl;
 import cn.navclub.nes4j.bin.apu.Channel;
 import cn.navclub.nes4j.bin.apu.Envelope;
 import cn.navclub.nes4j.bin.apu.impl.sequencer.NoiseSequencer;
-import cn.navclub.nes4j.bin.core.APU;
+import cn.navclub.nes4j.bin.apu.APU;
 import lombok.Getter;
 
 public class NoiseChannel extends Channel {

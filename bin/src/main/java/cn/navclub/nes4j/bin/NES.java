@@ -1,20 +1,20 @@
 package cn.navclub.nes4j.bin;
 
+import cn.navclub.nes4j.bin.apu.APU;
 import cn.navclub.nes4j.bin.core.*;
 import cn.navclub.nes4j.bin.debug.Debugger;
-import cn.navclub.nes4j.bin.enums.CPUInterrupt;
-import cn.navclub.nes4j.bin.enums.NameMirror;
+import cn.navclub.nes4j.bin.config.CPUInterrupt;
 import cn.navclub.nes4j.bin.function.TCallback;
+import cn.navclub.nes4j.bin.io.Cartridge;
+import cn.navclub.nes4j.bin.io.JoyPad;
+import cn.navclub.nes4j.bin.ppu.PPU;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @Getter
@@ -65,7 +65,7 @@ public class NES {
         this.bus = new Bus(this, joyPad, joyPad1);
 
 
-        this.cpu = new CPU(this.bus);
+        this.cpu = new CPU(this);
 
         if (this.debugger != null) {
             this.debugger.inject(this);
@@ -97,7 +97,9 @@ public class NES {
             }
             for (int i = 0; i < cycles; i++) {
                 this.apu.tick();
-                this.ppu.tick();
+                for (int j = 0; j < 3; j++) {
+                    this.ppu.tick();
+                }
             }
             this.cycles += cycles;
         }

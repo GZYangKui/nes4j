@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.app.model;
 
-import cn.navclub.nes4j.bin.core.JoyPad;
+import cn.navclub.nes4j.bin.io.JoyPad;
 import javafx.scene.input.KeyCode;
 import lombok.Data;
 

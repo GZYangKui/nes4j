@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.debug;
 
-import cn.navclub.nes4j.bin.enums.AddressMode;
+import cn.navclub.nes4j.bin.config.AddressMode;
 
 /**
  *

@@ -2,15 +2,13 @@ package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.Component;
 import cn.navclub.nes4j.bin.NES;
-import cn.navclub.nes4j.bin.enums.CPUInterrupt;
-import cn.navclub.nes4j.bin.enums.NMapper;
-import cn.navclub.nes4j.bin.function.TCallback;
+import cn.navclub.nes4j.bin.apu.APU;
+import cn.navclub.nes4j.bin.config.NMapper;
+import cn.navclub.nes4j.bin.io.Cartridge;
+import cn.navclub.nes4j.bin.io.JoyPad;
+import cn.navclub.nes4j.bin.ppu.PPU;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static cn.navclub.nes4j.bin.util.ByteUtil.uint8;
 
@@ -29,8 +27,6 @@ public class Bus implements Component {
     private final JoyPad joyPad;
     //Player2
     private final JoyPad joyPad1;
-    @Getter
-    protected CPU cpu;
     @Getter
     private final PPU ppu;
     private final APU apu;

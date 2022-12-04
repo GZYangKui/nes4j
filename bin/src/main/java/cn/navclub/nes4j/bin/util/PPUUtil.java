@@ -1,9 +1,9 @@
 package cn.navclub.nes4j.bin.util;
 
-import cn.navclub.nes4j.bin.core.PPU;
-import cn.navclub.nes4j.bin.enums.MaskFlag;
-import cn.navclub.nes4j.bin.enums.NameMirror;
-import cn.navclub.nes4j.bin.enums.NameTMirror;
+import cn.navclub.nes4j.bin.ppu.PPU;
+import cn.navclub.nes4j.bin.config.MaskFlag;
+import cn.navclub.nes4j.bin.config.NameMirror;
+import cn.navclub.nes4j.bin.config.NameTMirror;
 
 public class PPUUtil {
     /**
