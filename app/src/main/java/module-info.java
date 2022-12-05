@@ -1,3 +1,5 @@
+import cn.navclub.nes4j.bin.apu.Player;
+
 module cn.navclub.nes4j.app {
     requires static lombok;
 
@@ -23,5 +25,5 @@ module cn.navclub.nes4j.app {
     opens cn.navclub.nes4j.app.model to javafx.base, com.fasterxml.jackson.databind;
     opens cn.navclub.nes4j.app.assets;
 
-    uses cn.navclub.nes4j.bin.Player;
+    uses Player;
 }

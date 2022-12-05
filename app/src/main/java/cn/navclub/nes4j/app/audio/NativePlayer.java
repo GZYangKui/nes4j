@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.app.audio;
 
-import cn.navclub.nes4j.bin.Player;
+import cn.navclub.nes4j.bin.apu.Player;
 
 public class NativePlayer implements Player {
     private final float[] samples;

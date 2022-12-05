@@ -1,9 +1,7 @@
 package cn.navclub.nes4j.bin.apu;
 
-import cn.navclub.nes4j.bin.Component;
+import cn.navclub.nes4j.bin.core.Component;
 import cn.navclub.nes4j.bin.NES;
-import cn.navclub.nes4j.bin.Player;
-import cn.navclub.nes4j.bin.apu.FrameCounter;
 import cn.navclub.nes4j.bin.apu.impl.*;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package cn.navclub.nes4j.bin;
+package cn.navclub.nes4j.bin.apu;
 
 
 public interface Player {

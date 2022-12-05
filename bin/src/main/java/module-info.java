@@ -1,3 +1,5 @@
+import cn.navclub.nes4j.bin.apu.Player;
+
 module cn.navclub.nes4j.bin {
     requires static lombok;
     requires org.slf4j;
@@ -14,5 +16,5 @@ module cn.navclub.nes4j.bin {
     exports cn.navclub.nes4j.bin.ppu.register;
     exports cn.navclub.nes4j.bin.apu;
 
-    uses cn.navclub.nes4j.bin.Player;
+    uses Player;
 }

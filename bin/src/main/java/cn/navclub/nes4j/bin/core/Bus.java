@@ -1,6 +1,5 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.Component;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.apu.APU;
 import cn.navclub.nes4j.bin.config.NMapper;

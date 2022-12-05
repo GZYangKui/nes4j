@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin;
 
 import cn.navclub.nes4j.bin.apu.APU;
+import cn.navclub.nes4j.bin.apu.Player;
 import cn.navclub.nes4j.bin.core.*;
 import cn.navclub.nes4j.bin.debug.Debugger;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;

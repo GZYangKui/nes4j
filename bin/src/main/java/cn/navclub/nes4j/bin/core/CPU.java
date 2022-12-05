@@ -43,7 +43,7 @@ public class CPU {
 
     public CPU(NES context) {
         this.bus = context.getBus();
-        this.status = new StatusRegister();
+        this.status = new StatusRegister<>();
         this.modeProvider = new AddrMProvider(this, this.bus);
     }
 
