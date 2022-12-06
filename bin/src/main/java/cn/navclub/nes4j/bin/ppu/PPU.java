@@ -8,6 +8,7 @@ import cn.navclub.nes4j.bin.ppu.register.PPUMask;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
 import cn.navclub.nes4j.bin.config.NameMirror;
 import cn.navclub.nes4j.bin.config.PStatus;
+import cn.navclub.nes4j.bin.ppu.register.PPUStatus;
 import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,7 +28,7 @@ public class PPU implements Component {
     protected final byte[] vram;
     @Getter
     private final PPUMask mask;
-    protected final StatusRegister<PStatus> status;
+    protected final PPUStatus status;
     private final PPURender render;
     @Getter
     protected final PPUControl control;
@@ -70,9 +71,9 @@ public class PPU implements Component {
         this.mask = new PPUMask();
         this.ch = new byte[8 * 1024];
         this.scroll = new PPUScroll();
-        this.paletteTable = new byte[32];
-        this.status = new StatusRegister();
+        this.status = new PPUStatus();
         this.control = new PPUControl();
+        this.paletteTable = new byte[32];
         this.render = new PPURender(this);
 
         System.arraycopy(ch, 0, this.ch, 0, Math.min(this.ch.length, ch.length));

@@ -82,8 +82,8 @@ public class PPURender implements CycleDriver {
 
     public PPURender(PPU ppu) {
         this.ppu = ppu;
-
-        this.scanline = 0;
+        this.cycles = 340;
+        this.scanline = 240;
         this.frameCounter = 0;
         this.oam = new byte[8];
         this.frame = new Frame();

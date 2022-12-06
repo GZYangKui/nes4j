@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.config;
 
-public enum CPUStatus {
+public enum ICPUStatus {
     //Carry flag
     CF,
     //Zero flag
