@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.util;
 
-public class ByteUtil {
+public class BinUtil {
 
     public static byte overflow(int value) {
         if (-128 > value || value > 255) {

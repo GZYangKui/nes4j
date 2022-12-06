@@ -4,7 +4,7 @@ package cn.navclub.nes4j.bin.io;
 import cn.navclub.nes4j.bin.config.NESFormat;
 import cn.navclub.nes4j.bin.config.NMapper;
 import cn.navclub.nes4j.bin.config.NameMirror;
-import cn.navclub.nes4j.bin.util.ByteUtil;
+import cn.navclub.nes4j.bin.util.BinUtil;
 import cn.navclub.nes4j.bin.util.IOUtil;
 
 import lombok.Getter;
@@ -279,7 +279,7 @@ public class Cartridge {
         var scale = 16 * 1024;
         if (this.format == NESFormat.NES_20) {
             var msb = headers[9] & 0x0f;
-            size = ByteUtil.toInt(new byte[]{lsb, ByteUtil.overflow(msb), 0, 0});
+            size = BinUtil.toInt(new byte[]{lsb, BinUtil.overflow(msb), 0, 0});
             if (msb > 0x0e) {
                 scale = 0;
             }

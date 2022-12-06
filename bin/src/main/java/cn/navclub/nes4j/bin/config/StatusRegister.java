@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.config;
 
-import cn.navclub.nes4j.bin.util.ByteUtil;
+import cn.navclub.nes4j.bin.util.BinUtil;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -76,7 +76,7 @@ public class StatusRegister<T extends Enum<?>> {
 
     @Override
     public String toString() {
-        return ByteUtil.toBinStr(this.bits);
+        return BinUtil.toBinStr(this.bits);
     }
 
     public final StatusRegister<T> _clone() {

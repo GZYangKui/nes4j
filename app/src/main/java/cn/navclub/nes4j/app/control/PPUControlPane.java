@@ -1,7 +1,7 @@
 package cn.navclub.nes4j.app.control;
 
 import cn.navclub.nes4j.bin.NES;
-import cn.navclub.nes4j.bin.util.ByteUtil;
+import cn.navclub.nes4j.bin.util.BinUtil;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;
@@ -75,10 +75,10 @@ public class PPUControlPane extends Tab {
         this.cycles.setText(Long.toString(ppu.getCycles()));
         this.scanline.setText(Long.toString(ppu.getScanline()));
         this.paddr.setText(String.format("$%s", Integer.toHexString(ppu.getV())));
-        this.oaddr.setText(String.format("$%s", ByteUtil.toHexStr((byte) ppu.getOamAddr())));
-        this.mask.setText(String.format("$%s", ByteUtil.toHexStr(ppu.getMask().getBits())));
-        this.ctrl.setText(String.format("$%s", ByteUtil.toHexStr(ppu.getControl().getBits())));
-        this.status.setText(String.format("$%s", ByteUtil.toHexStr(ppu.getStatus())));
+        this.oaddr.setText(String.format("$%s", BinUtil.toHexStr((byte) ppu.getOamAddr())));
+        this.mask.setText(String.format("$%s", BinUtil.toHexStr(ppu.getMask().getBits())));
+        this.ctrl.setText(String.format("$%s", BinUtil.toHexStr(ppu.getControl().getBits())));
+        this.status.setText(String.format("$%s", BinUtil.toHexStr(ppu.getStatus())));
 
     }
 }

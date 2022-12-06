@@ -13,7 +13,7 @@ import lombok.Getter;
 import java.util.HashMap;
 import java.util.Map;
 
-import static cn.navclub.nes4j.bin.util.ByteUtil.toHexStr;
+import static cn.navclub.nes4j.bin.util.BinUtil.toHexStr;
 
 public class BreakLine extends HBox {
     private final static Map<Integer, String> ALIAS = new HashMap<>();

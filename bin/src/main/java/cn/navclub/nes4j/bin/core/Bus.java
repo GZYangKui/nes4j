@@ -9,7 +9,7 @@ import cn.navclub.nes4j.bin.ppu.PPU;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import static cn.navclub.nes4j.bin.util.ByteUtil.uint8;
+import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 
 
 @Slf4j

@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.io;
 
-import cn.navclub.nes4j.bin.util.ByteUtil;
+import cn.navclub.nes4j.bin.util.BinUtil;
 
 /**
  * <a href="https://www.nesdev.org/wiki/Standard_controller"> Standard controller</a>
@@ -39,7 +39,7 @@ public class JoyPad {
 
     @Override
     public String toString() {
-        return ByteUtil.toBinStr(this.bits);
+        return BinUtil.toBinStr(this.bits);
     }
 
     public enum JoypadButton {
