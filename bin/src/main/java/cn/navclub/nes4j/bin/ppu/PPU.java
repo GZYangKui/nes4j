@@ -2,7 +2,6 @@ package cn.navclub.nes4j.bin.ppu;
 
 import cn.navclub.nes4j.bin.core.Component;
 import cn.navclub.nes4j.bin.NES;
-import cn.navclub.nes4j.bin.config.StatusRegister;
 import cn.navclub.nes4j.bin.ppu.register.PPUControl;
 import cn.navclub.nes4j.bin.ppu.register.PPUMask;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;

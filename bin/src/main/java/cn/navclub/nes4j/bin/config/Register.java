@@ -4,16 +4,16 @@ import cn.navclub.nes4j.bin.util.BinUtil;
 import lombok.Getter;
 import lombok.Setter;
 
-public class StatusRegister<T extends Enum<?>> {
+public class Register<T extends Enum<?>> {
     @Getter
     @Setter
     protected byte bits;
 
-    public StatusRegister(byte bits) {
+    public Register(byte bits) {
         this.bits = bits;
     }
 
-    public StatusRegister() {
+    public Register() {
     }
 
     public final void set(T instance) {
@@ -81,7 +81,7 @@ public class StatusRegister<T extends Enum<?>> {
         return BinUtil.toBinStr(this.bits);
     }
 
-    public final StatusRegister<T> _clone() {
-        return new StatusRegister<>(this.bits);
+    public final Register<T> _clone() {
+        return new Register<>(this.bits);
     }
 }

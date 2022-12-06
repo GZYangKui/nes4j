@@ -2,7 +2,7 @@ package cn.navclub.nes4j.bin.ppu.register;
 
 import cn.navclub.nes4j.bin.config.NameTMirror;
 import cn.navclub.nes4j.bin.config.PControl;
-import cn.navclub.nes4j.bin.config.StatusRegister;
+import cn.navclub.nes4j.bin.config.Register;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
  * </pre>
  */
 @Slf4j
-public class PPUControl extends StatusRegister<PControl> {
+public class PPUControl extends Register<PControl> {
 
     public PPUControl() {
         this.bits = 0;

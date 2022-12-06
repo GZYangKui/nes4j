@@ -1,12 +1,8 @@
 package cn.navclub.nes4j.bin.ppu.register;
 
 
-import cn.navclub.nes4j.bin.config.StatusRegister;
-import cn.navclub.nes4j.bin.ppu.Color;
+import cn.navclub.nes4j.bin.config.Register;
 import cn.navclub.nes4j.bin.config.MaskFlag;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * <pre>
@@ -31,4 +27,4 @@ import java.util.List;
  * +--------- Emphasize blue
  * </pre>
  */
-public class PPUMask extends StatusRegister<MaskFlag> { }
+public class PPUMask extends Register<MaskFlag> { }
