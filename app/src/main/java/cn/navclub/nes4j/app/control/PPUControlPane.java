@@ -17,6 +17,7 @@ public class PPUControlPane extends Tab {
     private final TextField oaddr = new TextField();
     private final TextField paddr = new TextField();
     private final TextField scanline = new TextField();
+    private final TextField cycles = new TextField();
 
 
     public PPUControlPane() {
@@ -28,6 +29,7 @@ public class PPUControlPane extends Tab {
         var l5 = new Label("Scanline");
         var l6 = new Label("X Scroll");
         var l7 = new Label("Y Scroll");
+        var l8 = new Label("CYCLES");
 
         var gridPane = new GridPane();
 
@@ -52,6 +54,9 @@ public class PPUControlPane extends Tab {
         gridPane.add(l7, 2, 3);
         gridPane.add(y, 3, 3);
 
+        gridPane.add(l8, 0, 4);
+        gridPane.add(cycles, 1, 4);
+
         GridPane.setHgrow(ctrl, Priority.ALWAYS);
         GridPane.setHgrow(mask, Priority.ALWAYS);
         GridPane.setHgrow(status, Priority.ALWAYS);
@@ -64,16 +69,16 @@ public class PPUControlPane extends Tab {
 
     public void update(NES context) {
         var ppu = context.getPpu();
-        var scroll = ppu.getScroll();
 
-        this.x.setText(Integer.toString(scroll.getX()));
-        this.y.setText(Integer.toString(scroll.getY()));
-        this.scanline.setText(Integer.toString(ppu.getScanLine()));
-        this.paddr.setText(String.format("$%s", Integer.toHexString(ppu.getAddr().get())));
+        this.x.setText(Integer.toString(ppu.x()));
+        this.y.setText(Integer.toString(ppu.y()));
+        this.cycles.setText(Long.toString(ppu.getCycles()));
+        this.scanline.setText(Long.toString(ppu.getScanline()));
+        this.paddr.setText(String.format("$%s", Integer.toHexString(ppu.getV())));
         this.oaddr.setText(String.format("$%s", ByteUtil.toHexStr((byte) ppu.getOamAddr())));
         this.mask.setText(String.format("$%s", ByteUtil.toHexStr(ppu.getMask().getBits())));
         this.ctrl.setText(String.format("$%s", ByteUtil.toHexStr(ppu.getControl().getBits())));
-        this.status.setText(String.format("$%s", ByteUtil.toHexStr(ppu.getStatus().getBits())));
+        this.status.setText(String.format("$%s", ByteUtil.toHexStr(ppu.getStatus())));
 
     }
 }

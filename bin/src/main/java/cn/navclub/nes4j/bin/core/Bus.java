@@ -67,15 +67,6 @@ public class Bus implements Component {
         return address;
     }
 
-//    private byte readRPGData(int address) {
-//        address -= 0x8000;
-//        if (this.cartridge.getRgbSize() == 0x4000 && address >= 0x4000) {
-//            address %= 0x4000;
-//        }
-//        return this.rpgrom[address];
-//    }
-
-
     @Override
     public byte read(int address) {
         final byte b;

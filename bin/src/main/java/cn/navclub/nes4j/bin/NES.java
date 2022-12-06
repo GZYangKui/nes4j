@@ -8,6 +8,7 @@ import cn.navclub.nes4j.bin.config.CPUInterrupt;
 import cn.navclub.nes4j.bin.function.TCallback;
 import cn.navclub.nes4j.bin.io.Cartridge;
 import cn.navclub.nes4j.bin.io.JoyPad;
+import cn.navclub.nes4j.bin.ppu.Frame;
 import cn.navclub.nes4j.bin.ppu.PPU;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,7 +31,7 @@ public class NES {
     private final JoyPad joyPad1;
     private final Cartridge cartridge;
     private final Debugger debugger;
-    private final TCallback<PPU, JoyPad, JoyPad> gameLoopCallback;
+    private final TCallback<Frame, JoyPad, JoyPad> gameLoopCallback;
 
     //CPU延迟时钟
     private int stall;
@@ -121,18 +122,22 @@ public class NES {
      * @param interrupt interrupt type
      */
     public void interrupt(CPUInterrupt interrupt) {
-        if (interrupt == CPUInterrupt.NMI && this.gameLoopCallback != null) {
+        if (this.interrupt == CPUInterrupt.NMI) {
+            return;
+        }
+        this.interrupt = interrupt;
+    }
+
+    public void videoOutput(Frame frame) {
+        if (this.gameLoopCallback != null) {
             try {
                 Thread.sleep(this.speed);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            this.gameLoopCallback.accept(this.ppu, this.joyPad, this.joyPad1);
+            this.gameLoopCallback.accept(frame, this.joyPad, this.joyPad1);
+            frame.clear();
         }
-        if (this.interrupt == CPUInterrupt.NMI) {
-            return;
-        }
-        this.interrupt = interrupt;
     }
 
     public void setStall(int stall) {
@@ -162,7 +167,7 @@ public class NES {
         private byte[] buffer;
         private Debugger debugger;
         private Class<? extends Player> player;
-        private TCallback<PPU, JoyPad, JoyPad> gameLoopCallback;
+        private TCallback<Frame, JoyPad, JoyPad> gameLoopCallback;
 
         public NESBuilder buffer(byte[] buffer) {
             this.buffer = buffer;
@@ -189,7 +194,7 @@ public class NES {
             return this;
         }
 
-        public NESBuilder gameLoopCallback(TCallback<PPU, JoyPad, JoyPad> gameLoopCallback) {
+        public NESBuilder gameLoopCallback(TCallback<Frame, JoyPad, JoyPad> gameLoopCallback) {
             this.gameLoopCallback = gameLoopCallback;
             return this;
         }

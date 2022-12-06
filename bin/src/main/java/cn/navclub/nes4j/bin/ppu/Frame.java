@@ -17,16 +17,15 @@ public class Frame {
     }
 
     public Frame() {
-        this(256 * 2, 240);
+        this(256, 240);
     }
 
-    public void updatePixel(int x, int y, int[] rgb) {
-        var index = y * 3 * width + x * 3;
-        if (index + 2 < this.pixels.length) {
-            this.pixels[index] = (byte) rgb[0];
-            this.pixels[index + 1] = (byte) rgb[1];
-            this.pixels[index + 2] = (byte) rgb[2];
-        }
+
+    public void update(int x, int y, int r, int g, int b) {
+        var offset = y * 256 * 3;
+        this.pixels[offset + x] = (byte) r;
+        this.pixels[offset + x + 1] = (byte) g;
+        this.pixels[offset + x + 2] = (byte) b;
     }
 
     public void clear() {

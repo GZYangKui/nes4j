@@ -3,14 +3,11 @@ package cn.navclub.nes4j.app.view;
 import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.Nes4j;
 import cn.navclub.nes4j.app.audio.NativePlayer;
-import cn.navclub.nes4j.app.dialog.DPalette;
 import cn.navclub.nes4j.app.event.GameEventWrap;
 import cn.navclub.nes4j.app.model.KeyMapper;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.io.JoyPad;
-import cn.navclub.nes4j.bin.ppu.PPU;
 import cn.navclub.nes4j.bin.ppu.Frame;
-import cn.navclub.nes4j.bin.ppu.Render;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -36,10 +33,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class GameWorld extends Stage {
-    private final Frame frame;
     private final Canvas canvas;
     private final GraphicsContext ctx;
-    private final Render render;
     private final Label frameLabel;
     private final MenuBar menuBar;
     private final AnimationTimer fpsTimer;
@@ -54,8 +49,6 @@ public class GameWorld extends Stage {
     private int frameCounter;
 
     public GameWorld(final File file) {
-        this.frame = new Frame();
-        this.render = new Render();
         this.canvas = new Canvas();
         this.menuBar = new MenuBar();
         this.frameLabel = new Label();
@@ -154,12 +147,12 @@ public class GameWorld extends Stage {
     }
 
     private void systemPalette(ActionEvent event) {
-        var dialog = new DPalette(this.render.getSysPalette());
-        var buttonType = dialog.showAndWait().orElse(null);
-        //Restore system palette
-        if (buttonType == null || buttonType == ButtonType.CANCEL) {
-            dialog.restore(this.render.getSysPalette());
-        }
+//        var dialog = new DPalette(this.render.getSysPalette());
+//        var buttonType = dialog.showAndWait().orElse(null);
+//        //Restore system palette
+//        if (buttonType == null || buttonType == ButtonType.CANCEL) {
+//            dialog.restore(this.render.getSysPalette());
+//        }
     }
 
 
@@ -193,10 +186,7 @@ public class GameWorld extends Stage {
         this.fpsTimer.stop();
     }
 
-    private void gameLoopCallback(PPU ppu, JoyPad joyPad, JoyPad joyPad1) {
-        this.render.render(ppu, this.frame);
-
-
+    private void gameLoopCallback(Frame frame, JoyPad joyPad, JoyPad joyPad1) {
         var wPixel = 3;
         var hPixel = 3;
         var w = frame.getWidth();
@@ -224,7 +214,7 @@ public class GameWorld extends Stage {
         frame.clear();
         Platform.runLater(() -> {
 
-            this.setWidth(image.getWidth() / 2);
+            this.setWidth(image.getWidth());
             this.setHeight(image.getHeight() + this.menuBar.getHeight());
 
             var width = this.getWidth();
