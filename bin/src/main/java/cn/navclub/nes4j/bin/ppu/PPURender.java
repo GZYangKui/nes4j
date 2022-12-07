@@ -5,8 +5,7 @@ import cn.navclub.nes4j.bin.config.PStatus;
 import cn.navclub.nes4j.bin.function.CycleDriver;
 import lombok.Getter;
 
-import static cn.navclub.nes4j.bin.util.BinUtil.uint16;
-import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
+import static cn.navclub.nes4j.bin.util.BinUtil.*;
 
 /**
  *
@@ -61,8 +60,7 @@ public class PPURender implements CycleDriver {
     private final int[][] sysPalette;
 
     private final PPU ppu;
-    //Secondary OAM (holds 8 sprites for the current scanline)
-    private final byte[] oam;
+
 
     private final Frame frame;
     //
@@ -82,23 +80,32 @@ public class PPURender implements CycleDriver {
     // Attribute table byte
     private byte attrTableByte;
     //Pattern table tile low
-    private byte tileLow;
+    private byte tl;
     //Pattern table tile high (+8 bytes from pattern table tile low)
-    private byte tileHigh;
+    private byte th;
 
     private int cycles;
     //Record current scan line index
     protected int scanline;
     //Record already trigger frame counter
     private long frameCounter;
+    private int spriteCount;
+    //Secondary OAM (holds 8 sprites for the current scanline)
+    private final int[] sprites;
+//    //8 counters - These contain the X positions for up to 8 sprites.
+//    private final int[] spriteX;
+//    //8 latches - These contain the attribute bytes for up to 8 sprites.
+//    private final byte[] spriteAttr;
 
     public PPURender(PPU ppu) {
         this.ppu = ppu;
         this.cycles = 340;
         this.scanline = 240;
         this.frameCounter = 0;
-        this.oam = new byte[8];
         this.frame = new Frame();
+        this.sprites = new int[8];
+//        this.spriteX = new int[8];
+//        this.spriteAttr = new byte[8];
 
         this.sysPalette = new int[DEF_SYS_PALETTE.length][];
 
@@ -219,29 +226,56 @@ public class PPURender implements CycleDriver {
         //Whether render is enable
         var enable = (background || sprite);
 
-        if (visibleCycle) {
-            var type = this.cycles % 8;
-            var v = this.ppu.v;
-
-            switch (type) {
-                case 1 -> this.readTileIdx(v);
-                case 3 -> this.readTileAttr(v);
-                case 5 -> this.readTileOffset(v, false);
-                case 7 -> this.readTileOffset(v, true);
+        if (enable) {
+            if (visibleLine && visibleCycle) {
+                this.renderPixel();
             }
-        }
+            if (visibleCycle) {
 
-        // The coarse X component of v needs to be incremented when the next tile is reached.
-        if (preLine) {
-            this.incX();
-        }
-        //
-        // If rendering is enabled, fine Y is incremented at dot 256 of each scanline, overflowing to coarse Y,and
-        // finally adjusted to wrap among the nametables vertically.Bits 12-14 are fine Y. Bits 5-9 are coarse Y.
-        // Bit 11 selects the vertical nametable.
-        //
-        if (enable && cycles == 256) {
-            this.incY();
+                if (this.cycles == 257) {
+                    this.spriteEvaluate();
+                }
+
+                var type = this.cycles % 8;
+                var v = this.ppu.v;
+                switch (type) {
+                    case 1 -> this.readTileIdx(v);
+                    case 3 -> this.readTileAttr(v);
+                    case 5 -> this.readTileOffset(v, false);
+                    case 7 -> this.readTileOffset(v, true);
+                }
+            }
+
+            // The coarse X component of v needs to be incremented when the next tile is reached.
+            if (preLine) {
+                this.incX();
+            }
+            //
+            // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
+            // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
+            if (this.cycles == 257) {
+                this.ppu.v = uint16((this.ppu.v & 0xfbe0) | (this.ppu.t & 0x041f));
+            }
+
+            //
+            // If rendering is enabled, at the end of vblank, shortly after the horizontal bits are copied from
+            // t to v at dot 257, the PPU will repeatedly copy the vertical bits from t to v from dots 280 to 304,
+            // completing the full initialization of v from t:
+            //
+            // v: GHIA.BC DEF..... <- t: GHIA.BC DEF.....
+            //
+            if (preLine && this.cycles >= 280 && this.cycles <= 304) {
+                this.ppu.v = uint16((this.ppu.v & 0x841f) | (this.ppu.t & 0x7be0));
+            }
+
+            //
+            // If rendering is enabled, fine Y is incremented at dot 256 of each scanline, overflowing to coarse Y,and
+            // finally adjusted to wrap among the nametables vertically.Bits 12-14 are fine Y. Bits 5-9 are coarse Y.
+            // Bit 11 selects the vertical nametable.
+            //
+            if (cycles == 256) {
+                this.incY();
+            }
         }
     }
 
@@ -279,13 +313,13 @@ public class PPURender implements CycleDriver {
     }
 
     private void readTileOffset(int v, boolean high) {
-        var fineY = (v >> 12) & 7;
-        var nameTable = this.ppu.ctr.nameTableAddr();
-        var address = nameTable + uint8(this.nameTableByte) * 16 + fineY;
+        var y = (v >> 12) & 7;
+        var table = ppu.ctr.bkNamePatternTable();
+        var address = table + uint8(this.nameTableByte) * 16 + y;
         if (!high) {
-            this.tileLow = this.ppu.iRead(address);
+            this.tl = this.ppu.iRead(address);
         } else {
-            this.tileHigh = this.ppu.iRead(address + 8);
+            this.th = this.ppu.iRead(address + 8);
         }
     }
 
@@ -301,7 +335,7 @@ public class PPURender implements CycleDriver {
         } else {
             v += 1;
         }
-        this.ppu.v = v;
+        this.ppu.v = uint16(v);
     }
 
     /**
@@ -332,6 +366,69 @@ public class PPURender implements CycleDriver {
             }
             v = (v & 0x03e0 | y << 5);
         }
-        this.ppu.v = v;
+        this.ppu.v = uint16(v);
+    }
+
+    private void renderPixel() {
+        var x = this.cycles - 1;
+        var y = this.scanline;
+        var sprite = int8(0);
+        var background = this.backgroundPixel();
+        if (x < 8 && !this.ppu.mask.contain(MaskFlag.SHOW_BACKGROUND)) {
+            background = 0;
+        }
+        if (x < 8 && this.ppu.mask.contain(MaskFlag.LEFTMOST_8PXL_SPRITE)) {
+            sprite = 0;
+        }
+
+        var s = sprite % 4 != 0;
+        var b = background % 4 != 0;
+        var pixel = int8(0);
+        if (!s && !b) {
+            pixel = 0;
+        } else if (!b && s) {
+            pixel = int8(sprite | 0x10);
+        } else if (b && !s) {
+            pixel = background;
+        } else {
+            if (x == 255) {
+                this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
+            }
+        }
+        this.frame.update(x, y, pixel);
+    }
+
+    private byte backgroundPixel() {
+        if (!this.ppu.mask.contain(MaskFlag.SHOW_BACKGROUND)) {
+            return 0;
+        }
+        var b = this.tileData >> ((7 - this.ppu.x) * 4);
+        return int8((int) (b & 0x0f));
+    }
+
+    /**
+     * <a href="https://www.nesdev.org/wiki/PPU_sprite_evaluation">Sprite Evaluation</a>
+     */
+    private void spriteEvaluate() {
+        var count = 0;
+        var size = this.ppu.ctr.spriteSize();
+        for (var i = 0; i < 64; i += 4) {
+            //Y position of top of sprite
+            var y = this.ppu.oam[i * 4];
+            var df = this.scanline - uint8(y);
+            //Whether sprite fall on current scanline
+            if (df < 0 || df >= size) {
+                continue;
+            }
+            if (count < 8) {
+                this.sprites[count] = i;
+            }
+            count++;
+        }
+        if (count > 8) {
+            count = 8;
+            this.ppu.status.set(PStatus.SPRITE_OVERFLOW);
+        }
+        this.spriteCount = count;
     }
 }

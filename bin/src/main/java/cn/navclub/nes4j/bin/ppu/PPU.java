@@ -26,16 +26,16 @@ public class PPU implements Component {
     @Getter
     protected final byte[] vram;
     @Getter
-    private final PPUMask mask;
+    protected final PPUMask mask;
     protected final PPUStatus status;
     private final PPURender render;
     @Getter
     protected final PPUControl ctr;
     @Getter
-    private final byte[] oam;
+    protected final byte[] oam;
     @Getter
     //https://www.nesdev.org/wiki/PPU_palettes
-    private final byte[] paletteTable;
+    protected final byte[] paletteTable;
     @Getter
     private int oamAddr;
     private byte byteBuf;

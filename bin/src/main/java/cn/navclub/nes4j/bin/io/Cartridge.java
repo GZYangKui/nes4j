@@ -11,6 +11,8 @@ import lombok.Getter;
 
 import java.io.File;
 
+import static cn.navclub.nes4j.bin.util.BinUtil.int8;
+
 /**
  *
  *
@@ -279,7 +281,7 @@ public class Cartridge {
         var scale = 16 * 1024;
         if (this.format == NESFormat.NES_20) {
             var msb = headers[9] & 0x0f;
-            size = BinUtil.toInt(new byte[]{lsb, BinUtil.overflow(msb), 0, 0});
+            size = BinUtil.toInt(new byte[]{lsb, int8(msb), 0, 0});
             if (msb > 0x0e) {
                 scale = 0;
             }

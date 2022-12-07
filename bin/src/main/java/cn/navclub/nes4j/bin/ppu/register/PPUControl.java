@@ -37,8 +37,8 @@ public class PPUControl extends Register<PControl> {
     /**
      * Get current name table address
      */
-    public int nameTableAddr() {
-        return NameTMirror.values()[this.bits & 0x03].address;
+    public NameTMirror nameTableAddr() {
+        return NameTMirror.values()[this.bits & 0x03];
     }
 
     public int VRamIncrement() {

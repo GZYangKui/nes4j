@@ -21,11 +21,9 @@ public class Frame {
     }
 
 
-    public void update(int x, int y, int r, int g, int b) {
+    public void update(int x, int y, byte pixel) {
         var offset = y * 256 * 3;
-        this.pixels[offset + x] = (byte) r;
-        this.pixels[offset + x + 1] = (byte) g;
-        this.pixels[offset + x + 2] = (byte) b;
+        this.pixels[offset + x] = pixel;
     }
 
     public void clear() {

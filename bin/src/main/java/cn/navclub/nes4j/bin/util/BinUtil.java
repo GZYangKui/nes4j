@@ -2,10 +2,7 @@ package cn.navclub.nes4j.bin.util;
 
 public class BinUtil {
 
-    public static byte overflow(int value) {
-        if (-128 > value || value > 255) {
-            throw new IllegalArgumentException("Byte legal range in 0...255.");
-        }
+    public static byte int8(int value) {
         return (byte) value;
     }
 
