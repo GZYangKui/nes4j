@@ -77,7 +77,7 @@ public class PPUControlPane extends Tab {
         this.paddr.setText(String.format("$%s", Integer.toHexString(ppu.getV())));
         this.oaddr.setText(String.format("$%s", BinUtil.toHexStr((byte) ppu.getOamAddr())));
         this.mask.setText(String.format("$%s", BinUtil.toHexStr(ppu.getMask().getBits())));
-        this.ctrl.setText(String.format("$%s", BinUtil.toHexStr(ppu.getControl().getBits())));
+        this.ctrl.setText(String.format("$%s", BinUtil.toHexStr(ppu.getCtr().getBits())));
         this.status.setText(String.format("$%s", BinUtil.toHexStr(ppu.getStatus())));
 
     }

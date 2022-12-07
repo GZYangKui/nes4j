@@ -30,7 +30,7 @@ public class PPU implements Component {
     protected final PPUStatus status;
     private final PPURender render;
     @Getter
-    protected final PPUControl control;
+    protected final PPUControl ctr;
     @Getter
     private final byte[] oam;
     @Getter
@@ -42,8 +42,6 @@ public class PPU implements Component {
     @Getter
     @Setter
     private NameMirror mirrors;
-    @Getter
-    private final PPUScroll scroll;
     protected final NES context;
     @Getter
     //Current VRAM address (15 bits)
@@ -68,10 +66,9 @@ public class PPU implements Component {
         this.oam = new byte[256];
         this.vram = new byte[2048];
         this.mask = new PPUMask();
+        this.ctr = new PPUControl();
         this.ch = new byte[8 * 1024];
-        this.scroll = new PPUScroll();
         this.status = new PPUStatus();
-        this.control = new PPUControl();
         this.paletteTable = new byte[32];
         this.render = new PPURender(this);
 
@@ -159,9 +156,27 @@ public class PPU implements Component {
             temp = this.paletteTable[addr - 0x3f00];
         }
 
-        this.v += this.control.VRamIncrement();
+        this.v += this.ctr.VRamIncrement();
 
         return temp;
+    }
+
+    protected byte iRead(int address) {
+        final byte b;
+        //Read chr-rom data
+        if (address < 0x2000) {
+            b = this.ch[address];
+        }
+        //Read name table data
+        else if (address < 0x3000) {
+            b = this.vram[address - 0x2000];
+        }
+        //unknown ppu read memory
+        else {
+            b = 0;
+        }
+
+        return b;
     }
 
     @Override
@@ -186,7 +201,7 @@ public class PPU implements Component {
             this.paletteTable[addr - 0x3f00] = b;
         }
 
-        this.v += this.control.VRamIncrement();
+        this.v += this.ctr.VRamIncrement();
     }
 
     public byte readStatus() {
@@ -218,9 +233,9 @@ public class PPU implements Component {
             return;
         }
 
-        var temp = this.control.generateVBlankNMI();
-        this.control.update(b);
-        if (!temp && this.control.generateVBlankNMI() && this.status.contain(PStatus.V_BLANK_OCCUR)) {
+        var temp = this.ctr.generateVBlankNMI();
+        this.ctr.update(b);
+        if (!temp && this.ctr.generateVBlankNMI() && this.status.contain(PStatus.V_BLANK_OCCUR)) {
             this.fireNMI();
         }
 
@@ -229,7 +244,6 @@ public class PPU implements Component {
     }
 
     public void ScrollWrite(byte b) {
-        this.scroll.write(uint8(b));
         if (this.w == 0) {
             this.w = 1;
             //t: ........ ..ABCDE <- d: ABCDE...

@@ -5,6 +5,9 @@ import cn.navclub.nes4j.bin.config.PStatus;
 import cn.navclub.nes4j.bin.function.CycleDriver;
 import lombok.Getter;
 
+import static cn.navclub.nes4j.bin.util.BinUtil.uint16;
+import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
+
 /**
  *
  * <a hrep="https://www.nesdev.org/wiki/PPU_rendering">PPU Render</a>
@@ -63,17 +66,26 @@ public class PPURender implements CycleDriver {
 
     private final Frame frame;
     //
-    //2 16-bit shift registers - These contain the pattern table data for two tiles.
+    // 2 16-bit shift registers - These contain the pattern table data for two tiles.
     // Every 8 cycles, the data for the next tile is loaded into the upper 8 bits of this shift register.
     // Meanwhile, the pixel to render is fetched from one of the lower 8 bits.
     //
-    private int backgroundTile;
+    private long tileData;
     //
-    //2 8-bit shift registers - These contain the palette attributes for the lower 8 pixels
+    // 2 8-bit shift registers - These contain the palette attributes for the lower 8 pixels
     // of the 16-bit shift register. These registers are fed by a latch which contains the palette attribute
     // for the next tile. Every 8 cycles, the latch is loaded with the palette attribute for the next tile.
     //
-    private int backgroundTileAttr;
+    private int shiftRegister;
+    // Name table byte
+    private byte nameTableByte;
+    // Attribute table byte
+    private byte attrTableByte;
+    //Pattern table tile low
+    private byte tileLow;
+    //Pattern table tile high (+8 bytes from pattern table tile low)
+    private byte tileHigh;
+
     private int cycles;
     //Record current scan line index
     protected int scanline;
@@ -112,7 +124,7 @@ public class PPURender implements CycleDriver {
         if (this.scanline == 241) {
             //A frame render finish immediate output video
             this.ppu.context.videoOutput(this.frame);
-            if (ppu.control.generateVBlankNMI()) {
+            if (ppu.ctr.generateVBlankNMI()) {
                 this.ppu.fireNMI();
                 this.ppu.status.set(PStatus.V_BLANK_OCCUR);
             }
@@ -139,6 +151,7 @@ public class PPURender implements CycleDriver {
     public void render() {
         //
         // Pre-render scanline (-1 or 261)
+        //
         // This is a dummy scanline, whose sole purpose is to fill the shift registers with the data for the first two tiles of the next scanline.
         // Although no pixels are rendered for this scanline, the PPU still makes the same memory accesses it would for a regular scanline.
         // This scanline varies in length, depending on whether an even or an odd frame is being rendered. For odd frames,
@@ -162,14 +175,33 @@ public class PPURender implements CycleDriver {
         //
         var visibleLine = this.scanline < 240;
         //
-        // Cycle 0
-        // This is an idle cycle. The value on the PPU address bus during this cycle appears to be the same CHR
-        // address that is later used to fetch the low background tile byte starting at dot 5 (possibly calculated
-        // during the two unused NT fetches at the end of the previous scanline).
+        // Cycles 1-256
+        //
+        // The data for each tile is fetched during this phase. Each memory access takes 2 PPU cycles to complete,
+        // and 4 must be performed per tile:
+        //
+        // 1.Nametable byte
+        // 2.Attribute table byte
+        // 3.Pattern table tile low
+        // 4.Pattern table tile high (+8 bytes from pattern table tile low)
+        //
+        // The data fetched from these accesses is placed into internal latches, and then fed to the appropriate
+        // shift registers when it's time to do so (every 8 cycles). Because the PPU can only fetch an attribute
+        // byte every 8 cycles, each sequential string of 8 pixels is forced to have the same palette attribute.
+        // Sprite zero hits act as if the image starts at cycle 2 (which is the same cycle that the shifters
+        // shift for the first time), so the sprite zero flag will be raised at this point at the earliest. Actual pixel
+        // output is delayed further due to internal render pipelining, and the first pixel is output during cycle 4.
+        // The shifters are reloaded during ticks 9, 17, 25, ..., 257.
+        //
+        // Note: At the beginning of each scanline, the data for the first two tiles is already loaded into the shift
+        // registers (and ready to be rendered), so the first tile that gets fetched is Tile 3.
+        // While all of this is going on, sprite evaluation for the next scanline is taking place as a seperate process,
+        // independent to what's happening here.
         //
         var visibleCycle = this.cycles > 0 && this.cycles <= 256;
         //
         // Cycles 321-336
+        //
         // This is where the first two tiles for the next scanline are fetched, and loaded into the shift registers. Again,
         // each memory access takes 2 PPU cycles to complete, and 4 are performed for the two tiles:
         //
@@ -187,16 +219,119 @@ public class PPURender implements CycleDriver {
         //Whether render is enable
         var enable = (background || sprite);
 
-        if (enable) {
-            if (visibleLine && visibleCycle) {
-                this.renderPixel();
+        if (visibleCycle) {
+            var type = this.cycles % 8;
+            var v = this.ppu.v;
+
+            switch (type) {
+                case 1 -> this.readTileIdx(v);
+                case 3 -> this.readTileAttr(v);
+                case 5 -> this.readTileOffset(v, false);
+                case 7 -> this.readTileOffset(v, true);
             }
+        }
+
+        // The coarse X component of v needs to be incremented when the next tile is reached.
+        if (preLine) {
+            this.incX();
+        }
+        //
+        // If rendering is enabled, fine Y is incremented at dot 256 of each scanline, overflowing to coarse Y,and
+        // finally adjusted to wrap among the nametables vertically.Bits 12-14 are fine Y. Bits 5-9 are coarse Y.
+        // Bit 11 selects the vertical nametable.
+        //
+        if (background && cycles == 256) {
+            this.incY();
         }
     }
 
-    private void renderPixel() {
-        var x = this.cycles - 1;
-        var y = this.scanline;
+    /**
+     * <b>
+     * The high bits of v are used for fine Y during rendering, and addressing nametable data only
+     * requires 12 bits, with the high 2 CHR address lines fixed to the 0x2000 region.
+     * <b/>
+     * <pre>
+     *      yyy NN YYYYY XXXXX
+     *      ||| || ||||| +++++-- coarse X scroll
+     *      ||| || +++++-------- coarse Y scroll
+     *      ||| ++-------------- nametable select
+     *      +++----------------- fine Y scroll
+     * </pre>
+     */
+    private void readTileIdx(int v) {
+        var idx = 0x2000 | (v & 0x0fff);
+        this.nameTableByte = this.ppu.iRead(idx);
     }
 
+    /**
+     * <b>The low 12 bits of the attribute address are composed in the following way:</b>
+     * <pre>
+     *      NN 1111 YYY XXX
+     *      || |||| ||| +++-- high 3 bits of coarse X (x/4)
+     *      || |||| +++------ high 3 bits of coarse Y (y/4)
+     *      || ++++---------- attribute offset (960 bytes)
+     *      ++--------------- nametable select
+     * </pre>
+     */
+    private void readTileAttr(int v) {
+        var idx = 0x23c0 | (v & 0x0c00) | (v >> 4) & 0x38 | (v >> 2) & 0x07;
+        this.attrTableByte = this.ppu.iRead(idx);
+    }
+
+    private void readTileOffset(int v, boolean high) {
+        var fineY = (v >> 12) & 7;
+        var nameTable = this.ppu.ctr.nameTableAddr();
+        var address = nameTable + uint8(this.nameTableByte) * 16 + fineY;
+        if (!high) {
+            this.tileLow = this.ppu.iRead(address);
+        } else {
+            this.tileHigh = this.ppu.iRead(address + 8);
+        }
+    }
+
+    /**
+     * Bits 0-4 are incremented,with overflow toggling bit 10. This means that bits 0-4 count from 0 to 31 across
+     * a single nametable,and bit 10 selects the current nametable horizontally.
+     */
+    private void incX() {
+        var v = this.ppu.v;
+        if ((v & 0x001f) == 31) {
+            v &= ~0x001f;
+            v ^= 0x0400;
+        } else {
+            v += 1;
+        }
+        this.ppu.v = v;
+    }
+
+    /**
+     *
+     * Row 29 is the last row of tiles in a nametable. To wrap to the next nametable when incrementing coarse Y
+     * from 29, the vertical nametable is switched by toggling bit 11, and coarse Y wraps to row 0.
+     * Coarse Y can be set out of bounds (> 29), which will cause the PPU to read the attribute data stored there
+     * as tile data. If coarse Y is incremented from 31, it will wrap to 0, but the nametable will not switch.
+     * For this reason, a write >= 240 to $2005 may appear as a "negative" scroll value, where 1 or 2 rows of
+     * attribute data will appear before the nametable's tile data is reached. (Some games use this to move the
+     * top of the nametable out of the <a href="https://www.nesdev.org/wiki/Overscan">Overscan</a> area.)
+     *
+     */
+    private void incY() {
+        var v = this.ppu.v;
+        if ((v & 0x7000) != 0x7000) {
+            v += 0x1000;
+        } else {
+            v &= ~0x7000;
+            var y = (v & 0x03e0) >> 5;
+            if (y == 29) {
+                y = 0;
+                v ^= 0x8000;
+            } else if (y == 31) {
+                y = 0;
+            } else {
+                y += 1;
+            }
+            v = (v & 0x03e0 | y << 5);
+        }
+        this.ppu.v = v;
+    }
 }
