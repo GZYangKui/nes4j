@@ -81,7 +81,7 @@ public class Register<T extends Enum<?>> {
         return BinUtil.toBinStr(this.bits);
     }
 
-    public final Register<T> _clone() {
+    public final Register<T> copy() {
         return new Register<>(this.bits);
     }
 }

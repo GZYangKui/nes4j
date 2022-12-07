@@ -214,7 +214,7 @@ public class CPU {
         if (instruction == CPUInstruction.PHA) {
             this.push((byte) this.ra);
         } else {
-            var flags = this.status._clone();
+            var flags = this.status.copy();
             flags.set(ICPUStatus.BK, ICPUStatus.BK2);
             this.push(flags.getBits());
         }
@@ -349,7 +349,7 @@ public class CPU {
 
         this.pushInt(this.pc);
 
-        var flag = this.status._clone();
+        var flag = this.status.copy();
 
         //https://www.nesdev.org/wiki/Status_flags#The_B_flag
         flag.set(ICPUStatus.BK2);

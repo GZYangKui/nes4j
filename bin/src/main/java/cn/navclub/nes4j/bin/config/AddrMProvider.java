@@ -1,6 +1,5 @@
 package cn.navclub.nes4j.bin.config;
 
-import cn.navclub.nes4j.bin.config.AddressMode;
 import cn.navclub.nes4j.bin.core.Bus;
 import cn.navclub.nes4j.bin.core.CPU;
 import lombok.Getter;
