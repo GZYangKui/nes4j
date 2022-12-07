@@ -240,7 +240,7 @@ public class PPURender implements CycleDriver {
         // finally adjusted to wrap among the nametables vertically.Bits 12-14 are fine Y. Bits 5-9 are coarse Y.
         // Bit 11 selects the vertical nametable.
         //
-        if (background && cycles == 256) {
+        if (enable && cycles == 256) {
             this.incY();
         }
     }
