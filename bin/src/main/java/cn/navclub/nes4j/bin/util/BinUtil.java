@@ -45,9 +45,4 @@ public class BinUtil {
     public static int uint16(int i) {
         return i & 0xffff;
     }
-
-    public static byte fixBit(byte b, int i, byte ifPresent, byte ifAbsent) {
-        return (b & (1 << i)) != 0 ? ifPresent : ifAbsent;
-    }
-
 }
