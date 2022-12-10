@@ -15,7 +15,7 @@ import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 
 /**
  *
- *
+ *<pre>
  * iNES file format
  * An iNES file consists of the following sections, in order:
  *
@@ -152,6 +152,7 @@ import static cn.navclub.nes4j.bin.util.BinUtil.int8;
  * If byte 7 AND $0C = $04, archaic iNES.
  * If byte 7 AND $0C = $00, and bytes 12-15 are all 0, then iNES.
  * Otherwise, iNES 0.7 or archaic iNES.
+ * </pre>
  *
  */
 @Getter

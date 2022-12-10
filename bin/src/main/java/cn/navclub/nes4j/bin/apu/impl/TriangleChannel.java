@@ -44,6 +44,7 @@ public class TriangleChannel extends Channel {
     }
 
     /**
+     * <pre>
      *                    +---------+    +---------+
      *                    |LinearCtr|    | Length  |
      *                    +---------+    +---------+
@@ -52,7 +53,7 @@ public class TriangleChannel extends Channel {
      *     +---------+        |\             |\         +---------+    +---------+
      *     |  Timer  |------->| >----------->| >------->|Sequencer|--->|   DAC   |
      *     +---------+        |/             |/         +---------+    +---------+
-     *
+     *</pre>
      */
     @Override
     public int output() {

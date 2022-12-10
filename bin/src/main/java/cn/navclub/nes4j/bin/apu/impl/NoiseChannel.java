@@ -78,7 +78,7 @@ public class NoiseChannel extends Channel {
     }
 
     /**
-     *
+     *<pre>
      *     +---------+    +---------+    +---------+
      *     |  Timer  |--->| Random  |    | Length  |
      *     +---------+    +---------+    +---------+
@@ -87,7 +87,7 @@ public class NoiseChannel extends Channel {
      *     +---------+        |\             |\         +---------+
      *     |Envelope |------->| >----------->| >------->|   DAC   |
      *     +---------+        |/             |/         +---------+
-     *
+     *</pre>
      */
     @Override
     public int output() {

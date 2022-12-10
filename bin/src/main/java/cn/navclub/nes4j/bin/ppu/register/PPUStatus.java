@@ -4,6 +4,7 @@ import cn.navclub.nes4j.bin.config.PStatus;
 import cn.navclub.nes4j.bin.config.Register;
 
 /**
+ * <pre>
  * Status ($2002) < read
  * Common name: PPUSTATUS
  * Description: PPU status register
@@ -30,6 +31,7 @@ import cn.navclub.nes4j.bin.config.Register;
  *            Set at dot 1 of line 241 (the line *after* the post-render
  *            line); cleared after reading $2002 and at dot 1 of the
  *            pre-render line.
+ * </pre>
  */
 public class PPUStatus extends Register<PStatus> {
 }

@@ -3,7 +3,6 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.config.*;
 import cn.navclub.nes4j.bin.core.register.CPUStatus;
-import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

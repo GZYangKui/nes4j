@@ -53,8 +53,8 @@ public class PulseChannel extends Channel {
         this.updateTimeValue(address, b);
     }
 
-    /*
-     *
+    /**
+     *<pre>
      *                    +---------+    +---------+
      *                    |  Sweep  |--->|Timer / 2|
      *                    +---------+    +---------+
@@ -68,7 +68,7 @@ public class PulseChannel extends Channel {
      *     +---------+        |\             |\             |\          +---------+
      *     |Envelope |------->| >----------->| >----------->| >-------->|   DAC   |
      *     +---------+        |/             |/             |/          +---------+
-     *
+     *</pre>
      */
     @Override
     public int output() {
