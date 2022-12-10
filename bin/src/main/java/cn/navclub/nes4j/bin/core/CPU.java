@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
 import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
 
@@ -56,9 +57,9 @@ public class CPU {
         this.rx = 0;
         this.ry = 0;
         this.ra = 0;
-        this.status.reset();
         this.sp = STACK_RESET;
         this.pc = this.bus.readInt(PC_RESET);
+        this.status.setBits(int8(0b100100));
     }
 
 
@@ -75,7 +76,7 @@ public class CPU {
     }
 
     public byte pop() {
-        this.sp = MathUtil.u8add(this.sp, 1);
+        this.sp = u8add(this.sp, 1);
         return this.bus.read(STACK + this.sp);
     }
 
@@ -255,12 +256,12 @@ public class CPU {
         if (instruction == CPUInstruction.INC) {
             var address = this.modeProvider.getAbsAddr(mode);
             var m = this.bus.ReadU8(address);
-            result = MathUtil.u8add(m, 1);
+            result = u8add(m, 1);
             this.bus.WriteU8(address, result);
         } else if (instruction == CPUInstruction.INX) {
-            this.rx = result = MathUtil.u8add(this.rx, 1);
+            this.rx = result = u8add(this.rx, 1);
         } else {
-            this.ry = result = MathUtil.u8add(this.ry, 1);
+            this.ry = result = u8add(this.ry, 1);
         }
         this.NZUpdate(result);
     }

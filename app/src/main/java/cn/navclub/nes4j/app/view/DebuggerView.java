@@ -33,12 +33,13 @@ public class DebuggerView extends Stage implements Debugger {
     private final PPUControlPane ppuControlPane;
     private NES instance;
     private boolean stepInto;
+    private volatile BreakLine currentLine;
 
     public DebuggerView(final Window owner) {
 
         var topBox = new HBox();
-        var tabPane = new TabPane();
         this.map = new HashMap<>();
+        var tabPane = new TabPane();
         this.debuggers = new HashMap<>();
         this.listView = new ListView<>();
         var borderPane = new BorderPane();
@@ -117,12 +118,25 @@ public class DebuggerView extends Stage implements Debugger {
             var index = this.map.get(programCounter);
             if (index != null) {
                 Platform.runLater(() -> {
-                    //scroll debug line
-                    this.listView.scrollTo(index);
-                    //Select debug line
-                    this.listView.getSelectionModel().select(index);
+                    var item = this.listView.getItems().get(index);
+                    if (item != this.currentLine) {
+                        if (this.currentLine != null) {
+                            this.currentLine.debug(false);
+                        }
+                        this.currentLine = item;
+                        this.currentLine.debug(true);
+                    }
+                    this.listView.scrollTo(item);
                     this.controlPane.update(context);
                     this.ppuControlPane.update(context);
+                    this.listView.getSelectionModel().select(item);
+                });
+            }
+        } else {
+            if (this.currentLine != null) {
+                Platform.runLater(() -> {
+                    this.currentLine.debug(false);
+                    this.currentLine = null;
                 });
             }
         }
@@ -150,7 +164,7 @@ public class DebuggerView extends Stage implements Debugger {
         if (line.isDrag()) {
             this.debuggers.remove(index);
         } else {
-            debuggers.put(index, null);
+            this.debuggers.put(index, null);
         }
     }
 

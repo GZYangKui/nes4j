@@ -99,9 +99,7 @@ public class NES {
             }
             for (int i = 0; i < cycles; i++) {
                 this.apu.tick();
-                for (int j = 0; j < 3; j++) {
-                    this.ppu.tick();
-                }
+                this.ppu.tick();
             }
             this.cycles += cycles;
         }
@@ -113,6 +111,19 @@ public class NES {
             this.interrupt = null;
         }
         return temp;
+    }
+
+    /**
+     *
+     * Reset NES all core component
+     *
+     */
+    public void reset() {
+        //Reset release debug lock
+        this.release();
+        this.apu.reset();
+        this.ppu.reset();
+        this.cpu.reset();
     }
 
     /**

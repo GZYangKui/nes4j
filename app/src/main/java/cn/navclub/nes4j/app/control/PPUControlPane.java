@@ -17,7 +17,7 @@ public class PPUControlPane extends Tab {
     private final TextField oaddr = new TextField();
     private final TextField paddr = new TextField();
     private final TextField scanline = new TextField();
-    private final TextField cycles = new TextField();
+    private final TextField pixel = new TextField();
 
 
     public PPUControlPane() {
@@ -29,7 +29,7 @@ public class PPUControlPane extends Tab {
         var l5 = new Label("Scanline");
         var l6 = new Label("X Scroll");
         var l7 = new Label("Y Scroll");
-        var l8 = new Label("CYCLES");
+        var l8 = new Label("Pixel");
 
         var gridPane = new GridPane();
 
@@ -55,7 +55,7 @@ public class PPUControlPane extends Tab {
         gridPane.add(y, 3, 3);
 
         gridPane.add(l8, 0, 4);
-        gridPane.add(cycles, 1, 4);
+        gridPane.add(pixel, 1, 4);
 
         GridPane.setHgrow(ctrl, Priority.ALWAYS);
         GridPane.setHgrow(mask, Priority.ALWAYS);
@@ -72,7 +72,7 @@ public class PPUControlPane extends Tab {
 
         this.x.setText(Integer.toString(ppu.x()));
         this.y.setText(Integer.toString(ppu.y()));
-        this.cycles.setText(Long.toString(ppu.getCycles()));
+        this.pixel.setText(Integer.toString(ppu.pixel()));
         this.scanline.setText(Long.toString(ppu.getScanline()));
         this.paddr.setText(String.format("$%s", Integer.toHexString(ppu.getV())));
         this.oaddr.setText(String.format("$%s", BinUtil.toHexStr((byte) ppu.getOamAddr())));

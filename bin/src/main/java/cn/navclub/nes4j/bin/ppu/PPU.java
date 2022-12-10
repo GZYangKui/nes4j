@@ -8,12 +8,12 @@ import cn.navclub.nes4j.bin.config.CPUInterrupt;
 import cn.navclub.nes4j.bin.config.NameMirror;
 import cn.navclub.nes4j.bin.config.PStatus;
 import cn.navclub.nes4j.bin.ppu.register.PPUStatus;
-import cn.navclub.nes4j.bin.util.MathUtil;
 import lombok.Getter;
 import lombok.Setter;
 
-import static cn.navclub.nes4j.bin.util.BinUtil.uint16;
-import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
+import static cn.navclub.nes4j.bin.util.BinUtil.*;
+import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
+import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
 
 
 /**
@@ -35,7 +35,7 @@ public class PPU implements Component {
     protected final byte[] oam;
     @Getter
     //https://www.nesdev.org/wiki/PPU_palettes
-    protected final byte[] paletteTable;
+    protected final byte[] palette;
     @Getter
     private int oamAddr;
     private byte byteBuf;
@@ -53,10 +53,6 @@ public class PPU implements Component {
     protected byte w;
     //Fine X scroll (3 bits)
     protected byte x;
-    @Getter
-    private long cycles;
-
-    protected boolean nmi;
 
     public PPU(final NES context, byte[] ch, NameMirror mirrors) {
         this.oamAddr = 0;
@@ -69,7 +65,7 @@ public class PPU implements Component {
         this.ctr = new PPUControl();
         this.ch = new byte[8 * 1024];
         this.status = new PPUStatus();
-        this.paletteTable = new byte[32];
+        this.palette = new byte[32];
         this.render = new PPURender(this);
 
         System.arraycopy(ch, 0, this.ch, 0, Math.min(this.ch.length, ch.length));
@@ -81,21 +77,34 @@ public class PPU implements Component {
 
 
     @Override
+    public void reset() {
+        this.t = 0;
+        this.v = 0;
+        this.w = 0;
+        this.x = 0;
+        this.render.reset();
+        this.ctr.setBits(int8(0));
+        this.mask.setBits(int8(0));
+        this.status.setBits(int8(0));
+    }
+
+    @Override
     public void tick() {
-        this.cycles++;
-        this.render.tick();
+        for (int i = 0; i < 3; i++) {
+            this.render.tick();
+        }
     }
 
     public void DMAWrite(byte[] arr) {
         for (byte b : arr) {
             this.oam[this.oamAddr] = b;
-            this.oamAddr = MathUtil.u8add(this.oamAddr, 1);
+            this.oamAddr = u8add(this.oamAddr, 1);
         }
     }
 
     public void OAMWrite(byte b) {
         this.oam[this.oamAddr] = b;
-        this.oamAddr = MathUtil.u8sbc(this.oamAddr, 1);
+        this.oamAddr = u8sbc(this.oamAddr, 1);
     }
 
     public byte readOam() {
@@ -148,12 +157,12 @@ public class PPU implements Component {
 
         if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
             var mirror = addr - 0x10;
-            temp = this.paletteTable[mirror - 0x3f00];
+            temp = this.palette[mirror - 0x3f00];
         }
 
         //读取调色板数据
         if (addr >= 0x3f00 && addr <= 0x3fff) {
-            temp = this.paletteTable[addr - 0x3f00];
+            temp = this.palette[addr - 0x3f00];
         }
 
         this.v += this.ctr.VRamIncrement();
@@ -161,7 +170,7 @@ public class PPU implements Component {
         return temp;
     }
 
-    protected byte iRead(int address) {
+    protected int iRead(int address) {
         final byte b;
         //Read chr-rom data
         if (address < 0x2000) {
@@ -176,7 +185,7 @@ public class PPU implements Component {
             b = 0;
         }
 
-        return b;
+        return uint8(b);
     }
 
     @Override
@@ -193,12 +202,12 @@ public class PPU implements Component {
 
         if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
             addr = addr - 0x10;
-            this.paletteTable[addr - 0x3f00] = b;
+            this.palette[addr - 0x3f00] = b;
         }
 
         //更新调色板数据
         if (addr >= 0x3f00 && addr <= 0x3fff) {
-            this.paletteTable[addr - 0x3f00] = b;
+            this.palette[addr - 0x3f00] = b;
         }
 
         this.v += this.ctr.VRamIncrement();
@@ -228,18 +237,12 @@ public class PPU implements Component {
     }
 
     public void writeCtr(byte b) {
-        //After power/reset, writes to this register are ignored for about 30,000 cycles.
-        if (this.cycles < 30000) {
-            return;
-        }
-
         var temp = this.ctr.generateVBlankNMI();
         this.ctr.update(b);
         if (!temp && this.ctr.generateVBlankNMI() && this.status.contain(PStatus.V_BLANK_OCCUR)) {
             this.fireNMI();
         }
-
-        //t: ...GH.. ........ <- d: ......GH
+        //t: ...NN.. ........ <- d: ......NN
         this.t = uint16(this.t & 0xf3ff | (uint8(b) & 0x03) << 10);
     }
 
@@ -271,11 +274,16 @@ public class PPU implements Component {
     }
 
     public int x() {
-        return this.v & 0x1f;
+        return (this.v & 0x1f) | uint8(this.x) << 5;
     }
 
     public int y() {
-        return (this.v >> 5) & 0x1f;
+        return (this.v >> 5) & 0x1f | (this.v >> 7 & 0x1f);
+    }
+
+
+    public int pixel() {
+        return this.render.pixel;
     }
 
     /**
@@ -284,10 +292,7 @@ public class PPU implements Component {
      *
      */
     protected void fireNMI() {
-        if (this.nmi) {
-            return;
-        }
-        this.nmi = true;
+        this.status.set(PStatus.V_BLANK_OCCUR);
         this.context.interrupt(CPUInterrupt.NMI);
     }
 }

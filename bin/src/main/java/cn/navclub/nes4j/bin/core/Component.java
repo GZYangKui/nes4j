@@ -26,6 +26,13 @@ public interface Component extends CycleDriver {
     }
 
     /**
+     * 组件触发重置
+     */
+    default void reset() {
+
+    }
+
+    /**
      *
      * 组件快照,用于存档使用
      *
@@ -39,7 +46,7 @@ public interface Component extends CycleDriver {
      * 加载组件快照,用于恢复存档
      *
      */
-    default void load(byte[] snapshot){
+    default void load(byte[] snapshot) {
 
     }
 }

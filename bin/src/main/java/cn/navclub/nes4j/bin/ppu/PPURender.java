@@ -1,11 +1,14 @@
 package cn.navclub.nes4j.bin.ppu;
 
-import cn.navclub.nes4j.bin.config.MaskFlag;
 import cn.navclub.nes4j.bin.config.PStatus;
 import cn.navclub.nes4j.bin.function.CycleDriver;
+import cn.navclub.nes4j.bin.ppu.register.PPUMask;
 import lombok.Getter;
 
-import static cn.navclub.nes4j.bin.util.BinUtil.*;
+import java.util.Arrays;
+
+import static cn.navclub.nes4j.bin.util.BinUtil.uint16;
+import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 
 /**
  *
@@ -58,31 +61,17 @@ public class PPURender implements CycleDriver {
 
     @Getter
     private final int[][] sysPalette;
-
     private final PPU ppu;
-
-
     private final Frame frame;
-    //
-    // 2 16-bit shift registers - These contain the pattern table data for two tiles.
-    // Every 8 cycles, the data for the next tile is loaded into the upper 8 bits of this shift register.
-    // Meanwhile, the pixel to render is fetched from one of the lower 8 bits.
-    //
-    private long tileData;
-    //
-    // 2 8-bit shift registers - These contain the palette attributes for the lower 8 pixels
-    // of the 16-bit shift register. These registers are fed by a latch which contains the palette attribute
-    // for the next tile. Every 8 cycles, the latch is loaded with the palette attribute for the next tile.
-    //
-    private int shiftRegister;
+    private final PPUMask mask;
     // Name table byte
-    private byte nameTableByte;
+    private int tileIdx;
     // Attribute table byte
-    private byte attrTableByte;
+    private int tileAttr;
     //Pattern table tile low
-    private byte tl;
+    private int tileLow;
     //Pattern table tile high (+8 bytes from pattern table tile low)
-    private byte th;
+    private int tileHigh;
 
     private int cycles;
     //Record current scan line index
@@ -90,22 +79,31 @@ public class PPURender implements CycleDriver {
     //Record already trigger frame counter
     private long frameCounter;
     private int spriteCount;
-    //Secondary OAM (holds 8 sprites for the current scanline)
-    private final int[] sprites;
-//    //8 counters - These contain the X positions for up to 8 sprites.
-//    private final int[] spriteX;
-//    //8 latches - These contain the attribute bytes for up to 8 sprites.
-//    private final byte[] spriteAttr;
+    //
+    // Current scan line sprite pixel.
+    //
+    // piiiiii bbbbbbbb gggggggg rrrrrrrr
+    // ||||||| |||||||| |||||||| ||||||||
+    // ||||||| |||||||| |||||||| ||||||||
+    // ||||||| |||||||| |||||||| ++++++++---------- red
+    // ||||||| |||||||| ++++++++------------------- green
+    // ||||||| ++++++++---------------------------- Blur
+    // |++++++---------------------------------------------- Sprite index
+    // +---------------------------------------------------- Priority (0: in front of background; 1: behind background)
+    //
+    private final int[] foreground;
+    // Background pixel
+    private final int[] background;
+    //Record current pixel on scanline
+    protected int pixel;
 
     public PPURender(PPU ppu) {
         this.ppu = ppu;
-        this.cycles = 340;
-        this.scanline = 240;
-        this.frameCounter = 0;
+        this.mask = ppu.mask;
         this.frame = new Frame();
-        this.sprites = new int[8];
-//        this.spriteX = new int[8];
-//        this.spriteAttr = new byte[8];
+
+        this.background = new int[8];
+        this.foreground = new int[256];
 
         this.sysPalette = new int[DEF_SYS_PALETTE.length][];
 
@@ -115,6 +113,16 @@ public class PPURender implements CycleDriver {
             System.arraycopy(src, 0, dst, 0, dst.length);
             this.sysPalette[i] = dst;
         }
+
+        this.reset();
+    }
+
+    public void reset() {
+        this.cycles = 340;
+        this.scanline = 240;
+        this.frameCounter = 0;
+
+        this.frame.clear();
     }
 
     @Override
@@ -128,13 +136,10 @@ public class PPURender implements CycleDriver {
 
         this.render();
 
-        if (this.scanline == 241) {
+        if (this.scanline == 241 && this.cycles == 1) {
+            this.ppu.fireNMI();
             //A frame render finish immediate output video
             this.ppu.context.videoOutput(this.frame);
-            if (ppu.ctr.generateVBlankNMI()) {
-                this.ppu.fireNMI();
-                this.ppu.status.set(PStatus.V_BLANK_OCCUR);
-            }
         }
 
         //
@@ -219,37 +224,23 @@ public class PPURender implements CycleDriver {
         //
         var nextLine = this.cycles >= 321 && this.cycles <= 336;
 
-        var mask = this.ppu.getMask();
-        var sprite = mask.contain(MaskFlag.SHOW_SPRITES);
-        var background = mask.contain(MaskFlag.SHOW_BACKGROUND);
-
-        //Whether render is enable
-        var enable = (background || sprite);
-
-        if (enable) {
-            if (visibleLine && visibleCycle) {
-                this.renderPixel();
+        if (this.mask.enableRender()) {
+            if (this.cycles == 257 && visibleLine && this.mask.showSprite()) {
+                this.spriteEval();
             }
-            if (visibleCycle) {
 
-                if (this.cycles == 257) {
-                    this.spriteEvaluate();
-                }
-
-                var type = this.cycles % 8;
+            if (visibleLine && visibleCycle) {
                 var v = this.ppu.v;
-                switch (type) {
+                switch (this.cycles % 8) {
+                    case 0 -> this.tileMut();
                     case 1 -> this.readTileIdx(v);
                     case 3 -> this.readTileAttr(v);
-                    case 5 -> this.readTileOffset(v, false);
-                    case 7 -> this.readTileOffset(v, true);
+                    case 5 -> this.readTileByte(v, false);
+                    case 7 -> this.readTileByte(v, true);
                 }
+                this.renderPixel();
             }
 
-            // The coarse X component of v needs to be incremented when the next tile is reached.
-            if (preLine) {
-                this.incX();
-            }
             //
             // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
             // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
@@ -279,22 +270,74 @@ public class PPURender implements CycleDriver {
         }
     }
 
+    private void tileMut() {
+        Arrays.fill(this.background, 0, this.background.length, 0);
+
+        var x = (this.ppu.v & 0x1f) / 16;
+        var y = ((this.ppu.v >> 5) & 0x1f) / 16;
+        //Top left
+        var tl = (x == 0 && y == 0);
+        //Top right
+        var tr = (x == 1 && y == 0);
+        //Bottom left
+        var bl = (x == 0 && y == 1);
+        //Bottom right
+        var br = (x == 1 && y == 1);
+        var idx = 0;
+        if (tl) {
+            idx = this.tileAttr;
+        }
+        if (tr) {
+            idx = this.tileAttr >> 2;
+        }
+        if (bl) {
+            idx = this.tileAttr >> 4;
+        }
+        if (br) {
+            idx = this.tileAttr >> 6;
+        }
+
+        idx = 1 + (idx & 0x03) * 4;
+
+        var palette = new byte[]{
+                this.ppu.palette[0],
+                this.ppu.palette[idx],
+                this.ppu.palette[idx + 1],
+                this.ppu.palette[idx + 2]
+        };
+
+        for (int i = 0; i < 8; i++) {
+            var lower = (this.tileLow >> i) & 0x01;
+            var upper = (this.tileHigh >> (7 - i));
+            var rgb = switch (lower | upper << 1) {
+                case 1 -> sysPalette[palette[1]];
+                case 2 -> sysPalette[palette[2]];
+                case 3 -> sysPalette[palette[3]];
+                default -> sysPalette[ppu.palette[0]];
+            };
+            this.background[i] = rgb[0] << 16 | rgb[1] << 8 | rgb[2];
+        }
+
+        //The coarse X component of v needs to be incremented when the next tile is reached.
+        this.incX();
+    }
+
     /**
      * <b>
      * The high bits of v are used for fine Y during rendering, and addressing nametable data only
      * requires 12 bits, with the high 2 CHR address lines fixed to the 0x2000 region.
      * <b/>
      * <pre>
-     *      yyy NN YYYYY XXXXX
-     *      ||| || ||||| +++++-- coarse X scroll
-     *      ||| || +++++-------- coarse Y scroll
-     *      ||| ++-------------- nametable select
-     *      +++----------------- fine Y scroll
+     *      ... NN YYYYY XXXXX
+     *          || ||||| +++++-- coarse X scroll
+     *          || +++++-------- coarse Y scroll
+     *          ++-------------- nametable select
+     *
      * </pre>
      */
     private void readTileIdx(int v) {
         var idx = 0x2000 | (v & 0x0fff);
-        this.nameTableByte = this.ppu.iRead(idx);
+        this.tileIdx = this.ppu.iRead(idx);
     }
 
     /**
@@ -308,18 +351,42 @@ public class PPURender implements CycleDriver {
      * </pre>
      */
     private void readTileAttr(int v) {
-        var idx = 0x23c0 | (v & 0x0c00) | (v >> 4) & 0x38 | (v >> 2) & 0x07;
-        this.attrTableByte = this.ppu.iRead(idx);
+        var address = 0x23c0 | (v & 0x0c00) | (v >> 4) & 0x38 | (v >> 2) & 0x07;
+        this.tileAttr = this.ppu.iRead(address);
     }
 
-    private void readTileOffset(int v, boolean high) {
+    /**
+     * From ppu address get fine y[yyy] after query tile in current position pixel.
+     *
+     * <b>PPU address:</b>
+     *
+     * <pre>
+     *  yyy .. ..... .....
+     *  |||
+     *  +++----------------- fine Y scroll
+     * </pre>
+     *
+     * <b>Explain example:</b>
+     *
+     * <pre>
+     *  00000000 00010000
+     *  10000000 00100000  <- y(Render current line 8 pixel)
+     *  00000100 00010000
+     *  00010000 00011000
+     *  00000000 00000000
+     *  00001000 00010000
+     *  00000100 00111000
+     *  00000010 00000000
+     * </pre>
+     */
+    private void readTileByte(int v, boolean high) {
         var y = (v >> 12) & 7;
         var table = ppu.ctr.bkNamePatternTable();
-        var address = table + uint8(this.nameTableByte) * 16 + y;
+        var address = table + this.tileIdx * 16 + y;
         if (!high) {
-            this.tl = this.ppu.iRead(address);
+            this.tileLow = this.ppu.iRead(address);
         } else {
-            this.th = this.ppu.iRead(address + 8);
+            this.tileHigh = this.ppu.iRead(address + 8);
         }
     }
 
@@ -372,56 +439,91 @@ public class PPURender implements CycleDriver {
     private void renderPixel() {
         var x = this.cycles - 1;
         var y = this.scanline;
-        var sprite = int8(0);
-        var background = this.backgroundPixel();
-        if (x < 8 && !this.ppu.mask.contain(MaskFlag.SHOW_BACKGROUND)) {
-            background = 0;
-        }
-        if (x < 8 && this.ppu.mask.contain(MaskFlag.LEFTMOST_8PXL_SPRITE)) {
-            sprite = 0;
+        var spriteZeroHit = false;
+        var pixel = this.backgroundPixel(x);
+        if (this.mask.showSprite()) {
+            var value = this.foreground[x];
+            var cover = (value >> 30 & 0x01) == 1;
+            var index = (value >> 24) & 0x3f;
+            if (cover || !this.mask.showBackground()) {
+                pixel = value & 0xffffff;
+            }
+            spriteZeroHit = (index == 0) && this.cycles < 255;
         }
 
-        var s = sprite % 4 != 0;
-        var b = background % 4 != 0;
-        var pixel = int8(0);
-        if (!s && !b) {
-            pixel = 0;
-        } else if (!b && s) {
-            pixel = int8(sprite | 0x10);
-        } else if (b && !s) {
-            pixel = background;
-        } else {
-            if (x == 255) {
-                this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
-            }
+        if ((this.mask.enableRender()) && spriteZeroHit) {
+            this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
         }
+
+        this.pixel = x;
         this.frame.update(x, y, pixel);
     }
 
-    private byte backgroundPixel() {
-        if (!this.ppu.mask.contain(MaskFlag.SHOW_BACKGROUND)) {
+    private int backgroundPixel(int x) {
+        if (!this.mask.showBackground()) {
             return 0;
         }
-        var b = this.tileData >> ((7 - this.ppu.x) * 4);
-        return int8((int) (b & 0x0f));
+        return this.background[x % 8];
     }
 
     /**
      * <a href="https://www.nesdev.org/wiki/PPU_sprite_evaluation">Sprite Evaluation</a>
      */
-    private void spriteEvaluate() {
+    private void spriteEval() {
+        Arrays.fill(this.foreground, 0, this.foreground.length, 0);
+
         var count = 0;
         var size = this.ppu.ctr.spriteSize();
-        for (var i = 0; i < 64; i += 4) {
-            //Y position of top of sprite
-            var y = this.ppu.oam[i * 4];
-            var df = this.scanline - uint8(y);
+        for (var i = 0; i < 64; i++) {
+            var offset = i * 4;
+            var y = uint8(this.ppu.oam[offset]);
+            var df = this.scanline - y;
             //Whether sprite fall on current scanline
             if (df < 0 || df >= size) {
                 continue;
             }
             if (count < 8) {
-                this.sprites[count] = i;
+                var x = uint8(this.ppu.oam[offset + 3]);
+                var idx = uint8(this.ppu.oam[offset + 1]);
+                var attr = uint8(this.ppu.oam[offset + 2]);
+                //Indicates whether to flip the sprite horizontally.
+                var hf = ((attr >> 6) & 0x01) == 1;
+                //Indicates whether to flip the sprite vertically.
+                var vf = ((attr >> 7) & 0x01) == 1;
+
+                var bank = this.ppu.ctr.spritePattern8();
+
+                var base = bank + idx * 16 + (vf ? 7 - df : df);
+
+                var l = uint8(this.ppu.getCh()[bank]);
+                var r = uint8(this.ppu.getCh()[base + 8]);
+
+                var palette = this.spritePalette(attr & 0x03);
+
+
+                for (int j = 0; j < 8; j++) {
+                    var lower = (l >> j) & 0x01;
+                    var upper = (r >> (7 - j)) & 0x01;
+                    var arr = switch (lower | upper << 1) {
+                        case 1 -> this.sysPalette[palette[1]];
+                        case 2 -> this.sysPalette[palette[2]];
+                        case 3 -> this.sysPalette[palette[3]];
+                        default -> new int[]{0, 0, 0};
+                    };
+                    var b = 0;
+                    b |= (arr[0] << 16);
+                    b |= (arr[1] << 8);
+                    b |= (arr[2]);
+                    b |= ((i & 0x3f) << 24);
+                    b |= ((attr & 0x2f) << 30);
+
+                    var index = x + j;
+                    if (hf) {
+                        index = x + 7 - j;
+                    }
+                    if (index < this.foreground.length)
+                        this.foreground[index] = b;
+                }
             }
             count++;
         }
@@ -430,5 +532,15 @@ public class PPURender implements CycleDriver {
             this.ppu.status.set(PStatus.SPRITE_OVERFLOW);
         }
         this.spriteCount = count;
+    }
+
+    private byte[] spritePalette(int idx) {
+        var offset = 0x11 + idx * 4;
+        return new byte[]{
+                0,
+                ppu.palette[offset],
+                ppu.palette[offset + 1],
+                ppu.palette[offset + 2]
+        };
     }
 }

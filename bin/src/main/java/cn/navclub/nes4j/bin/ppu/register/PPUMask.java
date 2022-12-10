@@ -27,4 +27,16 @@ import cn.navclub.nes4j.bin.config.MaskFlag;
  * +--------- Emphasize blue
  * </pre>
  */
-public class PPUMask extends Register<MaskFlag> { }
+public class PPUMask extends Register<MaskFlag> {
+    public boolean showSprite() {
+        return this.contain(MaskFlag.SHOW_SPRITES);
+    }
+
+    public boolean showBackground() {
+        return this.contain(MaskFlag.SHOW_BACKGROUND);
+    }
+
+    public boolean enableRender() {
+        return this.showSprite() || this.showBackground();
+    }
+}

@@ -16,6 +16,9 @@ import java.util.Map;
 import static cn.navclub.nes4j.bin.util.BinUtil.toHexStr;
 
 public class BreakLine extends HBox {
+    private static final String DEBUG_LINE = "debug-line";
+    public static final String DEFAULT_STYLE_CLASS = "break-line";
+
     private final static Map<Integer, String> ALIAS = new HashMap<>();
 
     static {
@@ -31,7 +34,6 @@ public class BreakLine extends HBox {
         ALIAS.put(0x2007, "PPU_DATA");
     }
 
-    public static final String DEFAULT_STYLE_CLASS = "break-line";
     @Getter
     private boolean drag;
     private final Label label;
@@ -95,5 +97,15 @@ public class BreakLine extends HBox {
         this.operator.setText(text);
         this.instruct.setText(openCode.instruction().name());
         this.address.setText(String.format(":%s:", Integer.toHexString(openCode.index())));
+    }
+
+    public void debug(boolean b) {
+        var c = this.getStyleClass().contains(DEBUG_LINE);
+        if (b && !c) {
+            this.getStyleClass().add(DEBUG_LINE);
+        }
+        if (!b) {
+            this.getStyleClass().remove(DEBUG_LINE);
+        }
     }
 }

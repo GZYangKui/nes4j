@@ -170,7 +170,7 @@ public class Bus implements Component {
         //https://www.nesdev.org/wiki/PPU_programmer_reference#OAM_DMA_($4014)_%3E_write
         else if (address == 0x4014) {
             var buffer = new byte[0x100];
-            var msb = Byte.toUnsignedInt(b) << 8;
+            var msb = uint8(b) << 8;
             for (int i = 0; i < 0x100; i++) {
                 buffer[i] = this.read(msb + i);
             }

@@ -20,7 +20,7 @@ GridPane {
 }
 
 .list-view .list-cell {
-    -fx-padding: 0 .5em 0 0;
+    -fx-padding: 0;
 }
 
 .break-line {
@@ -36,4 +36,12 @@ GridPane {
 
 .break-line .break-label-drag {
     -fx-background-color: red !important;
+}
+
+.debug-line {
+    -fx-background-color: red !important;
+}
+
+.debug-line .label {
+    -fx-text-fill: #fff !important;
 }

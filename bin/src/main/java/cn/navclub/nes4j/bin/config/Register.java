@@ -63,13 +63,6 @@ public class Register<T extends Enum<?>> {
     }
 
     /**
-     * 重置当前状态
-     */
-    public final void reset() {
-        this.bits = 0b100100;
-    }
-
-    /**
      * 判断某个标识是否设置
      */
     public final boolean contain(T instance) {

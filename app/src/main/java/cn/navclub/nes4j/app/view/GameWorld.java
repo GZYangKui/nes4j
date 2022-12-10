@@ -29,6 +29,7 @@ import org.controlsfx.dialog.ExceptionDialog;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -70,6 +71,14 @@ public class GameWorld extends Stage {
 
         tool.getItems().add(debug);
         view.getItems().addAll(palette);
+
+        softRest.setOnAction(event -> {
+            if (this.instance == null) {
+                return;
+            }
+            this.instance.reset();
+        });
+
         emulator.getItems().addAll(pausePlay, softRest);
 
         menuBar.getMenus().addAll(emulator, view, tool);
@@ -168,6 +177,7 @@ public class GameWorld extends Stage {
                         .build();
                 this.instance.execute();
             } catch (Exception e) {
+                e.printStackTrace();
                 Platform.runLater(() -> this.dispose(e));
             }
         };
@@ -187,41 +197,32 @@ public class GameWorld extends Stage {
     }
 
     private void gameLoopCallback(Frame frame, JoyPad joyPad, JoyPad joyPad1) {
-        var wPixel = 3;
-        var hPixel = 3;
+        var wp = 3;
+        var hp = 3;
         var w = frame.getWidth();
         var h = frame.getHeight();
-        var image = new WritableImage(w * wPixel, h * hPixel);
-        var arr = new byte[3 * wPixel * hPixel];
+        var image = new WritableImage(w * wp, h * hp);
+        var arr = new int[wp * hp];
         var writer = image.getPixelWriter();
-        var format = PixelFormat.getByteRgbInstance();
-        for (int i = 0; i < h; i++) {
-            var offset = i * w * 3;
-            for (int j = 0; j < w; j++) {
-                for (int k = 0; k < wPixel * hPixel; k = k + 3) {
-                    arr[k] = frame.getPixels()[offset];
-                    arr[k + 1] = frame.getPixels()[offset + 1];
-                    arr[k + 2] = frame.getPixels()[offset + 2];
+        var format = PixelFormat.getIntArgbInstance();
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                var pixel = frame.getPixel(y * w + x);
+                for (int k = 0; k < wp * hp; k++) {
+                    arr[k] = pixel;
                 }
-                writer.setPixels(j * wPixel, i * hPixel, wPixel, hPixel, format, ByteBuffer.wrap(arr), 0);
-                offset += 3;
+                writer.setPixels(x * wp, y * hp, wp, hp, format, IntBuffer.wrap(arr), 1);
             }
         }
+
         var event = eventQueue.poll();
         if (event != null) {
             joyPad.updateBtnStatus(event.btn(), event.event() == KeyEvent.KEY_PRESSED);
         }
-        frame.clear();
         Platform.runLater(() -> {
-
             this.setWidth(image.getWidth());
             this.setHeight(image.getHeight() + this.menuBar.getHeight());
 
-            var width = this.getWidth();
-            var height = this.canvas.getHeight();
-
-            this.ctx.clearRect(0, 0, width, height);
-            this.ctx.fillRect(0, 0, width, height);
             this.ctx.drawImage(image, 0, 0);
 
             this.frameCounter++;

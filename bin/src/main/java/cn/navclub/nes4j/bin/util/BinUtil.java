@@ -35,11 +35,16 @@ public class BinUtil {
         return hex;
     }
 
-    public static int uint8(byte b) {
+    public static int uint8(int b) {
         return (b & 0xff);
     }
 
+
     public static int uint16(int i) {
         return i & 0xffff;
+    }
+
+    public static int uint32(long l) {
+        return (int) (l);
     }
 }

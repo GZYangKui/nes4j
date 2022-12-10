@@ -4,26 +4,30 @@ import lombok.Getter;
 
 import java.util.Arrays;
 
-@Getter
 public class Frame {
+    @Getter
     public final int width;
+    @Getter
     public final int height;
-    private final byte[] pixels;
+    private final int[] pixels;
 
     public Frame(int width, int height) {
         this.width = width;
         this.height = height;
-        this.pixels = new byte[width * height * 3];
+        this.pixels = new int[width * height];
     }
+
 
     public Frame() {
         this(256, 240);
     }
 
+    public final int getPixel(int pos) {
+        return (this.pixels[pos] | 0xff << 24);
+    }
 
-    public void update(int x, int y, byte pixel) {
-        var offset = y * 256 * 3;
-        this.pixels[offset + x] = pixel;
+    public void update(int x, int y, int pixel) {
+        this.pixels[y * width + x] = pixel;
     }
 
     public void clear() {
