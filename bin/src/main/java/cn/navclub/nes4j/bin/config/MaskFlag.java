@@ -33,7 +33,7 @@ public enum MaskFlag {
     // Setting these bits to 0 will mask these columns, which is often useful in horizontal scrolling
     // situations where you want partial sprites or tiles to scroll in from the left.
     //
-    LEFTMOST_0PXL_BACKGROUND,
+    LEFTMOST_8PXL_BACKGROUND,
     LEFTMOST_8PXL_SPRITE,
     //Bits 3 and 4 enable the rendering of background and sprites, respectively.
     SHOW_BACKGROUND,

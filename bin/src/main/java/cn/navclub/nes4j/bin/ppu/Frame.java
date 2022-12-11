@@ -23,7 +23,11 @@ public class Frame {
     }
 
     public final int getPixel(int pos) {
-        return (this.pixels[pos] | 0xff << 24);
+        var pixel = this.pixels[pos];
+        if (pixel != 0) {
+            pixel |= (0xff << 24);
+        }
+        return pixel;
     }
 
     public void update(int x, int y, int pixel) {

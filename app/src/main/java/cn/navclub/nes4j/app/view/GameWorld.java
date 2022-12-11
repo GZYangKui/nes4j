@@ -28,7 +28,6 @@ import javafx.stage.Stage;
 import org.controlsfx.dialog.ExceptionDialog;
 
 import java.io.File;
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -220,8 +219,10 @@ public class GameWorld extends Stage {
             joyPad.updateBtnStatus(event.btn(), event.event() == KeyEvent.KEY_PRESSED);
         }
         Platform.runLater(() -> {
+
             this.setWidth(image.getWidth());
             this.setHeight(image.getHeight() + this.menuBar.getHeight());
+            this.ctx.fillRect(0, 0, image.getWidth(), image.getHeight());
 
             this.ctx.drawImage(image, 0, 0);
 

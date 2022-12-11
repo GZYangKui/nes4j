@@ -318,7 +318,6 @@ public class PPURender implements CycleDriver {
             this.background[i] = rgb[0] << 16 | rgb[1] << 8 | rgb[2];
         }
 
-        //The coarse X component of v needs to be incremented when the next tile is reached.
         this.incX();
     }
 
@@ -380,8 +379,8 @@ public class PPURender implements CycleDriver {
      * </pre>
      */
     private void readTileByte(int v, boolean high) {
-        var y = (v >> 12) & 7;
-        var table = ppu.ctr.bkNamePatternTable();
+        var y = (v >> 12) & 0x07;
+        var table = ppu.ctr.backgroundNameTable();
         var address = table + this.tileIdx * 16 + y;
         if (!high) {
             this.tileLow = this.ppu.iRead(address);
@@ -391,15 +390,28 @@ public class PPURender implements CycleDriver {
     }
 
     /**
-     * Bits 0-4 are incremented,with overflow toggling bit 10. This means that bits 0-4 count from 0 to 31 across
-     * a single nametable,and bit 10 selects the current nametable horizontally.
+     * The coarse X component of v needs to be incremented when the next tile is reached. Bits 0-4 are incremented,
+     * with overflow toggling bit 10. This means that bits 0-4 count from 0 to 31 across a single nametable,
+     * and bit 10 selects the current nametable horizontally.
+     *<p/>
+     * Implement pseudocode:
+     * <pre>
+     *    if ((v & 0x001F) == 31) // if coarse X == 31
+     *     v &= ~0x001F          // coarse X = 0
+     *     v ^= 0x0400           // switch horizontal nametable
+     *    else
+     *     v += 1                // increment coarse X
+     * </pre>
      */
     private void incX() {
         var v = this.ppu.v;
         if ((v & 0x001f) == 31) {
+            //coarse x=0
             v &= ~0x001f;
+            //Switch horizontal name table
             v ^= 0x0400;
         } else {
+            //Increase coarse x
             v += 1;
         }
         this.ppu.v = uint16(v);
@@ -439,20 +451,20 @@ public class PPURender implements CycleDriver {
     private void renderPixel() {
         var x = this.cycles - 1;
         var y = this.scanline;
-        var spriteZeroHit = false;
         var pixel = this.backgroundPixel(x);
         if (this.mask.showSprite()) {
             var value = this.foreground[x];
-            var cover = (value >> 30 & 0x01) == 1;
-            var index = (value >> 24) & 0x3f;
-            if (cover || !this.mask.showBackground()) {
-                pixel = value & 0xffffff;
+            //non-alpha pixel
+            if (value != 0) {
+                var index = (value >> 24) & 0x3f;
+                var cover = (value >> 30 & 0x01) == 0;
+                if (this.mask.showLeftMostSprite(x) && (cover || !this.mask.showBackground())) {
+                    pixel = value & 0xffffff;
+                }
+                if ((index == 0) && this.cycles < 255) {
+                    this.ppu.status.update(PStatus.SPRITE_ZERO_HIT, true);
+                }
             }
-            spriteZeroHit = (index == 0) && this.cycles < 255;
-        }
-
-        if ((this.mask.enableRender()) && spriteZeroHit) {
-            this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
         }
 
         this.pixel = x;
@@ -460,10 +472,10 @@ public class PPURender implements CycleDriver {
     }
 
     private int backgroundPixel(int x) {
-        if (!this.mask.showBackground()) {
+        if (!this.mask.showBackground() || (x < 8 && !this.mask.showLeftMostBackground(x))) {
             return 0;
         }
-        return this.background[x % 8];
+        return this.background[7 - this.ppu.x];
     }
 
     /**

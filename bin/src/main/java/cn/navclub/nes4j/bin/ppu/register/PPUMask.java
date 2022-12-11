@@ -36,6 +36,14 @@ public class PPUMask extends Register<MaskFlag> {
         return this.contain(MaskFlag.SHOW_BACKGROUND);
     }
 
+    public boolean showLeftMostBackground(int x) {
+        return x > 8 || this.contain(MaskFlag.LEFTMOST_8PXL_BACKGROUND);
+    }
+
+    public boolean showLeftMostSprite(int x) {
+        return x > 8 || this.contain(MaskFlag.LEFTMOST_8PXL_SPRITE);
+    }
+
     public boolean enableRender() {
         return this.showSprite() || this.showBackground();
     }

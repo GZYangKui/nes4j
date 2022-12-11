@@ -59,7 +59,7 @@ public class PPUControl extends Register<PControl> {
         return (index & 0x01) == 0 ? 0x0000 : 0x1000;
     }
 
-    public int bkNamePatternTable() {
+    public int backgroundNameTable() {
         return this.contain(PControl.BKG_PATTERN_TABLE) ? 0x1000 : 0x000;
     }
 
