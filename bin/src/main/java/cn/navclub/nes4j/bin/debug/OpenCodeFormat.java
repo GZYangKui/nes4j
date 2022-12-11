@@ -6,6 +6,8 @@ import cn.navclub.nes4j.bin.config.CPUInstruction;
 import java.util.ArrayList;
 import java.util.List;
 
+import static cn.navclub.nes4j.bin.util.BinUtil.int8;
+
 /**
  *
  *
@@ -24,10 +26,11 @@ public class OpenCodeFormat {
                 var mode = instance.getAddressMode();
 
                 var operator = switch (mode) {
-                    case Immediate -> new Operand(AddressMode.Immediate, buffer[i], (byte) 0);
-                    case Accumulator -> new Operand(AddressMode.Accumulator, (byte) 0, (byte) 0);
+                    case Immediate -> new Operand(AddressMode.Immediate, buffer[i], int8(0));
+                    case Accumulator -> new Operand(AddressMode.Accumulator, (byte) 0, int8(0));
                     case Absolute, Absolute_X, Absolute_Y, Indirect -> new Operand(mode, buffer[i], buffer[i + 1]);
-                    case ZeroPage, ZeroPage_X, ZeroPage_Y, Indirect_Y, Indirect_X -> new Operand(mode, buffer[i], (byte) 0);
+                    case ZeroPage, ZeroPage_X, ZeroPage_Y, Indirect_Y, Indirect_X ->
+                            new Operand(mode, buffer[i], int8(0));
                     default -> Operand.DEFAULT_OPERAND;
                 };
 
