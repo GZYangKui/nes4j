@@ -527,7 +527,7 @@ public class PPURender implements CycleDriver {
                     b |= (arr[1] << 8);
                     b |= (arr[2]);
                     b |= ((i & 0x3f) << 24);
-                    b |= ((attr & 0x2f) << 30);
+                    b |= ((attr & 0x20) << 25);
 
                     var index = x + j;
                     if (hf) {
