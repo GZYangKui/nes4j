@@ -11,9 +11,8 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint16;
 import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 
 /**
- *
  * <a hrep="https://www.nesdev.org/wiki/PPU_rendering">PPU Render</a>
- *
+ * <p>
  * <p/>
  *
  * <pre>
@@ -35,7 +34,6 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
  *                                                |
  *                     [2-bit Palette Attribute for next tile (from attribute table)]
  * </pre>
- *
  */
 public class PPURender implements CycleDriver {
 
@@ -393,7 +391,7 @@ public class PPURender implements CycleDriver {
      * The coarse X component of v needs to be incremented when the next tile is reached. Bits 0-4 are incremented,
      * with overflow toggling bit 10. This means that bits 0-4 count from 0 to 31 across a single nametable,
      * and bit 10 selects the current nametable horizontally.
-     *<p/>
+     * <p/>
      * Implement pseudocode:
      * <pre>
      *    if ((v & 0x001F) == 31) // if coarse X == 31
@@ -418,7 +416,6 @@ public class PPURender implements CycleDriver {
     }
 
     /**
-     *
      * Row 29 is the last row of tiles in a nametable. To wrap to the next nametable when incrementing coarse Y
      * from 29, the vertical nametable is switched by toggling bit 11, and coarse Y wraps to row 0.
      * Coarse Y can be set out of bounds (> 29), which will cause the PPU to read the attribute data stored there
@@ -426,7 +423,6 @@ public class PPURender implements CycleDriver {
      * For this reason, a write >= 240 to $2005 may appear as a "negative" scroll value, where 1 or 2 rows of
      * attribute data will appear before the nametable's tile data is reached. (Some games use this to move the
      * top of the nametable out of the <a href="https://www.nesdev.org/wiki/Overscan">Overscan</a> area.)
-     *
      */
     private void incY() {
         var v = this.ppu.v;
@@ -504,17 +500,23 @@ public class PPURender implements CycleDriver {
                 var vf = ((attr >> 7) & 0x01) == 1;
 
                 var bank = this.ppu.ctr.spritePattern8();
+                //When sprite is 8*16
+                if (size == 0x10) {
+                    bank = this.ppu.ctr.spritePattern16(idx);
+                    //If even down flip other upper flip
+                    if (vf)
+                        idx += ((bank == 0) ? 1 : -1);
+                }
 
-                var base = bank + idx * 16 + (vf ? 7 - df : df);
+                var base = bank + idx * 16 + df;
 
-                var l = uint8(this.ppu.getCh()[bank]);
-                var r = uint8(this.ppu.getCh()[base + 8]);
+                var l = uint8(this.ppu.iRead(base));
+                var r = uint8(this.ppu.iRead(base + 8));
 
                 var palette = this.spritePalette(attr & 0x03);
 
-
                 for (int j = 0; j < 8; j++) {
-                    var lower = (l >> j) & 0x01;
+                    var lower = (l >> (7 - j)) & 0x01;
                     var upper = (r >> (7 - j)) & 0x01;
                     var arr = switch (lower | upper << 1) {
                         case 1 -> this.sysPalette[palette[1]];
@@ -529,10 +531,8 @@ public class PPURender implements CycleDriver {
                     b |= ((i & 0x3f) << 24);
                     b |= ((attr & 0x20) << 25);
 
-                    var index = x + j;
-                    if (hf) {
-                        index = x + 7 - j;
-                    }
+                    var index = x + (hf ? (7 - j) : j);
+
                     if (index < this.foreground.length)
                         this.foreground[index] = b;
                 }
