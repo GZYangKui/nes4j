@@ -67,9 +67,9 @@ public class PPURender implements CycleDriver {
     // Attribute table byte
     private int tileAttr;
     //Pattern table tile low
-    private int tileLow;
+    private int leftByte;
     //Pattern table tile high (+8 bytes from pattern table tile low)
-    private int tileHigh;
+    private int rightByte;
 
     private int cycles;
     //Record current scan line index
@@ -94,6 +94,8 @@ public class PPURender implements CycleDriver {
     private final int[] background;
     //Record current pixel on scanline
     protected int pixel;
+    //Background pixel offset
+    private int pixelOffset;
 
     public PPURender(PPU ppu) {
         this.ppu = ppu;
@@ -269,6 +271,7 @@ public class PPURender implements CycleDriver {
     }
 
     private void tileMut() {
+        this.pixelOffset = 0;
         Arrays.fill(this.background, 0, this.background.length, 0);
 
         var x = (this.ppu.v & 0x1f) / 16;
@@ -305,8 +308,8 @@ public class PPURender implements CycleDriver {
         };
 
         for (int i = 0; i < 8; i++) {
-            var lower = (this.tileLow >> (7 - i)) & 0x01;
-            var upper = (this.tileHigh >> (7 - i));
+            var lower = (this.leftByte >> (7 - i)) & 0x01;
+            var upper = (this.rightByte >> (7 - i)) & 0x01;
             var rgb = switch (lower | upper << 1) {
                 case 1 -> sysPalette[palette[1]];
                 case 2 -> sysPalette[palette[2]];
@@ -381,9 +384,9 @@ public class PPURender implements CycleDriver {
         var table = ppu.ctr.backgroundNameTable();
         var address = table + this.tileIdx * 16 + y;
         if (!high) {
-            this.tileLow = this.ppu.iRead(address);
+            this.leftByte = this.ppu.iRead(address);
         } else {
-            this.tileHigh = this.ppu.iRead(address + 8);
+            this.rightByte = this.ppu.iRead(address + 8);
         }
     }
 
@@ -471,7 +474,12 @@ public class PPURender implements CycleDriver {
         if (!this.mask.showBackground() || (x < 8 && !this.mask.showLeftMostBackground(x))) {
             return 0;
         }
-        return this.background[7 - this.ppu.x];
+        var pixel = 0;
+        var index = this.ppu.x + this.pixelOffset;
+        if (index < this.background.length)
+            pixel = this.background[this.ppu.x + this.pixelOffset];
+        this.pixelOffset++;
+        return pixel;
     }
 
     /**
