@@ -1,5 +1,14 @@
 .root {
     -nes4j-background-color: #fff;
+    /**Game hall navbar background color**/
+    -nes4j-game-hall-navbar: #0072ae;
+    /**Game hall left assort background color**/
+    -nes4j-game-hall-assort: #004b7f;
+    /**Game hall center content background color**/
+    -nes4j-game-hall-content: #005fa1;
+    /**Game hall text color**/
+    -nes4j-game-hall-text-fill: #fff;
+    /**Default list view select row background color**/
     -nes4j-list-cell-select-color: #1f68d0;
 }
 
