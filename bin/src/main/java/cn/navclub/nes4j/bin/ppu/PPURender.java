@@ -95,7 +95,7 @@ public class PPURender implements CycleDriver {
     //Record current pixel on scanline
     protected int pixel;
     //Background pixel offset
-    private int pixelOffset;
+    private int backgroundOffset;
 
     public PPURender(PPU ppu) {
         this.ppu = ppu;
@@ -242,13 +242,6 @@ public class PPURender implements CycleDriver {
             }
 
             //
-            // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
-            // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
-            if (this.cycles == 257) {
-                this.ppu.v = uint16((this.ppu.v & 0xfbe0) | (this.ppu.t & 0x041f));
-            }
-
-            //
             // If rendering is enabled, at the end of vblank, shortly after the horizontal bits are copied from
             // t to v at dot 257, the PPU will repeatedly copy the vertical bits from t to v from dots 280 to 304,
             // completing the full initialization of v from t:
@@ -267,11 +260,18 @@ public class PPURender implements CycleDriver {
             if (cycles == 256) {
                 this.incY();
             }
+
+            //
+            // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
+            // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
+            if (this.cycles == 257) {
+                this.ppu.v = uint16((this.ppu.v & 0xfbe0) | (this.ppu.t & 0x041f));
+            }
         }
     }
 
     private void tileMut() {
-        this.pixelOffset = 0;
+        this.backgroundOffset = 0;
         Arrays.fill(this.background, 0, this.background.length, 0);
 
         var x = (this.ppu.v & 0x1f) / 16;
@@ -413,7 +413,7 @@ public class PPURender implements CycleDriver {
             v ^= 0x0400;
         } else {
             //Increase coarse x
-            v += 1;
+            v++;
         }
         this.ppu.v = uint16(v);
     }
@@ -429,20 +429,30 @@ public class PPURender implements CycleDriver {
      */
     private void incY() {
         var v = this.ppu.v;
+        // if fine Y < 7
         if ((v & 0x7000) != 0x7000) {
+            // increment fine Y
             v += 0x1000;
         } else {
+            // fine Y = 0
             v &= ~0x7000;
+            // let y = coarse Y
             var y = (v & 0x03e0) >> 5;
             if (y == 29) {
+                // coarse Y = 0
                 y = 0;
-                v ^= 0x8000;
+                // switch vertical nametable
+                v ^= 0x0800;
             } else if (y == 31) {
+                // coarse Y = 0, nametable not switched
                 y = 0;
             } else {
-                y += 1;
+                // increment coarse Y
+                y++;
             }
-            v = (v & 0x03e0 | y << 5);
+
+            // put coarse Y back into v
+            v = ((v & ~0x03e0) | y << 5);
         }
         this.ppu.v = uint16(v);
     }
@@ -460,7 +470,7 @@ public class PPURender implements CycleDriver {
                 if (this.mask.showLeftMostSprite(x) && (cover || !this.mask.showBackground())) {
                     pixel = value & 0xffffff;
                 }
-                if ((index == 0) && this.cycles < 255) {
+                if (index == 0 && this.cycles < 255) {
                     this.ppu.status.update(PStatus.SPRITE_ZERO_HIT, true);
                 }
             }
@@ -475,10 +485,10 @@ public class PPURender implements CycleDriver {
             return 0;
         }
         var pixel = 0;
-        var index = this.ppu.x + this.pixelOffset;
+        var index = this.ppu.x + this.backgroundOffset;
         if (index < this.background.length)
-            pixel = this.background[this.ppu.x + this.pixelOffset];
-        this.pixelOffset++;
+            pixel = this.background[index];
+        this.backgroundOffset++;
         return pixel;
     }
 
@@ -508,7 +518,7 @@ public class PPURender implements CycleDriver {
                 var vf = ((attr >> 7) & 0x01) == 1;
 
                 var bank = this.ppu.ctr.spritePattern8();
-                //When sprite is 8*16
+                //When sprite size is 8*16
                 if (size == 0x10) {
                     bank = this.ppu.ctr.spritePattern16(idx);
                     //If even down flip other upper flip

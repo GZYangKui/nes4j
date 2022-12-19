@@ -43,8 +43,4 @@ public class BinUtil {
     public static int uint16(int i) {
         return i & 0xffff;
     }
-
-    public static int uint32(long l) {
-        return (int) (l);
-    }
 }

@@ -252,7 +252,7 @@ public class PPU implements Component {
             //t: ........ ..ABCDE <- d: ABCDE...
             this.t = uint16(this.t & 0xffe0 | uint8(b) >> 3);
             //x:              FGH <- d: .....FGH
-            this.x = (byte) (b & 0x07);
+            this.x = int8(b & 0x07);
         } else {
             this.w = 0;
             //t: FGH..AB CDE..... <- d: ABCDEFGH
@@ -287,9 +287,7 @@ public class PPU implements Component {
     }
 
     /**
-     *
      * Output one frame video sign.
-     *
      */
     protected void fireNMI() {
         this.status.set(PStatus.V_BLANK_OCCUR);
