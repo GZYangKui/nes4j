@@ -25,10 +25,6 @@ import java.util.List;
  */
 public class GameHall {
     @FXML
-    private Empty empty;
-    @FXML
-    private HBox navbar;
-    @FXML
     private FlowPane flowPane;
     @FXML
     private ListView<String> listView;
@@ -40,9 +36,6 @@ public class GameHall {
 
     public GameHall(Stage stage) {
         this.scene = new Scene(FXResource.loadFXML(this));
-
-        //注册拖拽事件
-        ControlDragEvent.bind(navbar);
 
         this.stage = stage;
         this.stage.setWidth(1200);

@@ -22,6 +22,7 @@ module cn.navclub.nes4j.app {
     opens cn.navclub.nes4j.app;
     opens cn.navclub.nes4j.app.view;
 
+    opens cn.navclub.nes4j.app.event to javafx.fxml;
     opens cn.navclub.nes4j.app.control to javafx.fxml;
 
     opens cn.navclub.nes4j.app.config to com.fasterxml.jackson.databind;

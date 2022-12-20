@@ -35,7 +35,7 @@ public class ControlDragEvent implements EventHandler<MouseEvent> {
     }
 
 
-    public static ControlDragEvent bind(Node node) {
-        return new ControlDragEvent(node);
+    public static void setBind(Node node,String nullable) {
+        new ControlDragEvent(node);
     }
 }
