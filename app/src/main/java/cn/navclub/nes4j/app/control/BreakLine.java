@@ -1,5 +1,6 @@
 package cn.navclub.nes4j.app.control;
 
+import cn.navclub.nes4j.app.util.StrUtil;
 import cn.navclub.nes4j.app.view.DebuggerView;
 import cn.navclub.nes4j.bin.debug.OpenCode;
 import cn.navclub.nes4j.bin.config.AddressMode;
@@ -13,6 +14,7 @@ import lombok.Getter;
 import java.util.HashMap;
 import java.util.Map;
 
+import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 import static cn.navclub.nes4j.bin.util.BinUtil.toHexStr;
 
 public class BreakLine extends HBox {
@@ -78,8 +80,10 @@ public class BreakLine extends HBox {
         var lsb = operand.lsb();
         var msb = operand.msb();
         var value = (lsb & 0xff | (msb & 0xff) << 8);
-        final String text;
-        if (!ALIAS.containsKey(value)) {
+
+        String text = ALIAS.get(value);
+
+        if (StrUtil.isBlank(text)) {
             var hexStr = "$%s%s".formatted(toHexStr(msb), toHexStr(lsb));
             text = switch (mode) {
                 case Accumulator -> "A";
@@ -89,10 +93,14 @@ public class BreakLine extends HBox {
                 case Indirect -> "(%s)".formatted(hexStr);
                 case ZeroPage_X -> "($%s,x)".formatted(toHexStr(lsb));
                 case Indirect_Y -> "($%s),y".formatted(toHexStr(lsb));
+                case Relative -> {
+                    var address = openCode.index() + lsb;
+                    var a = toHexStr(int8(address));
+                    var b = toHexStr(int8(address >> 8));
+                    yield "$%s%s".formatted(b, a);
+                }
                 default -> "";
             };
-        } else {
-            text = ALIAS.get(value);
         }
         this.operator.setText(text);
         this.instruct.setText(openCode.instruction().name());

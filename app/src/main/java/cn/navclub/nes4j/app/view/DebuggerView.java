@@ -135,6 +135,9 @@ public class DebuggerView extends Stage implements Debugger {
         } else {
             if (this.currentLine != null) {
                 Platform.runLater(() -> {
+                    if (this.currentLine == null) {
+                        return;
+                    }
                     this.currentLine.debug(false);
                     this.currentLine = null;
                 });

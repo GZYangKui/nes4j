@@ -15,5 +15,6 @@ public enum AddressMode {
     Indirect,
     Indirect_X,
     Indirect_Y,
-    Implied
+    Implied,
+    Relative
 }

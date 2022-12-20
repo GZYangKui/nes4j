@@ -127,6 +127,7 @@ public class GameWorld extends Stage {
             this.instance = null;
         }
         if (t != null) {
+            t.printStackTrace();
             var dialog = new ExceptionDialog(t);
             dialog.setHeaderText(INes.localeValue("nes4j.game.error"));
             dialog.showAndWait();

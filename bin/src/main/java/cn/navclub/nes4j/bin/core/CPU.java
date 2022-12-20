@@ -115,7 +115,7 @@ public class CPU {
     /**
      * 逻辑运算 或、与、异或
      */
-    private void logic(CPUInstruction instruction, AddressMode addressMode) {
+    private void logic(Instruction instruction, AddressMode addressMode) {
         var address = this.modeProvider.getAbsAddr(addressMode);
         var a = this.ra;
         var b = this.bus.ReadU8(address);
@@ -187,7 +187,7 @@ public class CPU {
         }
     }
 
-    private void asl(Instruction6502 instruction6502) {
+    private void asl(InstructionWrap instruction6502) {
         int b;
         var a = (instruction6502.getAddressMode() == AddressMode.Accumulator);
         var address = -1;
@@ -209,9 +209,9 @@ public class CPU {
         }
     }
 
-    private void push(Instruction6502 instruction6502) {
+    private void push(InstructionWrap instruction6502) {
         var instruction = instruction6502.getInstruction();
-        if (instruction == CPUInstruction.PHA) {
+        if (instruction == Instruction.PHA) {
             this.push((byte) this.ra);
         } else {
             var flags = this.status.copy();
@@ -220,10 +220,10 @@ public class CPU {
         }
     }
 
-    private void pull(Instruction6502 instruction6502) {
+    private void pull(InstructionWrap instruction6502) {
         var instruction = instruction6502.getInstruction();
         var value = this.pop();
-        if (instruction == CPUInstruction.PLA) {
+        if (instruction == Instruction.PLA) {
             this.raUpdate(value);
         } else {
             this.status.setBits(value);
@@ -232,12 +232,12 @@ public class CPU {
         }
     }
 
-    private void cmp(Instruction6502 instruction6502) {
+    private void cmp(InstructionWrap instruction6502) {
         final int a;
-        final CPUInstruction instruction = instruction6502.getInstruction();
-        if (instruction == CPUInstruction.CMP) {
+        final Instruction instruction = instruction6502.getInstruction();
+        if (instruction == Instruction.CMP) {
             a = this.ra;
-        } else if (instruction == CPUInstruction.CPX) {
+        } else if (instruction == Instruction.CPX) {
             a = this.rx;
         } else {
             a = this.ry;
@@ -250,14 +250,14 @@ public class CPU {
         this.NZUpdate(u8sbc(a, m));
     }
 
-    private void inc(CPUInstruction instruction, AddressMode mode) {
+    private void inc(Instruction instruction, AddressMode mode) {
         final int result;
-        if (instruction == CPUInstruction.INC) {
+        if (instruction == Instruction.INC) {
             var address = this.modeProvider.getAbsAddr(mode);
             var m = this.bus.ReadU8(address);
             result = u8add(m, 1);
             this.bus.WriteU8(address, result);
-        } else if (instruction == CPUInstruction.INX) {
+        } else if (instruction == Instruction.INX) {
             this.rx = result = u8add(this.rx, 1);
         } else {
             this.ry = result = u8add(this.ry, 1);
@@ -285,10 +285,10 @@ public class CPU {
         this.adc(mode, true);
     }
 
-    private void loadXY(Instruction6502 instruction6502) {
+    private void loadXY(InstructionWrap instruction6502) {
         var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
         var data = this.bus.ReadU8(address);
-        if (instruction6502.getInstruction() == CPUInstruction.LDX) {
+        if (instruction6502.getInstruction() == Instruction.LDX) {
             this.rx = data;
         } else {
             this.ry = data;
@@ -313,7 +313,7 @@ public class CPU {
         this.pc = jump;
     }
 
-    private void bit(Instruction6502 instruction6502) {
+    private void bit(InstructionWrap instruction6502) {
         var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
         var value = this.bus.ReadU8(address);
         this.status.update(ICPUStatus.ZF, (this.ra & value) == 0);
@@ -321,7 +321,7 @@ public class CPU {
         this.status.update(ICPUStatus.OF, (value >> 6) == 1);
     }
 
-    private void dec(Instruction6502 instruction6502) {
+    private void dec(InstructionWrap instruction6502) {
         var instruction = instruction6502.getInstruction();
         var value = switch (instruction) {
             case DEC -> {
@@ -372,16 +372,16 @@ public class CPU {
             return 0;
         }
 
-        var instruction6502 = CPUInstruction.getInstance(openCode);
+        var instruction6502 = Instruction.getInstance(openCode);
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 
 
-        if (instruction == CPUInstruction.JMP) {
+        if (instruction == Instruction.JMP) {
             this.pc = this.modeProvider.getAbsAddr(mode);
         }
 
-        if (instruction == CPUInstruction.RTI) {
+        if (instruction == Instruction.RTI) {
             this.status.setBits(this.pop());
 
             this.status.set(ICPUStatus.BK2);
@@ -389,209 +389,209 @@ public class CPU {
 
             this.pc = this.popInt();
         }
-        if (instruction == CPUInstruction.JSR) {
+        if (instruction == Instruction.JSR) {
             this.pushInt(this.pc + 1);
             this.pc = this.bus.readInt(this.pc);
         }
 
-        if (instruction == CPUInstruction.RTS) {
+        if (instruction == Instruction.RTS) {
             this.pc = this.popInt() + 1;
         }
 
-        if (instruction == CPUInstruction.LDA) {
+        if (instruction == Instruction.LDA) {
             this.lda(mode);
         }
 
         //加减运算
-        if (instruction == CPUInstruction.ADC) {
+        if (instruction == Instruction.ADC) {
             this.adc(instruction6502.getAddressMode(), false);
         }
 
-        if (instruction == CPUInstruction.SBC) {
+        if (instruction == Instruction.SBC) {
             this.sbc(instruction6502.getAddressMode());
         }
 
         //或、与、异或逻辑运算
-        if (instruction == CPUInstruction.AND
-                || instruction == CPUInstruction.ORA
-                || instruction == CPUInstruction.EOR) {
+        if (instruction == Instruction.AND
+                || instruction == Instruction.ORA
+                || instruction == Instruction.EOR) {
             this.logic(instruction6502.getInstruction(), instruction6502.getAddressMode());
         }
 
         //push累加寄存器/状态寄存器
-        if (instruction == CPUInstruction.PHA || instruction == CPUInstruction.PHP) {
+        if (instruction == Instruction.PHA || instruction == Instruction.PHP) {
             this.push(instruction6502);
         }
         //pull累加寄存器/状态寄存器
-        if (instruction == CPUInstruction.PLA || instruction == CPUInstruction.PLP) {
+        if (instruction == Instruction.PLA || instruction == Instruction.PLP) {
             this.pull(instruction6502);
         }
 
         //左移1位
-        if (instruction == CPUInstruction.ASL) {
+        if (instruction == Instruction.ASL) {
             this.asl(instruction6502);
         }
 
-        if (instruction == CPUInstruction.ROL) {
+        if (instruction == Instruction.ROL) {
             this.rol(mode);
         }
 
         //右移一位
-        if (instruction == CPUInstruction.ROR) {
+        if (instruction == Instruction.ROR) {
             this.ror(mode);
         }
 
         //刷新累加寄存器值到内存
-        if (instruction == CPUInstruction.STA) {
+        if (instruction == Instruction.STA) {
             var addr = this.modeProvider.getAbsAddr(mode);
             this.bus.WriteU8(addr, this.ra);
         }
 
         //刷新y寄存器值到内存
-        if (instruction == CPUInstruction.STY) {
+        if (instruction == Instruction.STY) {
             this.bus.WriteU8(this.modeProvider.getAbsAddr(mode), this.ry);
         }
 
         //刷新x寄存器值到内存中
-        if (instruction == CPUInstruction.STX) {
+        if (instruction == Instruction.STX) {
             this.bus.WriteU8(this.modeProvider.getAbsAddr(mode), this.rx);
         }
 
         //清除进位标识
-        if (instruction == CPUInstruction.CLC) {
+        if (instruction == Instruction.CLC) {
             this.status.clear(ICPUStatus.CF);
         }
 
         //清除Decimal model
-        if (instruction == CPUInstruction.CLD) {
+        if (instruction == Instruction.CLD) {
             this.status.clear(ICPUStatus.DM);
         }
 
         //清除中断标识
-        if (instruction == CPUInstruction.CLI) {
+        if (instruction == Instruction.CLI) {
             this.status.clear(ICPUStatus.ID);
         }
 
-        if (instruction == CPUInstruction.CLV) {
+        if (instruction == Instruction.CLV) {
             this.status.clear(ICPUStatus.OF);
         }
 
-        if (instruction == CPUInstruction.CMP
-                || instruction == CPUInstruction.CPX
-                || instruction == CPUInstruction.CPY) {
+        if (instruction == Instruction.CMP
+                || instruction == Instruction.CPX
+                || instruction == Instruction.CPY) {
             this.cmp(instruction6502);
         }
 
-        if (instruction == CPUInstruction.INC
-                || instruction == CPUInstruction.INX
-                || instruction == CPUInstruction.INY) {
+        if (instruction == Instruction.INC
+                || instruction == Instruction.INX
+                || instruction == Instruction.INY) {
             this.inc(instruction6502.getInstruction(), instruction6502.getAddressMode());
         }
 
 
-        if (instruction == CPUInstruction.LDX || instruction == CPUInstruction.LDY) {
+        if (instruction == Instruction.LDX || instruction == Instruction.LDY) {
             this.loadXY(instruction6502);
         }
 
-        if (instruction == CPUInstruction.BIT) {
+        if (instruction == Instruction.BIT) {
             this.bit(instruction6502);
         }
 
         //By negative flag to jump
-        if (instruction == CPUInstruction.BPL || instruction == CPUInstruction.BMI) {
-            this.branch((instruction == CPUInstruction.BMI) == this.status.contain(ICPUStatus.NF));
+        if (instruction == Instruction.BPL || instruction == Instruction.BMI) {
+            this.branch((instruction == Instruction.BMI) == this.status.contain(ICPUStatus.NF));
         }
 
         //By zero flag to jump
-        if (instruction == CPUInstruction.BEQ || instruction == CPUInstruction.BNE) {
-            this.branch((instruction == CPUInstruction.BEQ) == this.status.contain(ICPUStatus.ZF));
+        if (instruction == Instruction.BEQ || instruction == Instruction.BNE) {
+            this.branch((instruction == Instruction.BEQ) == this.status.contain(ICPUStatus.ZF));
         }
 
         //By overflow flag to jump
-        if (instruction == CPUInstruction.BVC || instruction == CPUInstruction.BVS) {
-            this.branch((instruction == CPUInstruction.BVS) == this.status.contain(ICPUStatus.OF));
+        if (instruction == Instruction.BVC || instruction == Instruction.BVS) {
+            this.branch((instruction == Instruction.BVS) == this.status.contain(ICPUStatus.OF));
         }
 
-        if (instruction == CPUInstruction.BCS || instruction == CPUInstruction.BCC) {
-            this.branch((instruction == CPUInstruction.BCS) == this.status.contain(ICPUStatus.CF));
+        if (instruction == Instruction.BCS || instruction == Instruction.BCC) {
+            this.branch((instruction == Instruction.BCS) == this.status.contain(ICPUStatus.CF));
         }
 
-        if (instruction == CPUInstruction.DEC
-                || instruction == CPUInstruction.DEX
-                || instruction == CPUInstruction.DEY) {
+        if (instruction == Instruction.DEC
+                || instruction == Instruction.DEX
+                || instruction == Instruction.DEY) {
             this.dec(instruction6502);
         }
 
 
-        if (instruction == CPUInstruction.SEC) {
+        if (instruction == Instruction.SEC) {
             this.status.set(ICPUStatus.CF);
         }
 
-        if (instruction == CPUInstruction.SED) {
+        if (instruction == Instruction.SED) {
             this.status.set(ICPUStatus.DM);
         }
 
-        if (instruction == CPUInstruction.SEI) {
+        if (instruction == Instruction.SEI) {
             this.status.set(ICPUStatus.ID);
         }
 
-        if (instruction == CPUInstruction.TAX) {
+        if (instruction == Instruction.TAX) {
             this.rx = this.ra;
             this.NZUpdate(this.rx);
         }
-        if (instruction == CPUInstruction.TAY) {
+        if (instruction == Instruction.TAY) {
             this.ry = this.ra;
             this.NZUpdate(this.ry);
         }
-        if (instruction == CPUInstruction.TSX) {
+        if (instruction == Instruction.TSX) {
             this.rx = this.sp;
             this.NZUpdate(this.rx);
         }
-        if (instruction == CPUInstruction.TXA) {
+        if (instruction == Instruction.TXA) {
             this.raUpdate(this.rx);
         }
 
-        if (instruction == CPUInstruction.TXS) {
+        if (instruction == Instruction.TXS) {
             this.sp = this.rx;
         }
 
-        if (instruction == CPUInstruction.TYA) {
+        if (instruction == Instruction.TYA) {
             this.raUpdate(this.ry);
         }
 
-        if (instruction == CPUInstruction.SLO) {
+        if (instruction == Instruction.SLO) {
             this.asl(instruction6502);
-            this.logic(CPUInstruction.ORA, instruction6502.getAddressMode());
+            this.logic(Instruction.ORA, instruction6502.getAddressMode());
         }
 
-        if (instruction == CPUInstruction.ISC) {
-            this.inc(CPUInstruction.INC, instruction6502.getAddressMode());
+        if (instruction == Instruction.ISC) {
+            this.inc(Instruction.INC, instruction6502.getAddressMode());
             this.sbc(instruction6502.getAddressMode());
         }
 
-        if (instruction == CPUInstruction.RLA) {
+        if (instruction == Instruction.RLA) {
             this.rol(mode);
             this.adc(mode, false);
         }
 
-        if (instruction == CPUInstruction.ALR) {
-            this.logic(CPUInstruction.AND, mode);
+        if (instruction == Instruction.ALR) {
+            this.logic(Instruction.AND, mode);
             this.lsr(mode);
         }
 
-        if (instruction == CPUInstruction.ANC) {
+        if (instruction == Instruction.ANC) {
             this.adc(mode, false);
             this.status.update(ICPUStatus.CF, this.status.contain(ICPUStatus.NF));
         }
 
-        if (instruction == CPUInstruction.XAA) {
+        if (instruction == Instruction.XAA) {
             this.raUpdate(this.rx);
             var addr = this.modeProvider.getAbsAddr(mode);
             var b = this.bus.ReadU8(addr);
             this.raUpdate(b & this.ra);
         }
 
-        if (instruction == CPUInstruction.ARR) {
+        if (instruction == Instruction.ARR) {
             var addr = this.modeProvider.getAbsAddr(mode);
             var b = this.bus.ReadU8(addr);
             this.raUpdate(b & this.ra);
@@ -604,7 +604,7 @@ public class CPU {
             this.NZUpdate(result);
         }
 
-        if (instruction == CPUInstruction.DCP) {
+        if (instruction == Instruction.DCP) {
             var addr = this.modeProvider.getAbsAddr(mode);
             var value = this.bus.ReadU8(addr);
             value = u8sbc(value, 1);
@@ -615,7 +615,7 @@ public class CPU {
             this.NZUpdate(u8sbc(this.ra, value));
         }
 
-        if (instruction == CPUInstruction.LAS) {
+        if (instruction == Instruction.LAS) {
             var addr = this.modeProvider.getAbsAddr(mode);
             var value = this.bus.ReadU8(addr);
             value = value & this.sp;
@@ -624,35 +624,35 @@ public class CPU {
             this.raUpdate(value);
         }
 
-        if (instruction == CPUInstruction.LAX) {
+        if (instruction == Instruction.LAX) {
             var addr = this.modeProvider.getAbsAddr(mode);
             var value = this.bus.ReadU8(addr);
             this.raUpdate(value);
             this.rx = value;
         }
 
-        if (instruction == CPUInstruction.SRE || instruction == CPUInstruction.LSR) {
+        if (instruction == Instruction.SRE || instruction == Instruction.LSR) {
             this.lsr(instruction6502.getAddressMode());
-            if (instruction == CPUInstruction.SRE) {
-                this.logic(CPUInstruction.EOR, instruction6502.getAddressMode());
+            if (instruction == Instruction.SRE) {
+                this.logic(Instruction.EOR, instruction6502.getAddressMode());
             }
         }
 
-        if (instruction == CPUInstruction.SHX) {
+        if (instruction == Instruction.SHX) {
             var addr = this.modeProvider.getAbsAddr(mode);
             var value = this.rx & u8add((addr >> 8) & 0xff, 1);
             this.bus.WriteU8(addr, value);
         }
 
-        if (instruction == CPUInstruction.TAX || instruction == CPUInstruction.LXA) {
-            if (instruction == CPUInstruction.LXA) {
+        if (instruction == Instruction.TAX || instruction == Instruction.LXA) {
+            if (instruction == Instruction.LXA) {
                 this.lda(mode);
             }
             this.rx = this.ra;
             this.NZUpdate(this.rx);
         }
 
-        if (instruction == CPUInstruction.SAX) {
+        if (instruction == Instruction.SAX) {
             var data = this.ra & this.rx;
             var addr = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
             this.bus.WriteU8(addr, data);
@@ -660,7 +660,7 @@ public class CPU {
 
         //根据是否发生重定向来判断是否需要更改程序计数器的值
         if (this.pc == state) {
-            this.pc += (instruction6502.getBytes() - 1);
+            this.pc += (instruction6502.getSize() - 1);
         }
 
         return instruction6502.getCycle() + this.modeProvider.getCycles();
