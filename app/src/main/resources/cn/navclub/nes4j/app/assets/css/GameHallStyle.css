@@ -1,8 +1,12 @@
 @import "common.css";
 
-.navbar *, .assort {
+.navbar *, .assort, .flow-pane .game-tray .label, .empty .label {
     -fx-font-size: 1.4em;
     -fx-text-fill: -nes4j-game-hall-text-fill;
+}
+
+.assort .list-cell {
+    -fx-text-fill: -nes4j-game-hall-assort-fill;
 }
 
 .assort .list-cell:selected {
@@ -36,6 +40,7 @@
 
 .navbar .logo-box .app-name {
     -fx-font-size: 1.8em;
+    -fx-text-fill: -nes4j-game-hall-app-name;
 }
 
 .assort, .assort .list-cell {
@@ -43,7 +48,31 @@
     -fx-focus-traversable: false;
 }
 
+.assort .list-cell:selected {
+    -fx-text-fill: -nes4j-game-hall-list-cell-active;
+}
+
 .flow-pane {
+    -fx-vgap: .5em;
+    -fx-hgap: .5em;
+    -fx-spacing: .5em;
+    -fx-padding: .5em;
     -fx-background-color: -nes4j-game-hall-content;
+}
+
+.flow-pane .game-tray {
+    -fx-alignment: CENTER;
+    -fx-pref-width: 100px;
+    -fx-border-radius: .5em;
+    -fx-background-radius: .5em;
+    -fx-padding: .5em;
+}
+
+.flow-pane .game-tray:hover {
+    -fx-background-color: -nes4j-game-tray-hover-color;
+}
+
+.flow-pane .game-tray:hover .label {
+    -fx-text-fill: -nes4j-game-tray-hover-text-color;
 }
 

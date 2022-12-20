@@ -3,15 +3,17 @@
 <?import javafx.scene.layout.*?>
 
 <?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.TabPane?>
-<?import javafx.scene.control.Tab?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ScrollPane?>
+<?import cn.navclub.nes4j.app.control.Empty?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml" stylesheets="@../css/GameHallStyle.css">
+    <fx:define>
+        <FlowPane styleClass="flow-pane" fx:id="flowPane"/>
+    </fx:define>
     <top>
         <HBox fx:id="navbar" styleClass="navbar">
             <HBox styleClass="logo-box">
@@ -48,9 +50,13 @@
         <ListView styleClass="assort" fx:id="listView"/>
     </left>
     <center>
-        <ScrollPane fitToHeight="true" fitToWidth="true">
-            <FlowPane styleClass="flow-pane" fx:id="flowPane"/>
-        </ScrollPane>
+        <StackPane>
+            <ScrollPane fitToHeight="true" fitToWidth="true">
+                <fx:reference source="flowPane"/>
+            </ScrollPane>
+            <Empty attach="$flowPane" text="暂无数据" fx:id="empty"/>
+        </StackPane>
+
     </center>
 
 </BorderPane>

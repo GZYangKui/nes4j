@@ -1,13 +1,11 @@
 package cn.navclub.nes4j.app;
 
 import cn.navclub.nes4j.app.config.NESConfig;
-import cn.navclub.nes4j.app.control.NesGameItem;
 import cn.navclub.nes4j.app.util.JsonUtil;
 import cn.navclub.nes4j.app.util.StrUtil;
 import cn.navclub.nes4j.app.view.GameHall;
 import javafx.application.Application;
 
-import javafx.scene.control.ListView;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 

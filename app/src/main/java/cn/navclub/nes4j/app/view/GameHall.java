@@ -1,6 +1,9 @@
 package cn.navclub.nes4j.app.view;
 
 import cn.navclub.nes4j.app.assets.FXResource;
+import cn.navclub.nes4j.app.concurrent.TaskService;
+import cn.navclub.nes4j.app.control.Empty;
+import cn.navclub.nes4j.app.control.GameTray;
 import cn.navclub.nes4j.app.event.ControlDragEvent;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -13,11 +16,16 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 游戏大厅
  */
 public class GameHall {
+    @FXML
+    private Empty empty;
     @FXML
     private HBox navbar;
     @FXML
@@ -27,6 +35,8 @@ public class GameHall {
 
     private final Stage stage;
     private final Scene scene;
+
+    private TaskService<List<File>> taskService;
 
     public GameHall(Stage stage) {
         this.scene = new Scene(FXResource.loadFXML(this));
@@ -43,6 +53,23 @@ public class GameHall {
         this.stage.show();
 
         this.loadAssort();
+
+        this.listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (taskService != null)
+                taskService.cancel();
+
+            this.flowPane.getChildren().clear();
+
+            taskService = TaskService.execute(this.loadGameList(newValue));
+            taskService.setOnSucceeded(event -> {
+                var files = (List<File>) event.getSource().getValue();
+                var list = files.stream().map(GameTray::new).toList();
+                this.flowPane.getChildren().addAll(list);
+            });
+        });
+
+        if (!this.listView.getItems().isEmpty())
+            this.listView.getSelectionModel().select(0);
     }
 
     private void loadAssort() {
@@ -56,6 +83,21 @@ public class GameHall {
                 continue;
             this.listView.getItems().add(item.getName());
         }
+    }
+
+
+    private Task<List<File>> loadGameList(String assort) {
+        return new Task<>() {
+            @Override
+            protected List<File> call() {
+                var path = Path.of("nes", assort);
+                var file = path.toFile();
+                if (!file.exists() || file.listFiles() == null) {
+                    return List.of();
+                }
+                return Arrays.stream(file.listFiles()).filter(File::isFile).toList();
+            }
+        };
     }
 
     @FXML

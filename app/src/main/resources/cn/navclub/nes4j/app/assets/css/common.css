@@ -1,15 +1,26 @@
 .root {
     -nes4j-background-color: #fff;
     /**Game hall navbar background color**/
-    -nes4j-game-hall-navbar: #0072ae;
+    -nes4j-game-hall-navbar: #ff9833;
     /**Game hall left assort background color**/
-    -nes4j-game-hall-assort: #004b7f;
+    -nes4j-game-hall-assort: #304156;
+    /**Game hall left assort text fill**/
+    -nes4j-game-hall-assort-fill: #bfcbd9;
     /**Game hall center content background color**/
-    -nes4j-game-hall-content: #005fa1;
+    -nes4j-game-hall-content: #ffffff;
+    /**Game hall app name text fill**/
+    -nes4j-game-hall-app-name: #ffffff;
     /**Game hall text color**/
-    -nes4j-game-hall-text-fill: #fff;
+    -nes4j-game-hall-text-fill: #000000;
+    /**Game hall list-cell select text color**/
+    -nes4j-game-hall-list-cell-active: rgba(64, 158, 255, 1);
     /**Default list view select row background color**/
-    -nes4j-list-cell-select-color: #1f68d0;
+    -nes4j-list-cell-select-color: rgba(10, 29, 47, 1);
+    /**Game tray hover background color**/
+    -nes4j-game-tray-hover-color: rgba(13, 10, 49, .4);
+    /**Game tray hover text color**/
+    -nes4j-game-tray-hover-text-color: #fff;
+
 }
 
 /*设置全局字体和大小*/
@@ -28,5 +39,9 @@ ScrollPane, .list-view {
 
 .list-view .list-cell:selected {
     -fx-background-color: -nes4j-list-cell-select-color;
+}
+
+.empty {
+    -fx-alignment: CENTER;
 }
 
