@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.app.assets;
 
-import cn.navclub.nes4j.app.Nes4j;
+import cn.navclub.nes4j.app.INes;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.image.Image;
@@ -40,7 +40,7 @@ public class FXResource {
         var file = String.format("fxml/%s.fxml", name);
         var loader = new FXMLLoader();
         loader.setController(controller);
-        loader.setResources(Nes4j.RESOURCE_BUNDLE);
+        loader.setResources(INes.RESOURCE_BUNDLE);
         loader.setLocation(FXResource.class.getResource(file));
         try {
             return loader.load();

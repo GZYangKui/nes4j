@@ -20,6 +20,10 @@ public class StrUtil {
         return name;
     }
 
+    public static String toKB(int bytes) {
+        return String.format("%dKB", bytes / 1024);
+    }
+
 
     public static boolean isBlank(String str) {
         return str == null || str.trim().equals("");

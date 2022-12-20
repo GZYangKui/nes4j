@@ -1,0 +1,10 @@
+@import "common.css";
+
+GridPane {
+    -fx-hgap: 1em;
+    -fx-vgap: 1em;
+}
+
+.choice-box {
+    -fx-pref-width: 15em;
+}

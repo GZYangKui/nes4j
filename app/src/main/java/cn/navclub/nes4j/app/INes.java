@@ -4,6 +4,7 @@ import cn.navclub.nes4j.app.config.NESConfig;
 import cn.navclub.nes4j.app.util.JsonUtil;
 import cn.navclub.nes4j.app.util.StrUtil;
 import cn.navclub.nes4j.app.view.GameHall;
+import cn.navclub.nes4j.bin.eventbus.EventBus;
 import javafx.application.Application;
 
 import javafx.stage.Stage;
@@ -14,14 +15,16 @@ import java.nio.file.Path;
 import java.util.ResourceBundle;
 
 @Slf4j
-public class Nes4j extends Application {
+public class INes extends Application {
     public static final ResourceBundle RESOURCE_BUNDLE;
     private static final String DEFAULT_CONFIG_PATH = "config/config.json";
 
     public static NESConfig config;
+    public static EventBus eventBus;
 
 
     static {
+        eventBus = new EventBus();
         System.loadLibrary("nes4j");
         System.setProperty("java.util.PropertyResourceBundle.encoding", "UTF-8");
         RESOURCE_BUNDLE = ResourceBundle.getBundle("cn.navclub.nes4j.app.assets.language.nes4j");
@@ -31,12 +34,6 @@ public class Nes4j extends Application {
     @Override
     public void start(Stage stage) {
         new GameHall(stage);
-    }
-
-
-    public static void main(String[] args) throws Exception {
-        config = loadLocalConfig(args);
-        launch(args);
     }
 
     /**
@@ -80,5 +77,10 @@ public class Nes4j extends Application {
             value = new String(arr);
         }
         return value;
+    }
+
+    public static void main(String[] args) throws Exception {
+        config = loadLocalConfig(args);
+        launch(args);
     }
 }

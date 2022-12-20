@@ -5,6 +5,7 @@ import cn.navclub.nes4j.bin.apu.Player;
 import cn.navclub.nes4j.bin.core.*;
 import cn.navclub.nes4j.bin.debug.Debugger;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
+import cn.navclub.nes4j.bin.eventbus.EventBus;
 import cn.navclub.nes4j.bin.function.TCallback;
 import cn.navclub.nes4j.bin.io.Cartridge;
 import cn.navclub.nes4j.bin.io.JoyPad;
@@ -21,7 +22,6 @@ import java.util.concurrent.locks.LockSupport;
 @Slf4j
 @Getter
 public class NES {
-
     private final Bus bus;
     private final CPU cpu;
     private final APU apu;
@@ -31,6 +31,7 @@ public class NES {
     private final JoyPad joyPad1;
     private final Cartridge cartridge;
     private final Debugger debugger;
+    private final EventBus eventBus;
     private final TCallback<Frame, JoyPad, JoyPad> gameLoopCallback;
 
     //CPU延迟时钟
@@ -56,6 +57,7 @@ public class NES {
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
+        this.eventBus = new EventBus();
         this.debugger = builder.debugger;
         this.thread = Thread.currentThread();
 
@@ -114,9 +116,7 @@ public class NES {
     }
 
     /**
-     *
      * Reset NES all core component
-     *
      */
     public void reset() {
         //Reset release debug lock
@@ -127,7 +127,6 @@ public class NES {
     }
 
     /**
-     *
      * {@link APU} AND {@link  PPU} trigger IRQ AND NMI interrupt.
      *
      * @param interrupt interrupt type
@@ -141,11 +140,7 @@ public class NES {
 
     public void videoOutput(Frame frame) {
         if (this.gameLoopCallback != null) {
-            try {
-                Thread.sleep(this.speed);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            LockSupport.parkNanos(this.speed * 1000000L);
             this.gameLoopCallback.accept(frame, this.joyPad, this.joyPad1);
             frame.clear();
         }
@@ -159,12 +154,11 @@ public class NES {
     public void stop() {
         this.stop = true;
         this.bus.stop();
+        LockSupport.unpark(this.thread);
     }
 
     /**
-     *
      * 在debug模式下用于执行下一个断点所用
-     *
      */
     public synchronized void release() {
         if (this.thread == null) {

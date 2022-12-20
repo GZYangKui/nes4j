@@ -1,7 +1,7 @@
 package cn.navclub.nes4j.app.view;
 
 import cn.navclub.nes4j.app.assets.FXResource;
-import cn.navclub.nes4j.app.Nes4j;
+import cn.navclub.nes4j.app.INes;
 import cn.navclub.nes4j.app.control.BreakLine;
 import cn.navclub.nes4j.app.control.CPUControlPane;
 import cn.navclub.nes4j.app.control.PPUControlPane;
@@ -54,7 +54,7 @@ public class DebuggerView extends Stage implements Debugger {
         rrun.setTooltip(new Tooltip("re-run"));
         stepOut.setTooltip(new Tooltip("step out"));
         stepInto.setTooltip(new Tooltip("step into"));
-        run.setTooltip(new Tooltip(Nes4j.localeValue("nes4j.run")));
+        run.setTooltip(new Tooltip(INes.localeValue("nes4j.run")));
 
         run.setGraphic(new ImageView(FXResource.loadImage("run.png")));
         rrun.setGraphic(new ImageView(FXResource.loadImage("rrun.png")));

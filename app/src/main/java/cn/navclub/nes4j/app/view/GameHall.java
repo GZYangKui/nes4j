@@ -1,17 +1,19 @@
 package cn.navclub.nes4j.app.view;
 
+import cn.navclub.nes4j.app.INes;
 import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.concurrent.TaskService;
 import cn.navclub.nes4j.app.control.Empty;
 import cn.navclub.nes4j.app.control.GameTray;
+import cn.navclub.nes4j.app.dialog.DNesHeader;
 import cn.navclub.nes4j.app.event.ControlDragEvent;
+import cn.navclub.nes4j.bin.eventbus.Message;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -24,24 +26,28 @@ import java.util.List;
  * 游戏大厅
  */
 public class GameHall {
+    public static final String INES_OPEN_GAME = "ines-open-game";
+
     @FXML
     private FlowPane flowPane;
     @FXML
     private ListView<String> listView;
 
     private final Stage stage;
-    private final Scene scene;
+
+    private final GameWorld gameWorld;
 
     private TaskService<List<File>> taskService;
 
     public GameHall(Stage stage) {
-        this.scene = new Scene(FXResource.loadFXML(this));
+        this.gameWorld = new GameWorld();
 
+        Scene scene = new Scene(FXResource.loadFXML(this));
         this.stage = stage;
         this.stage.setWidth(1200);
         this.stage.setHeight(900);
         this.stage.setTitle("ines");
-        this.stage.setScene(this.scene);
+        this.stage.setScene(scene);
         this.stage.initStyle(StageStyle.UNDECORATED);
         this.stage.show();
 
@@ -55,6 +61,7 @@ public class GameHall {
 
             taskService = TaskService.execute(this.loadGameList(newValue));
             taskService.setOnSucceeded(event -> {
+                @SuppressWarnings("all")
                 var files = (List<File>) event.getSource().getValue();
                 var list = files.stream().map(GameTray::new).toList();
                 this.flowPane.getChildren().addAll(list);
@@ -63,6 +70,17 @@ public class GameHall {
 
         if (!this.listView.getItems().isEmpty())
             this.listView.getSelectionModel().select(0);
+
+        INes.eventBus.listener(INES_OPEN_GAME, this::requestRun);
+    }
+
+    private boolean requestRun(Message<File> message) {
+        var file = message.body();
+        var execute = DNesHeader.open(message.body());
+        if (execute) {
+            this.gameWorld.execute(file);
+        }
+        return execute;
     }
 
     private void loadAssort() {
@@ -79,6 +97,7 @@ public class GameHall {
     }
 
 
+    @SuppressWarnings("all")
     private Task<List<File>> loadGameList(String assort) {
         return new Task<>() {
             @Override
