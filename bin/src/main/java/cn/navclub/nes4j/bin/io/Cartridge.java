@@ -4,6 +4,7 @@ package cn.navclub.nes4j.bin.io;
 import cn.navclub.nes4j.bin.config.NESFormat;
 import cn.navclub.nes4j.bin.config.NMapper;
 import cn.navclub.nes4j.bin.config.NameMirror;
+import cn.navclub.nes4j.bin.config.TV;
 import cn.navclub.nes4j.bin.util.BinUtil;
 import cn.navclub.nes4j.bin.util.IOUtil;
 
@@ -12,10 +13,10 @@ import lombok.Getter;
 import java.io.File;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.int8;
+import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 
 /**
- *
- *<pre>
+ * <pre>
  * iNES file format
  * An iNES file consists of the following sections, in order:
  *
@@ -153,12 +154,11 @@ import static cn.navclub.nes4j.bin.util.BinUtil.int8;
  * If byte 7 AND $0C = $00, and bytes 12-15 are all 0, then iNES.
  * Otherwise, iNES 0.7 or archaic iNES.
  * </pre>
- *
  */
 @Getter
 public class Cartridge {
     private final static int HEADER_SIZE = 16;
-
+    private final TV tv;
     private final int chSize;
     private final int rgbSize;
     private final byte[] chrom;
@@ -179,9 +179,10 @@ public class Cartridge {
         this.chSize = this.calChSize(headers);
         var rgbSize = this.calRgbSize(headers);
 
-        var flag6 = headers[6] & 0xff;
-        var flag7 = headers[7] & 0xff;
-        var flag8 = headers[8] & 0xff;
+        var flag6 = uint8(headers[6]);
+        var flag7 = uint8(headers[7]);
+        var flag8 = uint8(headers[8]);
+        var flag9 = uint8(headers[9]);
 
         var mapper = (flag7 & 0xf0) | ((flag6 & 0xf0) >> 4);
 
@@ -209,6 +210,7 @@ public class Cartridge {
         }
 
         this.mirrors = mirrors;
+        this.tv = TV.values()[flag9 & 0x01];
 
         var trainSize = this.trainAreaSize(flag6);
 
@@ -243,17 +245,18 @@ public class Cartridge {
         this.rgbSize = this.rgbrom.length;
     }
 
-    public Cartridge(NameMirror mirror, byte[] chrom, byte[] rgbrom) {
-        this.chrom = chrom;
-        this.mirrors = mirror;
-        this.rgbrom = rgbrom;
-        this.train = new byte[0];
-        this.mapper = NMapper.NROM;
-        this.format = NESFormat.INES;
-        this.cellaneous = new byte[0];
-        this.chSize = this.chrom.length;
-        this.rgbSize = this.rgbrom.length;
-    }
+//    public Cartridge(NameMirror mirror, byte[] chrom, byte[] rgbrom) {
+//        this.tv = TV.NTSC;
+//        this.chrom = chrom;
+//        this.mirrors = mirror;
+//        this.rgbrom = rgbrom;
+//        this.train = new byte[0];
+//        this.mapper = NMapper.NROM;
+//        this.format = NESFormat.INES;
+//        this.cellaneous = new byte[0];
+//        this.chSize = this.chrom.length;
+//        this.rgbSize = this.rgbrom.length;
+//    }
 
     public Cartridge(File file) {
         this(IOUtil.readFileAllByte(file));
