@@ -94,8 +94,8 @@ public class PPURender implements CycleDriver {
     private final int[] background;
     //Record current pixel on scanline
     protected int pixel;
-    //Background pixel offset
-    private int backgroundOffset;
+    //Background pixel shift
+    private int shift;
 
     public PPURender(PPU ppu) {
         this.ppu = ppu;
@@ -271,7 +271,6 @@ public class PPURender implements CycleDriver {
     }
 
     private void tileMut() {
-        this.backgroundOffset = 0;
         Arrays.fill(this.background, 0, this.background.length, 0);
 
         var x = (this.ppu.v & 0x1f) / 16;
@@ -318,7 +317,7 @@ public class PPURender implements CycleDriver {
             };
             this.background[i] = rgb[0] << 16 | rgb[1] << 8 | rgb[2];
         }
-
+        this.shift = 0;
         this.incX();
     }
 
@@ -463,15 +462,13 @@ public class PPURender implements CycleDriver {
         var pixel = this.backgroundPixel(x);
         if (this.mask.showSprite()) {
             var value = this.foreground[x];
-            //non-alpha pixel
-            if (value != 0) {
+            var color = value & 0xffffff;
+            if (color != 0) {
                 var index = (value >> 24) & 0x3f;
                 var cover = (value >> 30 & 0x01) == 0;
+                this.spriteZeroHit(pixel, color, index, x);
                 if (this.mask.showLeftMostSprite(x) && (cover || !this.mask.showBackground())) {
-                    pixel = value & 0xffffff;
-                }
-                if (index == 0 && this.cycles < 255) {
-                    this.ppu.status.update(PStatus.SPRITE_ZERO_HIT, true);
+                    pixel = color;
                 }
             }
         }
@@ -481,14 +478,15 @@ public class PPURender implements CycleDriver {
     }
 
     private int backgroundPixel(int x) {
-        if (!this.mask.showBackground() || (x < 8 && !this.mask.showLeftMostBackground(x))) {
+        if (!this.mask.showBackground() || !this.mask.showLeftMostBackground(x)) {
             return 0;
         }
         var pixel = 0;
-        var index = this.ppu.x + this.backgroundOffset;
-        if (index < this.background.length)
+        var index = this.ppu.x + this.shift;
+        if (index < this.background.length) {
             pixel = this.background[index];
-        this.backgroundOffset++;
+        }
+        this.shift++;
         return pixel;
     }
 
@@ -522,8 +520,7 @@ public class PPURender implements CycleDriver {
                 if (size == 0x10) {
                     bank = this.ppu.ctr.spritePattern16(idx);
                     //If even down flip other upper flip
-                    if (vf)
-                        idx += ((bank == 0) ? 1 : -1);
+                    if (vf) idx += ((bank == 0) ? 1 : -1);
                 }
 
                 var base = bank + idx * 16 + df;
@@ -540,6 +537,7 @@ public class PPURender implements CycleDriver {
                         case 1 -> this.sysPalette[palette[1]];
                         case 2 -> this.sysPalette[palette[2]];
                         case 3 -> this.sysPalette[palette[3]];
+                        //Transparent
                         default -> new int[]{0, 0, 0};
                     };
                     var b = 0;
@@ -551,8 +549,7 @@ public class PPURender implements CycleDriver {
 
                     var index = x + (hf ? (7 - j) : j);
 
-                    if (index < this.foreground.length)
-                        this.foreground[index] = b;
+                    if (index < this.foreground.length) this.foreground[index] = b;
                 }
             }
             count++;
@@ -604,12 +601,22 @@ public class PPURender implements CycleDriver {
      * <li>
      * The palette. The contents of the palette are irrelevant to sprite 0 hits. For example: a black
      * ($0F) sprite pixel can hit a black ($0F) background as long as neither is the transparent color index %00.
-     * <li>
+     * </li>
      * <li> The PAL PPU blanking on the left and right edges at x=0, x=1, and x=254 (see Overscan).</li>
      *
-     * @return If satisfy sprite zero hit condition return {@code true} otherwise {@code false}
+     * @param xb Background pixel
+     * @param xs Sprite pixel
      */
-    private boolean spriteZeroHit() {
-        return true;
+    private void spriteZeroHit(int xb, int xs, int index, int x) {
+        if (index != 0
+                || x == 255
+                || !this.mask.showSprite()
+                || !this.mask.showBackground()
+                || !this.mask.showLeftMostSprite(x)
+                || !this.mask.showLeftMostBackground(x)
+                || this.ppu.status.contain(PStatus.SPRITE_ZERO_HIT)) {
+            return;
+        }
+        this.ppu.status.update(PStatus.SPRITE_ZERO_HIT, xb != 0 && xs != 0);
     }
 }

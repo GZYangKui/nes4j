@@ -29,15 +29,11 @@ public class CPUControlPane extends Tab {
     private final CheckBox Z;
     private final CheckBox C;
 
-    private GridPane gridPane0;
-
-    private final VBox content;
-
     public CPUControlPane() {
-        this.content = new VBox();
-        this.gridPane0 = new GridPane();
+        var content = new VBox();
 
         var gridPane = new GridPane();
+        var gridPane0 = new GridPane();
 
         this.a = new TextField();
         this.x = new TextField();
@@ -92,11 +88,11 @@ public class CPUControlPane extends Tab {
 
         gridPane0.getStyleClass().add("status-grid");
 
-        this.content.getChildren().addAll(gridPane, gridPane0);
+        content.getChildren().addAll(gridPane, gridPane0);
 
         this.setText("CPU");
         this.setClosable(false);
-        this.setContent(this.content);
+        this.setContent(content);
     }
 
 

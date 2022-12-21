@@ -36,6 +36,7 @@ public class PPUMask extends Register<MaskFlag> {
         return this.contain(MaskFlag.SHOW_BACKGROUND);
     }
 
+    @SuppressWarnings("all")
     public boolean showLeftMostBackground(int x) {
         return x > 8 || this.contain(MaskFlag.LEFTMOST_8PXL_BACKGROUND);
     }
