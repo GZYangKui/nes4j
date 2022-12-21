@@ -5,13 +5,13 @@ import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
-public class ControlDragEvent implements EventHandler<MouseEvent> {
+public class NodeDragEvent implements EventHandler<MouseEvent> {
     private final Node node;
 
     private double x;
     private double y;
 
-    public ControlDragEvent(Node node) {
+    public NodeDragEvent(Node node) {
         this.node = node;
         this.node.addEventFilter(MouseEvent.ANY, this);
     }
@@ -35,7 +35,7 @@ public class ControlDragEvent implements EventHandler<MouseEvent> {
     }
 
 
-    public static void setBind(Node node,String nullable) {
-        new ControlDragEvent(node);
+    public static void setBind(Node node,String ignore) {
+        new NodeDragEvent(node);
     }
 }

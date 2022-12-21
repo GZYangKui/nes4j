@@ -10,6 +10,7 @@ import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Window;
 
 import java.io.File;
 import java.util.Arrays;
@@ -26,7 +27,7 @@ public class DNesHeader extends Dialog<Boolean> {
     @FXML
     private ChoiceBox<TV> cb3;
 
-    private DNesHeader(File file) {
+    public DNesHeader(File file, Window owner) {
         Cartridge cartridge = new Cartridge(file);
 
 
@@ -51,12 +52,8 @@ public class DNesHeader extends Dialog<Boolean> {
         pane.getButtonTypes().addAll(ButtonType.APPLY);
         ((Button) (pane.lookupButton(ButtonType.APPLY))).setText(INes.localeValue("nes4j.run"));
 
+        this.initOwner(owner);
         this.setTitle(StrUtil.getFileName(file));
         this.setResultConverter(buttonType -> !(buttonType == null));
-    }
-
-    public static boolean open(File file) {
-        return new DNesHeader(file)
-                .showAndWait().orElse(false);
     }
 }

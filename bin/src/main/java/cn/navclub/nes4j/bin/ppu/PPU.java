@@ -1,5 +1,6 @@
 package cn.navclub.nes4j.bin.ppu;
 
+import cn.navclub.nes4j.bin.config.NameTMirror;
 import cn.navclub.nes4j.bin.core.Component;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.ppu.register.PPUControl;
@@ -178,7 +179,7 @@ public class PPU implements Component {
         }
         //Read name table data
         else if (address < 0x3000) {
-            b = this.vram[address - 0x2000];
+            b = this.vram[address & 0x27ff - 0x2000];
         }
         //unknown ppu read memory
         else {

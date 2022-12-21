@@ -3,10 +3,8 @@ package cn.navclub.nes4j.app.view;
 import cn.navclub.nes4j.app.INes;
 import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.concurrent.TaskService;
-import cn.navclub.nes4j.app.control.Empty;
 import cn.navclub.nes4j.app.control.GameTray;
 import cn.navclub.nes4j.app.dialog.DNesHeader;
-import cn.navclub.nes4j.app.event.ControlDragEvent;
 import cn.navclub.nes4j.bin.eventbus.Message;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -76,7 +74,8 @@ public class GameHall {
 
     private boolean requestRun(Message<File> message) {
         var file = message.body();
-        var execute = DNesHeader.open(message.body());
+        var header = new DNesHeader(message.body(), this.stage);
+        var execute = header.showAndWait().orElse(false);
         if (execute) {
             this.gameWorld.execute(file);
         }

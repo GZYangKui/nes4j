@@ -9,14 +9,14 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ScrollPane?>
 <?import cn.navclub.nes4j.app.control.Empty?>
-<?import cn.navclub.nes4j.app.event.ControlDragEvent?>
+<?import cn.navclub.nes4j.app.event.NodeDragEvent?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml" stylesheets="@../css/GameHallStyle.css">
     <fx:define>
         <FlowPane styleClass="flow-pane" fx:id="flowPane"/>
     </fx:define>
     <top>
-        <HBox fx:id="navbar" styleClass="navbar" ControlDragEvent.bind="">
+        <HBox fx:id="navbar" styleClass="navbar" NodeDragEvent.bind="">
             <HBox styleClass="logo-box">
                 <Label text="INES" styleClass="app-name"/>
             </HBox>
