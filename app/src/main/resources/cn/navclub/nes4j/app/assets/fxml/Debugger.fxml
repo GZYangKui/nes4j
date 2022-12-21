@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import cn.navclub.nes4j.app.control.CPUControlPane?>
+<?import cn.navclub.nes4j.app.control.PPUControlPane?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            stylesheets="@../css/DebuggerStyle.css">
+    <top>
+        <HBox styleClass="top-box">
+            <Button onAction="#execute">
+                <graphic>
+                    <ImageView>
+                        <Image url="@../img/run.png"/>
+                    </ImageView>
+                </graphic>
+            </Button>
+            <Button onAction="#stepInto">
+                <graphic>
+                    <ImageView>
+                        <Image url="@../img/stepinto.png"/>
+                    </ImageView>
+                </graphic>
+            </Button>
+            <Button onAction="#stepOut">
+                <graphic>
+                    <ImageView>
+                        <Image url="@../img/stepout.png"/>
+                    </ImageView>
+                </graphic>
+            </Button>
+            <Button>
+                <graphic>
+                    <ImageView>
+                        <Image url="@../img/rrun.png"/>
+                    </ImageView>
+                </graphic>
+            </Button>
+        </HBox>
+    </top>
+    <left>
+        <ListView fx:id="listView"/>
+    </left>
+    <center>
+        <TabPane>
+            <CPUControlPane fx:id="controlPane"/>
+            <PPUControlPane fx:id="ppuControlPane"/>
+        </TabPane>
+    </center>
+
+</BorderPane>

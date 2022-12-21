@@ -1,6 +1,5 @@
 package cn.navclub.nes4j.bin.ppu;
 
-import cn.navclub.nes4j.bin.config.NameTMirror;
 import cn.navclub.nes4j.bin.core.Component;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.ppu.register.PPUControl;

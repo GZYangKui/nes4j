@@ -393,7 +393,7 @@ public enum Instruction {
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BNE">相关文档</a>
      */
-    BNE(int8(0XD0), 2, 2),
+    BNE(int8(0XD0), 2, 2, Relative),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BPL">相关文档</a>

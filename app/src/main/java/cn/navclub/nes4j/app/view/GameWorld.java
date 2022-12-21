@@ -10,15 +10,9 @@ import cn.navclub.nes4j.app.util.StrUtil;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.io.JoyPad;
 import cn.navclub.nes4j.bin.ppu.Frame;
-import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -26,10 +20,6 @@ import javafx.scene.control.*;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import org.controlsfx.dialog.ExceptionDialog;
 
@@ -44,8 +34,8 @@ public class GameWorld extends Stage {
     @FXML
     private MenuBar menuBar;
 
+    private final Debugger debugger;
     private final GraphicsContext ctx;
-    private final DebuggerView debuggerView;
     //使用队列模式在GameLoop和UILoop之间共享事件
     private final BlockingQueue<GameEventWrap> eventQueue;
 
@@ -57,7 +47,7 @@ public class GameWorld extends Stage {
 
         this.ctx = canvas.getGraphicsContext2D();
         this.eventQueue = new LinkedBlockingDeque<>();
-        this.debuggerView = new DebuggerView(this);
+        this.debugger = new Debugger(this);
 
 
         this.setWidth(900);
@@ -89,7 +79,7 @@ public class GameWorld extends Stage {
 
     @FXML
     public void debugger() {
-        this.debuggerView.show();
+        this.debugger.show();
     }
 
     public void execute(File file) {
@@ -102,7 +92,7 @@ public class GameWorld extends Stage {
                         .newBuilder()
                         .file(file)
                         .player(NativePlayer.class)
-                        .debugger(GameWorld.this.debuggerView)
+                        .debugger(GameWorld.this.debugger)
                         .gameLoopCallback(GameWorld.this::gameLoopCallback)
                         .build();
                 GameWorld.this.instance.execute();

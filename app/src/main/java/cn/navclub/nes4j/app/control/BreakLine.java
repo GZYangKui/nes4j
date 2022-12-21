@@ -1,7 +1,7 @@
 package cn.navclub.nes4j.app.control;
 
 import cn.navclub.nes4j.app.util.StrUtil;
-import cn.navclub.nes4j.app.view.DebuggerView;
+import cn.navclub.nes4j.app.view.Debugger;
 import cn.navclub.nes4j.bin.debug.OpenCode;
 import cn.navclub.nes4j.bin.config.AddressMode;
 import javafx.geometry.Pos;
@@ -45,7 +45,7 @@ public class BreakLine extends HBox {
     @Getter
     private final int index;
 
-    public BreakLine(DebuggerView view, int index) {
+    public BreakLine(Debugger view, int index) {
         this.index = index;
         this.label = new Label();
         this.address = new Label();
@@ -73,7 +73,7 @@ public class BreakLine extends HBox {
         });
     }
 
-    public BreakLine(DebuggerView view, OpenCode openCode) {
+    public BreakLine(Debugger view, OpenCode openCode) {
         this(view, openCode.index());
         var operand = openCode.operand();
         var mode = operand.mode();

@@ -6,10 +6,11 @@ import cn.navclub.nes4j.app.control.BreakLine;
 import cn.navclub.nes4j.app.control.CPUControlPane;
 import cn.navclub.nes4j.app.control.PPUControlPane;
 import cn.navclub.nes4j.bin.NES;
-import cn.navclub.nes4j.bin.debug.Debugger;
 import cn.navclub.nes4j.bin.debug.OpenCode;
 import cn.navclub.nes4j.bin.debug.OpenCodeFormat;
 import javafx.application.Platform;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
@@ -25,72 +26,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DebuggerView extends Stage implements Debugger {
-    private final ListView<BreakLine> listView;
+public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugger {
+
     private final Map<Integer, Integer> map;
     private final Map<Integer, Void> debuggers;
-    private final CPUControlPane controlPane;
-    private final PPUControlPane ppuControlPane;
+
+    @FXML
+    private CPUControlPane controlPane;
+    @FXML
+    private ListView<BreakLine> listView;
+    @FXML
+    private PPUControlPane ppuControlPane;
+
     private NES instance;
     private boolean stepInto;
     private volatile BreakLine currentLine;
 
-    public DebuggerView(final Window owner) {
-
-        var topBox = new HBox();
+    public Debugger(final Window owner) {
         this.map = new HashMap<>();
-        var tabPane = new TabPane();
         this.debuggers = new HashMap<>();
-        this.listView = new ListView<>();
-        var borderPane = new BorderPane();
-        this.controlPane = new CPUControlPane();
-        this.ppuControlPane = new PPUControlPane();
 
-        var run = new Button();
-        var rrun = new Button();
-        var stepOut = new Button();
-        var stepInto = new Button();
-
-        rrun.setTooltip(new Tooltip("re-run"));
-        stepOut.setTooltip(new Tooltip("step out"));
-        stepInto.setTooltip(new Tooltip("step into"));
-        run.setTooltip(new Tooltip(INes.localeValue("nes4j.run")));
-
-        run.setGraphic(new ImageView(FXResource.loadImage("run.png")));
-        rrun.setGraphic(new ImageView(FXResource.loadImage("rrun.png")));
-        stepOut.setGraphic(new ImageView(FXResource.loadImage("stepout.png")));
-        stepInto.setGraphic(new ImageView(FXResource.loadImage("stepinto.png")));
-
-        topBox.getStyleClass().add("top-box");
-        topBox.getChildren().addAll(run, stepInto, stepOut, rrun);
-
-        tabPane.getTabs().addAll(this.controlPane, this.ppuControlPane);
-
-        borderPane.setTop(topBox);
-        borderPane.setCenter(tabPane);
-        borderPane.setLeft(this.listView);
-
-
-        stepOut.setOnAction(event -> {
-            if (this.instance == null) {
-                return;
-            }
-            this.instance.release();
-        });
-
-        run.setOnAction(event -> {
-            if (this.instance == null) {
-                return;
-            }
-            this.stepInto = false;
-            this.instance.release();
-        });
-
-        stepInto.setOnAction((event) -> this.stepInto = true);
-
-        var scene = new Scene(borderPane);
-
-        scene.getStylesheets().add(FXResource.loadStyleSheet("DebuggerView.css"));
+        var scene = new Scene(FXResource.loadFXML(this));
 
         this.setHeight(900);
         this.setScene(scene);
@@ -103,6 +59,31 @@ public class DebuggerView extends Stage implements Debugger {
             }
             this.instance.release();
         });
+    }
+
+    @SuppressWarnings("all")
+    @FXML
+    public void stepInto() {
+        this.stepInto = true;
+    }
+
+    @SuppressWarnings("all")
+    @FXML
+    public void stepOut() {
+        if (this.instance == null) {
+            return;
+        }
+        this.instance.release();
+    }
+
+    @SuppressWarnings("all")
+    @FXML
+    public void execute() {
+        if (this.instance == null) {
+            return;
+        }
+        this.stepInto = false;
+        this.instance.release();
     }
 
     @Override
@@ -159,7 +140,10 @@ public class DebuggerView extends Stage implements Debugger {
             list.add(new BreakLine(this, openCode));
             index++;
         }
-        Platform.runLater(() -> this.listView.getItems().addAll(list));
+        Platform.runLater(() -> {
+            this.listView.getItems().clear();
+            this.listView.getItems().addAll(list);
+        });
     }
 
     public void point(BreakLine line) {

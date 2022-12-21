@@ -12,7 +12,6 @@ import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
 import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
 
 
-@Data
 @Slf4j
 public class CPU {
     //栈开始位置
@@ -268,7 +267,7 @@ public class CPU {
 
     private void adc(AddressMode mode, boolean sbc) {
         var addr = this.modeProvider.getAbsAddr(mode);
-        var b = this.getBus().read(addr);
+        var b = this.bus.read(addr);
         if (sbc) {
             b = (byte) (-b - 1);
         }
@@ -664,5 +663,9 @@ public class CPU {
         }
 
         return instruction6502.getCycle() + this.modeProvider.getCycles();
+    }
+
+    public byte getStatus() {
+        return this.status.getBits();
     }
 }

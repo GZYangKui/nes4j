@@ -7,6 +7,12 @@ GridPane {
     -fx-padding: .5em;
 }
 
+.status-grid {
+    -fx-hgap: .5em;
+    -fx-vgap: .5em;
+    -fx-alignment: CENTER-LEFT;
+}
+
 .top-box {
     -fx-padding: .2em;
     -fx-spacing: .5em;
