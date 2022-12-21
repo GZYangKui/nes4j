@@ -65,7 +65,7 @@ public class GameWorld extends Stage {
             if (!(eventType == KeyEvent.KEY_PRESSED || eventType == KeyEvent.KEY_RELEASED)) {
                 return;
             }
-            for (KeyMapper keyMapper : INes.config.getMapper()) {
+            for (KeyMapper keyMapper : INes.config().getMapper()) {
                 if (keyMapper.getKeyCode() == code) {
                     try {
                         this.eventQueue.put(new GameEventWrap(eventType, keyMapper.getButton()));
