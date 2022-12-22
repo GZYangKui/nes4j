@@ -54,7 +54,7 @@ public class PulseChannel extends Channel {
     }
 
     /**
-     *<pre>
+     * <pre>
      *                    +---------+    +---------+
      *                    |  Sweep  |--->|Timer / 2|
      *                    +---------+    +---------+
@@ -68,11 +68,14 @@ public class PulseChannel extends Channel {
      *     +---------+        |\             |\             |\          +---------+
      *     |Envelope |------->| >----------->| >----------->| >-------->|   DAC   |
      *     +---------+        |/             |/             |/          +---------+
-     *</pre>
+     * </pre>
      */
     @Override
     public int output() {
-        if (!this.enable || this.sequencer.value() == 0 || this.lengthCounter.getCounter() == 0) {
+        if (!this.enable
+                || this.sequencer.value() == 0
+                || this.lengthCounter.getCounter() == 0
+                || this.sweepUnit.isSilence()) {
             return 0;
         }
         return this.envelope.getVolume();

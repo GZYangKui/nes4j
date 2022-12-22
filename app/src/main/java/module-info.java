@@ -3,6 +3,7 @@ import cn.navclub.nes4j.bin.apu.Player;
 module cn.navclub.nes4j.app {
     requires static lombok;
 
+    requires java.desktop;
     requires javafx.fxml;
     requires javafx.base;
     requires javafx.media;

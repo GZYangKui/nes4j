@@ -23,7 +23,6 @@ public class INes extends Application {
 
     static {
         eventBus = new EventBus();
-        System.loadLibrary("nes4j");
         System.setProperty("java.util.PropertyResourceBundle.encoding", "UTF-8");
         RESOURCE_BUNDLE = ResourceBundle.getBundle("cn.navclub.nes4j.app.assets.language.nes4j");
     }

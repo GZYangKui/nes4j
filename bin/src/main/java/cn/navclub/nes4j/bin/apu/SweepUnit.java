@@ -2,6 +2,7 @@ package cn.navclub.nes4j.bin.apu;
 
 import cn.navclub.nes4j.bin.apu.impl.PulseChannel;
 import cn.navclub.nes4j.bin.function.CycleDriver;
+import lombok.Getter;
 
 /**
  * 滑音单元
@@ -17,6 +18,8 @@ public class SweepUnit implements CycleDriver {
     private final Divider divider;
     //判断至上一次tick以来是否能发生寄存器写操作
     private boolean write;
+    @Getter
+    private boolean silence;
     private final PulseChannel channel;
 
     public SweepUnit(PulseChannel channel) {
@@ -86,8 +89,11 @@ public class SweepUnit implements CycleDriver {
             if (this.enable && this.shift > 0) {
                 var timer = this.channel.timer;
                 var result = this.calculate(timer.getPeriod());
-                if (!(timer.getPeriod() < 8 && result > 0x7ff)) {
+                if (!(timer.getPeriod() < 8 || result > 0x7ff)) {
+                    this.silence = false;
                     timer.setPeriod(result);
+                } else {
+                    this.silence = true;
                 }
             }
         }

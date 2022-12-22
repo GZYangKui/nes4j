@@ -551,6 +551,7 @@ public class Render implements CycleDriver {
                 for (int j = 0; j < 8; j++) {
                     var lower = (l >> (7 - j)) & 0x01;
                     var upper = (r >> (7 - j)) & 0x01;
+
                     var arr = switch (lower | upper << 1) {
                         case 1 -> this.sysPalette[palette[1]];
                         case 2 -> this.sysPalette[palette[2]];
@@ -558,11 +559,18 @@ public class Render implements CycleDriver {
                         //Transparent
                         default -> new int[]{0, 0, 0};
                     };
+
                     var b = 0;
+
+                    //Red
                     b |= (arr[0] << 16);
+                    //Green
                     b |= (arr[1] << 8);
+                    //Blue
                     b |= (arr[2]);
+                    //Sprite index
                     b |= ((i & 0x3f) << 24);
+                    //Prior
                     b |= ((attr & 0x20) << 25);
 
                     var index = x + (hf ? (7 - j) : j);

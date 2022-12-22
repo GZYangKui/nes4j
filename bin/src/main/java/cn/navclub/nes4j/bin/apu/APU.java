@@ -187,8 +187,7 @@ public class APU implements Component {
     }
 
     /**
-     *
-     *<pre>
+     * <pre>
      * Implementation Using Lookup Table
      * ---------------------------------
      * The formulas can be efficiently implemented using two lookup tables: a 31-entry
@@ -206,8 +205,7 @@ public class APU implements Component {
      *     tnd_table [n] = 163.67 / (24329.0 / n + 100)
      *
      *     tnd_out = tnd_table [3 * triangle + 2 * noise + dmc]
-     *</pre>
-     *
+     * </pre>
      */
     private float lookupSample() {
         var d0 = this.dmc.output();

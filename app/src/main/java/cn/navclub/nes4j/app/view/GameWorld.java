@@ -2,7 +2,7 @@ package cn.navclub.nes4j.app.view;
 
 import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.INes;
-import cn.navclub.nes4j.app.audio.NativePlayer;
+import cn.navclub.nes4j.app.audio.JavaXAudio;
 import cn.navclub.nes4j.app.concurrent.TaskService;
 import cn.navclub.nes4j.app.event.GameEventWrap;
 import cn.navclub.nes4j.app.model.KeyMapper;
@@ -106,7 +106,7 @@ public class GameWorld extends Stage {
                 GameWorld.this.instance = NES.NESBuilder
                         .newBuilder()
                         .file(file)
-                        .player(NativePlayer.class)
+                        .player(JavaXAudio.class)
                         .gameLoopCallback(GameWorld.this::gameLoopCallback)
                         .build();
                 GameWorld.this.instance.execute();
