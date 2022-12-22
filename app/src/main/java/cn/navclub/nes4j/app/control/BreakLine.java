@@ -30,6 +30,7 @@ public class BreakLine extends HBox {
         ALIAS.put(0x2003, "PPU_OAM_ADDR");
         ALIAS.put(0x2005, "PPU_SCROLL");
         ALIAS.put(0x4014, "OAM_DMA");
+        ALIAS.put(0x4016, "JOY1_FRAME");
         ALIAS.put(0x4017, "JOY2_FRAME");
         ALIAS.put(0x4010, "DMC_RREQ");
         ALIAS.put(0x2006, "PPU_ADDRESS");

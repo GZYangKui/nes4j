@@ -7,6 +7,7 @@ import cn.navclub.nes4j.app.concurrent.TaskService;
 import cn.navclub.nes4j.app.event.GameEventWrap;
 import cn.navclub.nes4j.app.model.KeyMapper;
 import cn.navclub.nes4j.app.util.StrUtil;
+import cn.navclub.nes4j.app.util.UIUtil;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.io.JoyPad;
 import cn.navclub.nes4j.bin.ppu.Frame;
@@ -21,7 +22,6 @@ import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
-import org.controlsfx.dialog.ExceptionDialog;
 
 import java.io.File;
 import java.nio.IntBuffer;
@@ -34,26 +34,34 @@ public class GameWorld extends Stage {
     @FXML
     private MenuBar menuBar;
 
-    private final Debugger debugger;
+    //Pixel scale level
+    @SuppressWarnings("all")
+    private final int scale;
+
+    private final IntBuffer intBuffer;
     private final GraphicsContext ctx;
-    //使用队列模式在GameLoop和UILoop之间共享事件
+    private final WritableImage image;
     private final BlockingQueue<GameEventWrap> eventQueue;
 
     private NES instance;
+    private Debugger debugger;
     private TaskService<Void> service;
 
     public GameWorld() {
-        var borderPane = FXResource.loadFXML(this);
+        var scene = new Scene(FXResource.loadFXML(this));
+
+        this.scale = 3;
 
         this.ctx = canvas.getGraphicsContext2D();
         this.eventQueue = new LinkedBlockingDeque<>();
-        this.debugger = new Debugger(this);
 
+        this.intBuffer = IntBuffer.allocate(this.scale * this.scale);
+        this.image = new WritableImage(this.scale * Frame.width, this.scale * Frame.height);
 
         this.setWidth(900);
         this.setHeight(600);
+        this.setScene(scene);
         this.setResizable(false);
-        this.setScene(new Scene(borderPane));
         this.getScene().getStylesheets().add(FXResource.loadStyleSheet("common.css"));
 
 
@@ -77,8 +85,15 @@ public class GameWorld extends Stage {
         });
     }
 
+    @SuppressWarnings("all")
     @FXML
     public void debugger() {
+        if (this.debugger == null) {
+            this.debugger = new Debugger(this);
+            if (this.instance != null) {
+                this.instance.setDebugger(this.debugger);
+            }
+        }
         this.debugger.show();
     }
 
@@ -92,7 +107,6 @@ public class GameWorld extends Stage {
                         .newBuilder()
                         .file(file)
                         .player(NativePlayer.class)
-                        .debugger(GameWorld.this.debugger)
                         .gameLoopCallback(GameWorld.this::gameLoopCallback)
                         .build();
                 GameWorld.this.instance.execute();
@@ -108,38 +122,42 @@ public class GameWorld extends Stage {
 
 
     private void dispose(Throwable t) {
-        if (this.service != null) {
+        this.debugDispose();
+
+        if (this.service != null)
             this.service.cancel();
-            this.service = null;
-        }
-        if (this.instance != null) {
+
+        if (this.instance != null)
             this.instance.stop();
-            this.instance = null;
-        }
-        if (t != null) {
-            t.printStackTrace();
-            var dialog = new ExceptionDialog(t);
-            dialog.setHeaderText(INes.localeValue("nes4j.game.error"));
-            dialog.showAndWait();
-        }
+
+        if (t != null)
+            UIUtil.showError(t, INes.localeValue("nes4j.game.error"), null);
+
+        this.ctx.clearRect(0, 0, this.canvas.getWidth(), this.canvas.getHeight());
     }
 
+    public void debugDispose() {
+        this.debugger = null;
+        if (this.instance != null)
+            this.instance.setDebugger(null);
+
+        System.gc();
+    }
+
+
     private void gameLoopCallback(Frame frame, JoyPad joyPad, JoyPad joyPad1) {
-        var wp = 3;
-        var hp = 3;
-        var w = frame.getWidth();
-        var h = frame.getHeight();
-        var image = new WritableImage(w * wp, h * hp);
-        var arr = new int[wp * hp];
+        var w = Frame.width;
+        var h = Frame.height;
+
         var writer = image.getPixelWriter();
         var format = PixelFormat.getIntArgbInstance();
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
                 var pixel = frame.getPixel(y * w + x);
-                for (int k = 0; k < wp * hp; k++) {
-                    arr[k] = pixel;
+                for (int k = 0; k < this.scale * this.scale; k++) {
+                    intBuffer.put(k, pixel);
                 }
-                writer.setPixels(x * wp, y * hp, wp, hp, format, IntBuffer.wrap(arr), 1);
+                writer.setPixels(x * this.scale, y * this.scale, this.scale, this.scale, format, this.intBuffer, 1);
             }
         }
 
@@ -148,9 +166,8 @@ public class GameWorld extends Stage {
             joyPad.updateBtnStatus(event.btn(), event.event() == KeyEvent.KEY_PRESSED);
         }
         Platform.runLater(() -> {
-            this.setWidth(image.getWidth());
-            this.setHeight(image.getHeight() + this.menuBar.getHeight());
-            this.ctx.fillRect(0, 0, image.getWidth(), image.getHeight());
+            this.setWidth(this.image.getWidth());
+            this.setHeight(this.image.getHeight() + this.menuBar.getHeight());
 
             this.ctx.drawImage(image, 0, 0);
         });

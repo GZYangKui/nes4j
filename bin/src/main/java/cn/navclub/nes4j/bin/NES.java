@@ -30,7 +30,6 @@ public class NES {
     private final JoyPad joyPad;
     private final JoyPad joyPad1;
     private final Cartridge cartridge;
-    private final Debugger debugger;
     private final EventBus eventBus;
     private final TCallback<Frame, JoyPad, JoyPad> gameLoopCallback;
 
@@ -41,6 +40,7 @@ public class NES {
     private long cycles;
     @Getter
     private long instructions;
+    private Debugger debugger;
     private volatile boolean stop;
     private CPUInterrupt interrupt;
     @Getter
@@ -53,12 +53,11 @@ public class NES {
         } else {
             this.cartridge = new Cartridge(builder.file);
         }
-        this.speed = 8;
+        this.speed = 1;
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
         this.eventBus = new EventBus();
-        this.debugger = builder.debugger;
         this.thread = Thread.currentThread();
 
         this.gameLoopCallback = builder.gameLoopCallback;
@@ -70,11 +69,6 @@ public class NES {
 
 
         this.cpu = new CPU(this);
-
-        if (this.debugger != null) {
-            this.debugger.inject(this);
-            CompletableFuture.runAsync(() -> this.debugger.buffer(cartridge.getRgbrom()));
-        }
     }
 
     public void execute() {
@@ -115,6 +109,14 @@ public class NES {
         return temp;
     }
 
+    public void setDebugger(Debugger debugger) {
+        this.debugger = debugger;
+        if (this.debugger != null) {
+            this.debugger.inject(this);
+            CompletableFuture.runAsync(() -> this.debugger.buffer(cartridge.getRgbrom()));
+        }
+    }
+
     /**
      * Reset NES all core component
      */
@@ -140,7 +142,7 @@ public class NES {
 
     public void videoOutput(Frame frame) {
         if (this.gameLoopCallback != null) {
-            LockSupport.parkNanos(this.speed * 1000000L);
+            LockSupport.parkNanos(this.speed * 10000000L);
             this.gameLoopCallback.accept(frame, this.joyPad, this.joyPad1);
             frame.clear();
         }
@@ -170,17 +172,11 @@ public class NES {
     public static class NESBuilder {
         private File file;
         private byte[] buffer;
-        private Debugger debugger;
         private Class<? extends Player> player;
         private TCallback<Frame, JoyPad, JoyPad> gameLoopCallback;
 
         public NESBuilder buffer(byte[] buffer) {
             this.buffer = buffer;
-            return this;
-        }
-
-        public NESBuilder debugger(Debugger debugger) {
-            this.debugger = debugger;
             return this;
         }
 

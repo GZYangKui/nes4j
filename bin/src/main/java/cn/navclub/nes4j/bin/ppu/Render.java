@@ -148,11 +148,7 @@ public class Render implements CycleDriver {
         // During pixels 280 through 304 of this scanline, the vertical scroll bits are reloaded if rendering is enabled.
         //
         if (this.scanline == 261 && this.cycles == 1) {
-            this.ppu.status.clear(
-                    PStatus.V_BLANK_OCCUR,
-                    PStatus.SPRITE_ZERO_HIT,
-                    PStatus.SPRITE_OVERFLOW
-            );
+            this.ppu.status.clear(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT, PStatus.SPRITE_OVERFLOW);
         }
 
         if (this.cycles > 340) {
@@ -232,6 +228,8 @@ public class Render implements CycleDriver {
         if (this.mask.enableRender()) {
             if (this.cycles == 257 && visibleLine && this.mask.showSprite()) {
                 this.spriteEval();
+            } else {
+                spriteCount = 0;
             }
 
             if (nextLine || (visibleLine && visibleCycle)) {
@@ -243,16 +241,10 @@ public class Render implements CycleDriver {
                     case 5 -> this.readTileByte(v, false);
                     case 7 -> this.readTileByte(v, true);
                 }
-                if (!nextLine)
+                if (!nextLine) {
                     this.renderPixel();
+                }
             }
-
-            if (this.cycles == 257 && visibleLine) {
-                this.spriteEval();
-            } else {
-                spriteCount = 0;
-            }
-
 
             //
             // If rendering is enabled, at the end of vblank, shortly after the horizontal bits are copied from
@@ -480,9 +472,12 @@ public class Render implements CycleDriver {
             if (color != 0) {
                 var index = (value >> 24) & 0x3f;
                 var cover = (value >> 30 & 0x01) == 0;
-                this.spriteZeroHit(pixel, color, index, x);
                 if (this.mask.showLeftMostSprite(x) && (cover || !this.mask.showBackground())) {
                     pixel = color;
+                }
+
+                if (index == 0 && x < 255) {
+                    this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
                 }
             }
         }
@@ -592,54 +587,5 @@ public class Render implements CycleDriver {
                 ppu.palette[offset + 1],
                 ppu.palette[offset + 2]
         };
-    }
-
-    /**
-     * Sprite zero hits
-     * <p>
-     * Sprites are conventionally numbered 0 to 63. Sprite 0 is the sprite controlled by OAM addresses $00-$03,
-     * sprite 1 is controlled by $04-$07, ..., and sprite 63 is controlled by $FC-$FF.
-     * </p>
-     * <p>
-     * While the PPU is drawing the picture, when an opaque pixel of sprite 0 overlaps an opaque pixel of the
-     * background, this is a sprite zero hit. The PPU detects this condition and sets bit 6 of PPUSTATUS ($2002)
-     * to 1 starting at this pixel, letting the CPU know how far along the PPU is in drawing the picture.
-     * </p>
-     * <p>
-     * Sprite 0 hit does not happen:
-     *
-     * <li>If background or sprite rendering is disabled in PPUMASK ($2001)</li>
-     * <li>At x=0 to x=7 if the left-side clipping window is enabled (if bit 2 or bit 1 of PPUMASK is 0).</li>
-     * <li>At x=255, for an obscure reason related to the pixel pipeline.</li>
-     * <li>At any pixel where the background or sprite pixel is transparent (2-bit color index from the CHR pattern is %00).</li>
-     * <li>If sprite 0 hit has already occurred this frame. Bit 6 of PPUSTATUS ($2002) is cleared to 0 at dot 1 of
-     * the pre-render line. This means only the first sprite 0 hit in a frame can be detected.</li>
-     * Sprite 0 hit happens regardless of the following:
-     * </p>
-     * Sprite priority. Sprite 0 can still hit the background from behind.
-     * <li>
-     * The pixel colors. Only the CHR pattern bits are relevant, not the actual rendered colors,
-     * and any CHR color index except %00 is considered opaque.
-     * </li>
-     * <li>
-     * The palette. The contents of the palette are irrelevant to sprite 0 hits. For example: a black
-     * ($0F) sprite pixel can hit a black ($0F) background as long as neither is the transparent color index %00.
-     * </li>
-     * <li> The PAL PPU blanking on the left and right edges at x=0, x=1, and x=254 (see Overscan).</li>
-     *
-     * @param xb Background pixel
-     * @param xs Sprite pixel
-     */
-    private void spriteZeroHit(int xb, int xs, int index, int x) {
-        if (index != 0
-                || x == 255
-                || !this.mask.showSprite()
-                || !this.mask.showBackground()
-                || !this.mask.showLeftMostSprite(x)
-                || !this.mask.showLeftMostBackground(x)
-                || this.ppu.status.contain(PStatus.SPRITE_ZERO_HIT)) {
-            return;
-        }
-        this.ppu.status.update(PStatus.SPRITE_ZERO_HIT, xb != 0 && xs != 0);
     }
 }

@@ -42,7 +42,7 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
     private boolean stepInto;
     private volatile BreakLine currentLine;
 
-    public Debugger(final Window owner) {
+    public Debugger(final GameWorld owner) {
         this.map = new HashMap<>();
         this.debuggers = new HashMap<>();
 
@@ -59,6 +59,8 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
             }
             this.instance.release();
         });
+
+        this.setOnCloseRequest(event -> owner.debugDispose());
     }
 
     @SuppressWarnings("all")
