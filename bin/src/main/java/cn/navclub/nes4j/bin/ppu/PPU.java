@@ -155,14 +155,13 @@ public class PPU implements Component {
             this.byteBuf = this.vram[ramMirror(addr)];
         }
 
-        if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
-            var mirror = addr - 0x10;
-            temp = this.palette[mirror - 0x3f00];
-        }
 
         //读取调色板数据
         if (addr >= 0x3f00 && addr <= 0x3fff) {
-            temp = this.palette[addr - 0x3f00];
+            if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
+                addr = addr - 0x10;
+            }
+            temp = this.palette[addr & 0x3f1f - 0x3f00];
         }
 
         this.v += this.ctr.VRamIncrement();
@@ -200,14 +199,12 @@ public class PPU implements Component {
             this.vram[this.ramMirror(addr)] = b;
         }
 
-        if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
-            addr = addr - 0x10;
-            this.palette[addr - 0x3f00] = b;
-        }
-
         //更新调色板数据
         if (addr >= 0x3f00 && addr <= 0x3fff) {
-            this.palette[addr - 0x3f00] = b;
+            if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
+                addr = addr - 0x10;
+            }
+            this.palette[addr & 0x3f1f - 0x3f00] = b;
         }
 
         this.v += this.ctr.VRamIncrement();
