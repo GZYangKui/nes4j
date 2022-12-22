@@ -48,13 +48,43 @@ public class LengthCounter implements CycleDriver {
         this.counter--;
     }
 
+    /**
+     * <pre>
+     * Unless disabled, a write the channel's fourth register immediately reloads the
+     * counter with the value from a lookup table, based on(基于) the index formed(形成) by the
+     * upper 5 bits:
+     *
+     *     iiii i---       length index
+     *
+     *     bits  bit 3
+     *     7-4   0   1
+     *         -------
+     *     0   $0A $FE
+     *     1   $14 $02
+     *     2   $28 $04
+     *     3   $50 $06
+     *     4   $A0 $08
+     *     5   $3C $0A
+     *     6   $0E $0C
+     *     7   $1A $0E
+     *     8   $0C $10
+     *     9   $18 $12
+     *     A   $30 $14
+     *     B   $60 $16
+     *     C   $C0 $18
+     *     D   $48 $1A
+     *     E   $10 $1C
+     *     F   $20 $1E
+     * </pre>
+     *
+     * @param b Register valuer
+     */
     public void lookupTable(byte b) {
         if (!this.channel.enable) {
             return;
         }
-        var msb = (b & 0xf0) >> 4;
-        var index = msb * 2;
-        var offset = (b & 0x08) >> 3;
+        var index = ((b & 0xf0) >> 4) * 2;
+        var offset = ((b & 0x08) >> 3) & 0x01;
         this.counter = LOOKUP_TABLE[index + offset];
     }
 }

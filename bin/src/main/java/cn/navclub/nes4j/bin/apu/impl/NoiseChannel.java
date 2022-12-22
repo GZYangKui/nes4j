@@ -30,7 +30,7 @@ public class NoiseChannel extends Channel {
 
     public NoiseChannel(APU apu) {
         super(apu, new NoiseSequencer());
-        this.envelope = new Envelope(this);
+        this.envelope = new Envelope();
     }
 
     @Override
@@ -72,13 +72,13 @@ public class NoiseChannel extends Channel {
         }
 
         if (address == 0x400f) {
-            this.lock = true;
+            this.envelope.setLock(true);
             this.lengthCounter.setCounter(b >>> 3);
         }
     }
 
     /**
-     *<pre>
+     * <pre>
      *     +---------+    +---------+    +---------+
      *     |  Timer  |--->| Random  |    | Length  |
      *     +---------+    +---------+    +---------+
@@ -87,7 +87,7 @@ public class NoiseChannel extends Channel {
      *     +---------+        |\             |\         +---------+
      *     |Envelope |------->| >----------->| >------->|   DAC   |
      *     +---------+        |/             |/         +---------+
-     *</pre>
+     * </pre>
      */
     @Override
     public int output() {

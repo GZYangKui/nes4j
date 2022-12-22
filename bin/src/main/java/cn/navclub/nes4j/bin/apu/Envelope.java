@@ -2,31 +2,32 @@ package cn.navclub.nes4j.bin.apu;
 
 import cn.navclub.nes4j.bin.function.CycleDriver;
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Envelope Generate
  */
 public class Envelope implements CycleDriver {
     private final Divider divider;
-    private final Channel channel;
 
-    private int volume;
+    private int constant;
     private int counter;
     @Getter
     private boolean loop;
     private boolean disable;
+    @Setter
+    private boolean lock;
 
 
-    public Envelope(final Channel channel) {
-        this.channel = channel;
+    public Envelope() {
         this.divider = new Divider();
     }
 
     public void update(byte b) {
-        this.volume = b & 0x0f;
+        this.constant = b & 0x0f;
         this.loop = (b & 0x20) != 0;
         this.disable = (b & 0x10) != 0;
-        this.divider.setPeriod(volume + 1);
+        this.divider.setPeriod(constant + 1);
     }
 
     /**
@@ -36,9 +37,9 @@ public class Envelope implements CycleDriver {
      */
     @Override
     public void tick() {
-        var lock = this.channel.lock;
-        if (lock) {
+        if (this.lock) {
             this.counter = 15;
+            this.lock = false;
             this.divider.reset();
         } else {
             this.divider.tick();
@@ -64,7 +65,7 @@ public class Envelope implements CycleDriver {
      */
     public int getVolume() {
         if (this.disable) {
-            return this.volume;
+            return this.constant;
         }
         return this.counter;
     }

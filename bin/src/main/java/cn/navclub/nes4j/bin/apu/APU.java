@@ -6,6 +6,8 @@ import cn.navclub.nes4j.bin.apu.impl.*;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
 import lombok.Getter;
 
+import static cn.navclub.nes4j.bin.util.BinUtil.int8;
+
 /**
  * <a href="https://www.nesdev.org/wiki/APU">APU Document</a>
  */
@@ -30,8 +32,8 @@ public class APU implements Component {
     private final DMChannel dmc;
     private final Player player;
     private final NoiseChannel noise;
-    private final PulseChannel pulse;
     private final PulseChannel pulse1;
+    private final PulseChannel pulse2;
     private final TriangleChannel triangle;
     private final FrameCounter frameCounter;
 
@@ -42,8 +44,8 @@ public class APU implements Component {
         this.triangle = new TriangleChannel(this);
         this.frameCounter = new FrameCounter(this);
         this.player = Player.newInstance(context.getPlayer());
-        this.pulse = new PulseChannel(this, PulseChannel.PulseIndex.PULSE_0);
-        this.pulse1 = new PulseChannel(this, PulseChannel.PulseIndex.PULSE_1);
+        this.pulse1 = new PulseChannel(this, false);
+        this.pulse2 = new PulseChannel(this, true);
     }
 
     @Override
@@ -61,8 +63,8 @@ public class APU implements Component {
         //
         if (address == 0x4015) {
 
-            this.pulse.setEnable((b & 0x01) == 0x01);
-            this.pulse1.setEnable((b & 0x02) == 0x02);
+            this.pulse1.setEnable((b & 0x01) == 0x01);
+            this.pulse2.setEnable((b & 0x02) == 0x02);
             this.triangle.setEnable((b & 0x04) == 0x04);
             this.noise.setEnable((b & 0x08) == 0x08);
 
@@ -78,11 +80,11 @@ public class APU implements Component {
         }
         //0x4000-0x4003 Square Channel1
         else if (address >= 0x4000 && address <= 0x4003) {
-            this.pulse.write(address, b);
+            this.pulse1.write(address, b);
         }
         //0x4004-0x4007  Square Channel2
         else if (address >= 0x4004 && address <= 0x4007) {
-            this.pulse1.write(address, b);
+            this.pulse2.write(address, b);
         }
         //0x4008-0x400b Triangle channel
         else if (address >= 0x4008 && address <= 0x400b) {
@@ -122,8 +124,9 @@ public class APU implements Component {
         //    square 1 length counter > 0
         //
         var value = 0;
-        var c0 = pulse.getLengthCounter().getCounter();
-        var c1 = pulse1.getLengthCounter().getCounter();
+
+        var c0 = pulse1.getLengthCounter().getCounter();
+        var c1 = pulse2.getLengthCounter().getCounter();
         var c2 = triangle.getLengthCounter().getCounter();
         var c3 = this.noise.getLengthCounter().getCounter();
 
@@ -138,7 +141,7 @@ public class APU implements Component {
 
         this.frameCounter.setInterrupt(false);
 
-        return (byte) value;
+        return int8(value);
     }
 
     private long cycle;
@@ -149,8 +152,8 @@ public class APU implements Component {
 
         if (this.cycle % 2 == 0) {
             this.dmc.tick();
-            this.pulse.tick();
             this.pulse1.tick();
+            this.pulse2.tick();
             this.noise.tick();
         }
 
@@ -161,21 +164,21 @@ public class APU implements Component {
         if (this.frameCounter.isOutput()) {
             var index = this.frameCounter.getIndex() - 1;
             if (index % 2 != 0) {
-                this.pulse.lengthTick();
                 this.pulse1.lengthTick();
+                this.pulse2.lengthTick();
                 this.noise.lengthTick();
                 this.triangle.lengthTick();
             }
 
-            this.pulse.getEnvelope().tick();
-            this.noise.getEnvelope().tick();
             this.pulse1.getEnvelope().tick();
+            this.noise.getEnvelope().tick();
+            this.pulse2.getEnvelope().tick();
             this.triangle.getLinearCounter().tick();
         }
 
         if ((this.cycle / 2) % 40 == 0) {
             var output = this.lookupSample();
-            if (this.player != null) {
+            if (this.player != null && output != 0) {
                 this.player.output(output);
             }
         }
@@ -210,11 +213,11 @@ public class APU implements Component {
     private float lookupSample() {
         var d0 = this.dmc.output();
         var n0 = this.noise.output();
-        var p0 = this.pulse.output();
         var p1 = this.pulse1.output();
+        var p2 = this.pulse2.output();
         var t0 = this.triangle.output();
 
-        var seqOut = PULSE_TABLE[p0 + p1];
+        var seqOut = PULSE_TABLE[p2 + p1];
         var tndOut = TND_TABLE[3 * t0 + 2 * n0 + d0];
 
 

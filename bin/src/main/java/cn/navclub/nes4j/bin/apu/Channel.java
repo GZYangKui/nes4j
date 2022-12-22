@@ -3,9 +3,9 @@ package cn.navclub.nes4j.bin.apu;
 import cn.navclub.nes4j.bin.core.Component;
 import lombok.Getter;
 
+import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
+
 public abstract class Channel implements Component {
-    @Getter
-    protected boolean lock;
     @Getter
     protected Timer timer;
     @Getter
@@ -31,7 +31,6 @@ public abstract class Channel implements Component {
 
     @Override
     public void tick() {
-        this.lock = false;
         this.timer.tick();
     }
 
@@ -56,18 +55,26 @@ public abstract class Channel implements Component {
     public abstract int output();
 
     /**
-     * 更新当前定时器的值
+     * Update timer period
+     *
+     * @param address Register address
+     * @param b       Register value
      */
     protected void updateTimeValue(int address, byte b) {
         if (this.timer == null) {
             return;
         }
-        var first = address == 0x4002 || address == 0x4006 || address == 0x400A;
-        var second = address == 0x4003 || address == 0x4007 || address == 0x400B;
-        if (first || second) {
-            var period = this.timer.getPeriod();
-            period |= (second ? (b & 0x07) << 8 : b & 0xff);
-            this.timer.setPeriod(period);
+        var first = address == 0x4002 || address == 0x4006 || address == 0x400a;
+        var second = address == 0x4003 || address == 0x4007 || address == 0x400b;
+        var update = first || second;
+        if (update) {
+            var value = this.timer.getPeriod();
+            if (first) {
+                value |= uint8(b);
+            } else {
+                value |= ((uint8(b) & 0x07) << 8);
+            }
+            this.timer.setPeriod(value);
         }
 
     }

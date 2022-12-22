@@ -28,19 +28,21 @@ public class SweepUnit implements CycleDriver {
 
     }
 
-    //
-    // A channel's second register configures the sweep unit:
-    //
-    //    eppp nsss       enable, period, negate, shift
-    //
-    // The divider's period is set to p + 1.
-    //
+    /**
+     * <pre>
+     * A channel's second register configures the sweep unit:
+     *
+     * eppp nsss       enable, period, negate, shift
+     *
+     * The divider's period is set to p + 1.
+     * </p>
+     */
     public void update(byte value) {
         this.write = true;
         this.shift = value & 0x07;
         this.enable = ((value & 0x80) != 0);
         this.negative = (value & 0x08) != 0;
-        this.divider.setPeriod((value & 0x70) + 1);
+        this.divider.setPeriod(((value & 0x70) >> 4) + 1);
     }
 
     /**
@@ -51,13 +53,14 @@ public class SweepUnit implements CycleDriver {
      * value is added with the channel's current period, yielding the final result.
      *
      * @param period Current timer period
+     * @return Calculate result
      */
     private int calculate(int period) {
         var result = (period >> this.shift);
 
         if (this.negative) {
             result = -result;
-            if (this.channel.getIndex() == PulseChannel.PulseIndex.PULSE_1) {
+            if (this.channel.isSecond()) {
                 result -= 1;
             }
         }

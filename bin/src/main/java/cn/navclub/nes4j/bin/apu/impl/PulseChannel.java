@@ -7,20 +7,18 @@ import cn.navclub.nes4j.bin.apu.impl.sequencer.SeqSequencer;
 import cn.navclub.nes4j.bin.apu.APU;
 import lombok.Getter;
 
+
+@Getter
 public class PulseChannel extends Channel {
-    @Getter
-    private final PulseIndex index;
-    @Getter
+    private final boolean second;
     private final Envelope envelope;
-    @Getter
     private final SweepUnit sweepUnit;
 
-
-    public PulseChannel(APU apu, PulseIndex index) {
+    public PulseChannel(APU apu, boolean second) {
         super(apu, new SeqSequencer());
 
-        this.index = index;
-        this.envelope = new Envelope(this);
+        this.second = second;
+        this.envelope = new Envelope();
         this.sweepUnit = new SweepUnit(this);
     }
 
@@ -35,21 +33,21 @@ public class PulseChannel extends Channel {
             if (!this.envelope.isLoop()) {
                 this.lengthCounter.setHalt((b & 0x20) != 0);
             }
-            //更新占空比
-            ((SeqSequencer) (this.sequencer)).setDuty(b & 0x03);
+            //Update duty
+            ((SeqSequencer) (this.sequencer)).setDuty((b & 0xc0) >> 6);
         }
 
-        //更新滑音单元
+        //Update sweep properties
         if (address == 0x4001 || address == 0x4005) {
             this.sweepUnit.update(b);
         }
 
         if (address == 0x4003 || address == 0x4007) {
-            this.lock = true;
+            this.envelope.setLock(true);
             this.lengthCounter.lookupTable(b);
         }
 
-        //更新定时器周期
+        //Update timer period
         this.updateTimeValue(address, b);
     }
 
