@@ -28,7 +28,7 @@ public class PPU implements Component {
     @Getter
     protected final PPUMask mask;
     protected final PPUStatus status;
-    private final PPURender render;
+    private final Render render;
     @Getter
     protected final PPUControl ctr;
     @Getter
@@ -66,7 +66,7 @@ public class PPU implements Component {
         this.ch = new byte[8 * 1024];
         this.status = new PPUStatus();
         this.palette = new byte[32];
-        this.render = new PPURender(this);
+        this.render = new Render(this);
 
         System.arraycopy(ch, 0, this.ch, 0, Math.min(this.ch.length, ch.length));
     }

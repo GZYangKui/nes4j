@@ -35,7 +35,7 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
  *                     [2-bit Palette Attribute for next tile (from attribute table)]
  * </pre>
  */
-public class PPURender implements CycleDriver {
+public class Render implements CycleDriver {
 
     private static final int[][] DEF_SYS_PALETTE;
 
@@ -97,12 +97,12 @@ public class PPURender implements CycleDriver {
     //Background pixel shift
     private int shift;
 
-    public PPURender(PPU ppu) {
+    public Render(PPU ppu) {
         this.ppu = ppu;
         this.mask = ppu.mask;
         this.frame = new Frame();
 
-        this.background = new int[8];
+        this.background = new int[16];
         this.foreground = new int[256];
 
         this.sysPalette = new int[DEF_SYS_PALETTE.length][];
@@ -121,18 +121,12 @@ public class PPURender implements CycleDriver {
         this.cycles = 340;
         this.scanline = 240;
         this.frameCounter = 0;
-
         this.frame.clear();
     }
 
     @Override
     public void tick() {
         this.cycles++;
-
-        if (this.cycles == 341) {
-            this.cycles = 0;
-            this.scanline++;
-        }
 
         this.render();
 
@@ -153,10 +147,21 @@ public class PPURender implements CycleDriver {
         // which results in an image that looks more like a traditionally interlaced picture.
         // During pixels 280 through 304 of this scanline, the vertical scroll bits are reloaded if rendering is enabled.
         //
-        if (this.scanline >= 262) {
-            this.scanline = 0;
-            this.frameCounter++;
-            this.ppu.status.clear(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT);
+        if (this.scanline == 261 && this.cycles == 1) {
+            this.ppu.status.clear(
+                    PStatus.V_BLANK_OCCUR,
+                    PStatus.SPRITE_ZERO_HIT,
+                    PStatus.SPRITE_OVERFLOW
+            );
+        }
+
+        if (this.cycles > 340) {
+            this.cycles = 0;
+            this.scanline++;
+            if (this.scanline > 261) {
+                this.scanline = 0;
+                this.frameCounter++;
+            }
         }
     }
 
@@ -238,8 +243,16 @@ public class PPURender implements CycleDriver {
                     case 5 -> this.readTileByte(v, false);
                     case 7 -> this.readTileByte(v, true);
                 }
+
                 this.renderPixel();
             }
+
+            if (this.cycles == 257 && visibleLine) {
+                this.spriteEval();
+            } else {
+                spriteCount = 0;
+            }
+
 
             //
             // If rendering is enabled, at the end of vblank, shortly after the horizontal bits are copied from
@@ -315,9 +328,10 @@ public class PPURender implements CycleDriver {
                 case 3 -> sysPalette[palette[3]];
                 default -> sysPalette[ppu.palette[0]];
             };
-            this.background[i] = rgb[0] << 16 | rgb[1] << 8 | rgb[2];
+            this.background[i + 8] = (rgb[0] << 16 | rgb[1] << 8 | rgb[2]);
         }
         this.shift = 0;
+        System.arraycopy(this.background, 8, this.background, 0, 8);
         this.incX();
     }
 
@@ -379,9 +393,9 @@ public class PPURender implements CycleDriver {
      * </pre>
      */
     private void readTileByte(int v, boolean high) {
-        var y = (v >> 12) & 0x07;
+        var fineY = (v >> 12) & 0x07;
         var table = ppu.ctr.backgroundNameTable();
-        var address = table + this.tileIdx * 16 + y;
+        var address = table + this.tileIdx * 16 + fineY;
         if (!high) {
             this.leftByte = this.ppu.iRead(address);
         } else {
@@ -481,11 +495,7 @@ public class PPURender implements CycleDriver {
         if (!this.mask.showBackground() || !this.mask.showLeftMostBackground(x)) {
             return 0;
         }
-        var pixel = 0;
-        var index = this.ppu.x + this.shift;
-        if (index < this.background.length) {
-            pixel = this.background[index];
-        }
+        var pixel = this.background[this.ppu.x + this.shift];
         this.shift++;
         return pixel;
     }
@@ -515,18 +525,31 @@ public class PPURender implements CycleDriver {
                 //Indicates whether to flip the sprite vertically.
                 var vf = ((attr >> 7) & 0x01) == 1;
 
-                var bank = this.ppu.ctr.spritePattern8();
+                var bank = 0;
+                var address = 0;
+
                 //When sprite size is 8*16
                 if (size == 0x10) {
                     bank = this.ppu.ctr.spritePattern16(idx);
-                    //If even down flip other upper flip
-                    if (vf) idx += ((bank == 0) ? 1 : -1);
+                    if (vf) {
+                        df = 15 - df;
+                    }
+                    idx &= 0xfe;
+                    if (df > 7) {
+                        idx++;
+                        df -= 8;
+                    }
+                } else {
+                    bank = this.ppu.ctr.spritePattern8();
+                    if (vf) {
+                        df = 7 - df;
+                    }
                 }
 
-                var base = bank + idx * 16 + df;
+                address = bank + idx * 16 + df;
 
-                var l = uint8(this.ppu.iRead(base));
-                var r = uint8(this.ppu.iRead(base + 8));
+                var l = uint8(this.ppu.iRead(address));
+                var r = uint8(this.ppu.iRead(address + 8));
 
                 var palette = this.spritePalette(attr & 0x03);
 
