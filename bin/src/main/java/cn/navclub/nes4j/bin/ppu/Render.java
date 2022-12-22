@@ -234,7 +234,7 @@ public class Render implements CycleDriver {
                 this.spriteEval();
             }
 
-            if (visibleLine && visibleCycle) {
+            if (nextLine || (visibleLine && visibleCycle)) {
                 var v = this.ppu.v;
                 switch (this.cycles % 8) {
                     case 0 -> this.tileMut();
@@ -243,8 +243,8 @@ public class Render implements CycleDriver {
                     case 5 -> this.readTileByte(v, false);
                     case 7 -> this.readTileByte(v, true);
                 }
-
-                this.renderPixel();
+                if (!nextLine)
+                    this.renderPixel();
             }
 
             if (this.cycles == 257 && visibleLine) {
@@ -284,7 +284,8 @@ public class Render implements CycleDriver {
     }
 
     private void tileMut() {
-        Arrays.fill(this.background, 0, this.background.length, 0);
+
+        System.arraycopy(this.background, 8, this.background, 0, 8);
 
         var x = (this.ppu.v & 0x1f) / 16;
         var y = ((this.ppu.v >> 5) & 0x1f) / 16;
@@ -331,7 +332,6 @@ public class Render implements CycleDriver {
             this.background[i + 8] = (rgb[0] << 16 | rgb[1] << 8 | rgb[2]);
         }
         this.shift = 0;
-        System.arraycopy(this.background, 8, this.background, 0, 8);
         this.incX();
     }
 

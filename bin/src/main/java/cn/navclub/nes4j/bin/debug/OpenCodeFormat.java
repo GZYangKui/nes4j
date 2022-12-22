@@ -19,6 +19,7 @@ public class OpenCodeFormat {
             var b = buffer[i];
             try {
                 i += 1;
+
                 var instance = Instruction.getInstance(b);
                 var mode = instance.getAddressMode();
 
@@ -38,11 +39,10 @@ public class OpenCodeFormat {
                             Relative -> new Operand(mode, buffer[i], int8(0));
                     default -> Operand.DEFAULT_OPERAND;
                 };
-
-                list.add(new OpenCode(0x8000 + i - 1, instance.getInstruction(), operator));
+                var index = 0x8000 + i - 1;
+                list.add(new OpenCode(index, instance.getInstruction(), operator));
                 i += (instance.getSize() - 1);
             } catch (Exception ignore) {
-
             }
         }
         return list;

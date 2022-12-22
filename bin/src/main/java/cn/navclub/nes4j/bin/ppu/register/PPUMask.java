@@ -2,7 +2,7 @@ package cn.navclub.nes4j.bin.ppu.register;
 
 
 import cn.navclub.nes4j.bin.config.Register;
-import cn.navclub.nes4j.bin.config.MaskFlag;
+import cn.navclub.nes4j.bin.config.PMask;
 
 /**
  * <pre>
@@ -27,22 +27,22 @@ import cn.navclub.nes4j.bin.config.MaskFlag;
  * +--------- Emphasize blue
  * </pre>
  */
-public class PPUMask extends Register<MaskFlag> {
+public class PPUMask extends Register<PMask> {
     public boolean showSprite() {
-        return this.contain(MaskFlag.SHOW_SPRITES);
+        return this.contain(PMask.SHOW_SPRITES);
     }
 
     public boolean showBackground() {
-        return this.contain(MaskFlag.SHOW_BACKGROUND);
+        return this.contain(PMask.SHOW_BACKGROUND);
     }
 
     @SuppressWarnings("all")
     public boolean showLeftMostBackground(int x) {
-        return x > 8 || this.contain(MaskFlag.LEFTMOST_8PXL_BACKGROUND);
+        return x > 8 || this.contain(PMask.LEFTMOST_8PXL_BACKGROUND);
     }
 
     public boolean showLeftMostSprite(int x) {
-        return x > 8 || this.contain(MaskFlag.LEFTMOST_8PXL_SPRITE);
+        return x > 8 || this.contain(PMask.LEFTMOST_8PXL_SPRITE);
     }
 
     public boolean enableRender() {

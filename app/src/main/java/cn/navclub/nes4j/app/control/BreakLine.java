@@ -87,11 +87,10 @@ public class BreakLine extends HBox {
             var hexStr = "$%s%s".formatted(toHexStr(msb), toHexStr(lsb));
             text = switch (mode) {
                 case Accumulator -> "A";
-                case Absolute -> hexStr;
-                case Absolute_X, Absolute_Y -> "%s,%s".formatted(hexStr, mode == AddressMode.Absolute_X ? "x" : "y");
+                case Absolute, ZeroPage -> hexStr;
                 case Immediate -> "$%s".formatted(toHexStr(lsb));
                 case Indirect -> "(%s)".formatted(hexStr);
-                case ZeroPage_X -> "($%s,x)".formatted(toHexStr(lsb));
+                case ZeroPage_Y -> "$%s,Y".formatted(toHexStr(lsb));
                 case Indirect_Y -> "($%s),y".formatted(toHexStr(lsb));
                 case Relative -> {
                     var address = openCode.index() + lsb;
@@ -99,6 +98,8 @@ public class BreakLine extends HBox {
                     var b = toHexStr(int8(address >> 8));
                     yield "$%s%s".formatted(b, a);
                 }
+                case ZeroPage_X, Indirect_X -> "($%s,x)".formatted(toHexStr(lsb));
+                case Absolute_X, Absolute_Y -> "%s,%s".formatted(hexStr, mode == AddressMode.Absolute_X ? "x" : "y");
                 default -> "";
             };
         }
