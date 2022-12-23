@@ -39,7 +39,6 @@ public class FrameCounter implements Component {
     @Getter
     private int index;
     @Getter
-    @Setter
     private boolean output;
     private final APU apu;
 
@@ -88,7 +87,6 @@ public class FrameCounter implements Component {
     @Override
     public void write(int address, byte b) {
         this.index = 1;
-        this.output = false;
         //Sequencer mode: 0 selects 4-step sequence, 1 selects 5-step sequence.
         this.mode = ((b & 0x80) >> 7);
         //Interrupt inhibit flag. If set, the frame interrupt flag is cleared, otherwise it is unaffected.
@@ -98,15 +96,14 @@ public class FrameCounter implements Component {
     @Override
     public void tick() {
         this.cycle++;
-        var stepValue = this.sequencers[this.mode][this.index - 1];
-        this.output = this.cycle > stepValue;
+        var value = this.sequencers[this.mode][this.index - 1];
+        this.output = this.cycle > value;
         if (this.output) {
-            this.index = this.index + 1;
-            this.index = this.index % 5;
+            this.index = (this.index + 1) % 5;
             if (this.index == 0) {
                 this.index += 1;
             }
-            this.cycle %= stepValue;
+            this.cycle %= value;
             //
             // At any time if the interrupt flag is set and the IRQ disable is clear, the
             // CPU's IRQ line is asserted.

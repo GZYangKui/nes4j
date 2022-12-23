@@ -70,14 +70,24 @@ public class APU implements Component {
             this.triangle.setEnable((b & 0x04) == 0x04);
             this.noise.setEnable((b & 0x08) == 0x08);
 
-            var dmcEnable = (b & 0x10) == 0x10;
-            if (!dmcEnable) {
+            var enable = (b & 0x10) == 0x10;
+            //
+            // If the DMC bit is clear, the DMC bytes remaining will be set to 0 and the DMC will
+            // silence when it empties.
+            //
+            if (!enable) {
                 this.dmc.setCurrentLength(0);
             }
-            if (dmcEnable && this.dmc.getCurrentLength() == 0) {
+            //
+            // If the DMC bit is set, the DMC sample will be restarted only if its bytes remaining is 0.
+            // If there are bits remaining in the 1-byte sample buffer, these will finish playing before
+            // the next sample is fetched.
+            //
+            if (enable && this.dmc.getCurrentLength() == 0) {
                 this.dmc.reset();
             }
-            this.dmc.setEnable(dmcEnable);
+            this.dmc.setEnable(enable);
+            //Writing to this register clears the DMC interrupt flag.
             this.dmc.setIRQInterrupt(false);
         }
         //0x4000-0x4003 Square Channel1
@@ -142,6 +152,7 @@ public class APU implements Component {
         value |= this.frameCounter.isInterrupt() ? 1 << 6 : 0;
         value |= this.dmc.isIRQInterrupt() ? 1 << 7 : 0;
 
+        //Reading this register clears the frame interrupt flag (but not the DMC interrupt flag).
         this.frameCounter.setInterrupt(false);
 
         return int8(value);

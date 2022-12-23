@@ -12,9 +12,8 @@ import lombok.Setter;
 public class Envelope implements CycleDriver {
     private final Divider divider;
 
-    private int constant;
     private int counter;
-    @Getter
+    private int constant;
     private boolean loop;
     private boolean disable;
     @Setter
@@ -70,5 +69,17 @@ public class Envelope implements CycleDriver {
             return this.constant;
         }
         return this.counter;
+    }
+
+    /**
+     * Because the envelope loop and length counter disable flags are mapped to the
+     * same bit, the length counter can't be used while the envelope is in loop mode.
+     * Similar applies to the triangle channel, where the linear counter and length
+     * counter are both controlled by the same bit in register $4008.
+     *
+     * @return return {@code true} can safe use share flag bit otherwise can't use
+     */
+    public boolean shareFBit() {
+        return this.disable || !this.loop;
     }
 }

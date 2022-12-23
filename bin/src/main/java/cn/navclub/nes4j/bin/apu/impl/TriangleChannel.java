@@ -37,12 +37,6 @@ public class TriangleChannel extends Channel {
         this.updateTimeValue(address, b);
     }
 
-    @Override
-    public void tick() {
-        super.tick();
-        this.linearCounter.tick();
-    }
-
     /**
      * <pre>
      *                    +---------+    +---------+

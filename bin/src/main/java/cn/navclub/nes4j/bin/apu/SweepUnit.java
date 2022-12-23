@@ -13,15 +13,15 @@ import lombok.Getter;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class SweepUnit implements CycleDriver {
-    //右移位数
+    //Shift
     private int shift;
-    //滑音是否开启
+    //Enable flag
     private boolean enable;
-    //是否为负
+    //Negative flag
     private boolean negative;
-    //分频器
+    //Divider
     private final Divider divider;
-    //判断至上一次tick以来是否能发生寄存器写操作
+    //Record write operate from the last tick
     private boolean write;
     @Getter
     private boolean silence;
@@ -30,7 +30,6 @@ public class SweepUnit implements CycleDriver {
     public SweepUnit(PulseChannel channel) {
         this.channel = channel;
         this.divider = new Divider();
-
     }
 
     /**
@@ -99,10 +98,8 @@ public class SweepUnit implements CycleDriver {
         // shifter.
         //
         this.silence = (timer.period < 8 || result > 0x7ff);
-        if (!silence && this.enable) {
-            if (divider.output()) {
-                timer.setPeriod(result);
-            }
+        if (!silence && this.enable && this.shift > 0 && divider.output()) {
+            timer.setPeriod(result);
         }
     }
 }

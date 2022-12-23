@@ -37,11 +37,8 @@ public class NoiseChannel extends Channel {
     public void write(int address, byte b) {
         if (address == 0x400c) {
             this.envelope.update(b);
-            //
-            // Because the envelope loop and length counter disable flags are mapped to the
-            // same bit, the length counter can't be used while the envelope is in loop mode.
-            //
-            if (!this.envelope.isLoop()) {
+
+            if (this.envelope.shareFBit()) {
                 this.lengthCounter.setHalt((b & 0x20) != 0);
             }
         }
@@ -94,10 +91,16 @@ public class NoiseChannel extends Channel {
      *     |Envelope |------->| >----------->| >------->|   DAC   |
      *     +---------+        |/             |/         +---------+
      * </pre>
+     *
+     * <p> The mixer receives the current envelope volume except when</p>
+     *
+     * <li>Bit 0 of the shift register is set, or</li>
+     * <li>The length counter is zero</li>
+     * <li>Within the mixer, the DMC level has a noticeable effect on the noise's level.</li>
      */
     @Override
     public int output() {
-        if (!this.enable || this.sequencer.value() == 0 || this.lengthCounter.getCounter() == 0) {
+        if (!this.enable || (this.sequencer.value() == 0 || this.lengthCounter.getCounter() == 0)) {
             return 0;
         }
         return this.envelope.getVolume();

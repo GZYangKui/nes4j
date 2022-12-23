@@ -40,11 +40,8 @@ public class PulseChannel extends Channel {
     public void write(int address, byte b) {
         if (address == 0x4000 || address == 0x4004) {
             this.envelope.update(b);
-            //
-            // Because the envelope loop and length counter disable flags are mapped to the
-            // same bit, the length counter can't be used while the envelope is in loop mode.
-            //
-            if (!this.envelope.isLoop()) {
+
+            if (this.envelope.shareFBit()) {
                 this.lengthCounter.setHalt((b & 0x20) != 0);
             }
             //Update duty
