@@ -37,7 +37,13 @@ public class NoiseChannel extends Channel {
     public void write(int address, byte b) {
         if (address == 0x400c) {
             this.envelope.update(b);
-            this.lengthCounter.setHalt((b & 0x20) != 0);
+            //
+            // Because the envelope loop and length counter disable flags are mapped to the
+            // same bit, the length counter can't be used while the envelope is in loop mode.
+            //
+            if (!this.envelope.isLoop()) {
+                this.lengthCounter.setHalt((b & 0x20) != 0);
+            }
         }
         //
         // Register $400E sets the random generator mode and timer period based on a 4-bit
