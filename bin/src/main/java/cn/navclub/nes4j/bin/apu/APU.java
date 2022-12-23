@@ -21,9 +21,9 @@ public class APU implements Component {
 
         for (int i = 0; i < 203; i++) {
             if (i < 31) {
-                PULSE_TABLE[i] = (float) (95.52 / ((8128.0) / (float) i + 100));
+                PULSE_TABLE[i] = (float) (95.52 / (8128.0 / i + 100));
             }
-            TND_TABLE[i] = (float) (163.67 / (24329.0 / (float) i + 100));
+            TND_TABLE[i] = (float) (163.67 / (24329.0 / i + 100));
         }
     }
 
@@ -191,21 +191,24 @@ public class APU implements Component {
     }
 
     /**
+     * <p>
+     * <b>Lookup Table</b>
+     * </p>
+     * <p>
+     * The <a href="https://www.nesdev.org/wiki/APU_Mixe">APU mixer</a> formulas can be efficiently implemented using two lookup tables: a
+     * 31-entry table for the two pulse channels and a 203-entry table for the remaining channels
+     * (due to the approximation of tnd_out, the numerators are adjusted slightly to preserve the
+     * normalized output range).
+     * </p>
      * <pre>
-     * Implementation Using Lookup Table
-     * ---------------------------------
-     * The formulas can be efficiently implemented using two lookup tables: a 31-entry
-     * table for the two square channels and a 203-entry table for the remaining
-     * channels (due to the approximation of tnd_out, the numerators are adjusted
-     * slightly to preserve the normalized output range).
+     *     output = pulse_out + tnd_out
      *
-     *     square_table [n] = 95.52 / (8128.0 / n + 100)
+     *     pulse_table [n] = 95.52 / (8128.0 / n + 100)
      *
-     *     square_out = square_table [square1 + square2]
-     *
-     * The latter table is approximated (within 4%) by using a base unit close to the
-     * DMC's DAC.
-     *
+     *     pulse_out = pulse_table [pulse1 + pulse2]
+     * </pre>
+     * <p>The tnd_out table is approximated (within 4%) by using a base unit close to the DMC's DAC.</p>
+     * <pre>
      *     tnd_table [n] = 163.67 / (24329.0 / n + 100)
      *
      *     tnd_out = tnd_table [3 * triangle + 2 * noise + dmc]
