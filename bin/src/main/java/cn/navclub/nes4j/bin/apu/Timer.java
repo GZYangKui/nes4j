@@ -5,9 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- *
  * 归零计数器实现
- *
  */
 public class Timer implements CycleDriver {
     @Getter
@@ -25,12 +23,13 @@ public class Timer implements CycleDriver {
     public void tick() {
         if (this.counter == 0) {
             this.counter = this.period;
-        } else {
-            this.counter--;
-            //生成序列
-            if (this.counter == 0 && this.sequencer != null) {
+            //Generate sequence
+            if (this.sequencer != null) {
                 this.sequencer.tick();
             }
+        } else {
+            this.counter--;
+
         }
     }
 }

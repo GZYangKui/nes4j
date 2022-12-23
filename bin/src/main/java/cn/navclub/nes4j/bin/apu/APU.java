@@ -101,6 +101,7 @@ public class APU implements Component {
         //Frame sequencer
         else if (address == 0x4017) {
             this.frameCounter.write(address, b);
+            this.tick();
         }
     }
 
@@ -170,8 +171,8 @@ public class APU implements Component {
                 this.triangle.lengthTick();
             }
 
-            this.pulse1.getEnvelope().tick();
             this.noise.getEnvelope().tick();
+            this.pulse1.getEnvelope().tick();
             this.pulse2.getEnvelope().tick();
             this.triangle.getLinearCounter().tick();
         }

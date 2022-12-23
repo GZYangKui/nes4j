@@ -5,7 +5,12 @@ import cn.navclub.nes4j.bin.function.CycleDriver;
 import lombok.Getter;
 
 /**
- * 滑音单元
+ * <p>An NES APU sweep unit can be made to periodically adjust a pulse channel's period up or down.</p>
+ * <p>Each <a href="https://www.nesdev.org/wiki/APU_Sweep">sweep unit</a> contains the following:</p>
+ * <li>divider</li>
+ * <li>reload flag</li>
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class SweepUnit implements CycleDriver {
     //右移位数
@@ -76,28 +81,27 @@ public class SweepUnit implements CycleDriver {
     @Override
     public void tick() {
         this.divider.tick();
+
         if (this.write) {
             this.write = false;
             this.divider.reset();
         }
-        if (this.divider.output()) {
-            //
-            // When the channel's period is less than 8 or the result of the shifter is
-            // greater than $7FF, the channel's DAC receives 0 and the sweep unit doesn't
-            // change the channel's period.Otherwise, if the sweep unit is enabled and the
-            // shift count is greater than 0, when the divider outputs a clock, the channel's
-            // period in the third and fourth registers are updated with the result of the
-            // shifter.
-            //
-            if (this.enable && this.shift > 0) {
-                var timer = this.channel.timer;
-                var result = this.calculate(timer.getPeriod());
-                if (!(timer.getPeriod() < 8 || result > 0x7ff)) {
-                    this.silence = false;
-                    timer.setPeriod(result);
-                } else {
-                    this.silence = true;
-                }
+
+        var timer = this.channel.timer;
+        var result = this.calculate(timer.getPeriod());
+
+        //
+        // When the channel's period is less than 8 or the result of the shifter is
+        // greater than $7FF, the channel's DAC receives 0 and the sweep unit doesn't
+        // change the channel's period.Otherwise, if the sweep unit is enabled and the
+        // shift count is greater than 0, when the divider outputs a clock, the channel's
+        // period in the third and fourth registers are updated with the result of the
+        // shifter.
+        //
+        this.silence = (timer.period < 8 || result > 0x7ff);
+        if (!silence && this.enable) {
+            if (divider.output()) {
+                timer.setPeriod(result);
             }
         }
     }

@@ -51,7 +51,7 @@ public class LengthCounter implements CycleDriver {
     /**
      * <pre>
      * Unless disabled, a write the channel's fourth register immediately reloads the
-     * counter with the value from a lookup table, based on(基于) the index formed(形成) by the
+     * counter with the value from a lookup table, based on the index formed by the
      * upper 5 bits:
      *
      *     iiii i---       length index
