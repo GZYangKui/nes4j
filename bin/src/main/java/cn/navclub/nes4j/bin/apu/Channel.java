@@ -41,8 +41,8 @@ public abstract class Channel implements Component {
     public void setEnable(boolean enable) {
         this.enable = enable;
         //
-        // Counting can be halted and the counter can be disabled by clearing the appropriate bit in the status register,
-        // which immediately sets the counter to 0 and keeps it there.
+        // Counting can be halted and the counter can be disabled by clearing the appropriate bit in the status
+        // register,which immediately sets the counter to 0 and keeps it there.
         //
         if (!this.enable) {
             this.lengthCounter.setCounter(0);

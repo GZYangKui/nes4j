@@ -42,7 +42,7 @@ public class LengthCounter implements CycleDriver {
      */
     @Override
     public void tick() {
-        if (this.halt || this.counter == 0 || !this.channel.enable) {
+        if (this.halt || this.counter == 0) {
             return;
         }
         this.counter--;

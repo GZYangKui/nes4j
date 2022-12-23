@@ -53,15 +53,15 @@ public class APU implements Component {
     @Override
     public void write(int address, byte b) {
         //
-        //When $4015 is written to, the channels' length counter enable flags are set,
-        //the DMC is possibly started or stopped, and the DMC's IRQ occurred flag is
-        //cleared.
+        // When $4015 is written to, the channels' length counter enable flags are set,
+        // the DMC is possibly started or stopped, and the DMC's IRQ occurred flag is
+        // cleared.
         //
         //    ---d nt21   DMC, noise, triangle, square 2, square 1
         //
-        //If d is set and the DMC's DMA reader has no more sample bytes to fetch, the DMC
-        //sample is restarted. If d is clear then the DMA reader's sample bytes remaining
-        //is set to 0.
+        // If d is set and the DMC's DMA reader has no more sample bytes to fetch, the DMC
+        // sample is restarted. If d is clear then the DMA reader's sample bytes remaining
+        // is set to 0.
         //
         if (address == 0x4015) {
 
@@ -237,6 +237,7 @@ public class APU implements Component {
         var seqOut = PULSE_TABLE[p2 + p1];
         var tndOut = TND_TABLE[3 * t0 + 2 * n0 + d0];
 
+//        return TND_TABLE[d0];
         return tndOut + seqOut;
     }
 
