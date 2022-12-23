@@ -6,6 +6,8 @@ import lombok.Setter;
 
 /**
  * 归零计数器实现
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class Timer implements CycleDriver {
     @Getter

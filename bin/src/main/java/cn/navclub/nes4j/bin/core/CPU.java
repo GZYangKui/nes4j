@@ -11,7 +11,11 @@ import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
 import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
 
-
+/**
+ * 6502 cpu instance
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
+ */
 @Slf4j
 public class CPU {
     //栈开始位置

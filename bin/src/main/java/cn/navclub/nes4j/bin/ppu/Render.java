@@ -34,6 +34,8 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
  *                                                |
  *                     [2-bit Palette Attribute for next tile (from attribute table)]
  * </pre>
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class Render implements CycleDriver {
 

@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+/**
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
+ */
 public class EventBus {
     private final Map<String, MessageConsumer<?>> map;
 

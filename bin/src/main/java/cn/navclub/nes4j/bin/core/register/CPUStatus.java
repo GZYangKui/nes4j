@@ -43,6 +43,8 @@ import cn.navclub.nes4j.bin.config.Register;
  * <li>Negative Flag</li>
  * The negative flag is set if the result of the last operation had bit 7 set to a one.
  * </pre>
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class CPUStatus extends Register<ICPUStatus> {
 }

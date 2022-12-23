@@ -11,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 
-
+/**
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
+ */
 @Slf4j
 public class Bus implements Component {
     private static final int RPG_ROM = 0x8000;

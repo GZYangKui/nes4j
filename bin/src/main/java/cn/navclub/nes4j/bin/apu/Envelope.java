@@ -6,6 +6,8 @@ import lombok.Setter;
 
 /**
  * Envelope Generate
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class Envelope implements CycleDriver {
     private final Divider divider;

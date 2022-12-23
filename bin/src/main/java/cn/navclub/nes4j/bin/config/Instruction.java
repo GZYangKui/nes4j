@@ -10,6 +10,8 @@ import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 
 /**
  * 6502 指令集
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 @Slf4j
 public enum Instruction {

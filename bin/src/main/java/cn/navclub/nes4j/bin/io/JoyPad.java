@@ -4,6 +4,8 @@ import cn.navclub.nes4j.bin.util.BinUtil;
 
 /**
  * <a href="https://www.nesdev.org/wiki/Standard_controller"> Standard controller</a>
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class JoyPad {
     private int index;

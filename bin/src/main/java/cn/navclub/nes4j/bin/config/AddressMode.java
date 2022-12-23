@@ -2,6 +2,7 @@ package cn.navclub.nes4j.bin.config;
 
 /**
  * CPU寻址模式
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public enum AddressMode {
     Accumulator,

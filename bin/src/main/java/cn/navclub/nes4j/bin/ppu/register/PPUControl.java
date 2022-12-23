@@ -26,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
  * +--------- Generate an NMI at the start of the
  * vertical blanking interval (0: off; 1: on)
  * </pre>
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 @Slf4j
 public class PPUControl extends Register<PControl> {

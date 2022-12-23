@@ -1,6 +1,8 @@
 package cn.navclub.nes4j.bin.apu;
 
-
+/**
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
+ */
 public interface Player {
     /**
      *

@@ -10,6 +10,8 @@ import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 
 /**
  * <a href="https://www.nesdev.org/wiki/APU">APU Document</a>
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class APU implements Component {
     private static final float[] TND_TABLE;

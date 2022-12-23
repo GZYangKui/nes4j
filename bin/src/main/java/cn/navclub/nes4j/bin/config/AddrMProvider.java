@@ -9,6 +9,8 @@ import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
 
 /**
  * <a href="http://www.emulator101.com/6502-addressing-modes.html">6502 address mode</a>
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class AddrMProvider {
     private final Bus bus;

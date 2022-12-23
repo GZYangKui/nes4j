@@ -3,27 +3,30 @@ package cn.navclub.nes4j.bin.debug;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.CPU;
 
+/**
+ * NES instance debugger function
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
+ */
 public interface Debugger {
     /**
+     * When {@link CPU#next()} was executed before call
      *
-     * {@link CPU#next()}执行前调用该方法
-     *
-     * @return 如果返回 {@code true} 则阻塞当前处理器,否则继续执行
+     * @return If return {@code true} block current thread,otherwise do nothing.
      */
     boolean hack(NES context);
 
     /**
+     * When {@link NES} instance rpg-rom data happen change call
      *
-     * 当rpg-rom发生改变时调用该函数
-     *
-     * @param buffer rpg数据
+     * @param buffer Change after rpg data
      */
     void buffer(byte[] buffer);
 
     /**
+     * When {@link NES} wsa created  call
      *
-     * 注入NES对象实例
-     *
+     * @param instance {@link NES} instance
      */
     void inject(NES instance);
 }

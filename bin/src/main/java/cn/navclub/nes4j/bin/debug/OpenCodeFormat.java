@@ -9,7 +9,9 @@ import java.util.List;
 import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 
 /**
- * 6502操作码格式化
+ * 6502 open code format utils
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class OpenCodeFormat {
 

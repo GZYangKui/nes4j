@@ -18,6 +18,8 @@ import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
 
 /**
  * <a href="https://www.nesdev.org/wiki/PPU_programmer_reference">PPU document</a>
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class PPU implements Component {
     @Getter

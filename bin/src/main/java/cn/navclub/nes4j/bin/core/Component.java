@@ -3,48 +3,48 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.function.CycleDriver;
 
 /**
+ * Abstract nes system core component common function.
  *
- * NES系统核心组件功能抽象
- *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public interface Component extends CycleDriver {
     /**
-     * 向指定位置写入一个字节
+     * Write a byte to address
      */
     void write(int address, byte b);
 
     /**
-     * 从指定位置读取一个字节
+     * Read a byte from address
      */
     byte read(int address);
 
     /**
-     * 组件停止时触发资源清除工作
+     * When {@link cn.navclub.nes4j.bin.NES} instance stop call
      */
     default void stop() {
 
     }
 
     /**
-     * 组件触发重置
+     * When {@link cn.navclub.nes4j.bin.NES} was reset call
      */
     default void reset() {
 
     }
 
     /**
+     * Snapshot current component status info
      *
-     * 组件快照,用于存档使用
-     *
+     * @return Current status info data
      */
     default byte[] snapshot() {
         return null;
     }
 
     /**
+     * Recovery current component to target status
      *
-     * 加载组件快照,用于恢复存档
-     *
+     * @param snapshot Status data
      */
     default void load(byte[] snapshot) {
 

@@ -32,6 +32,7 @@ import cn.navclub.nes4j.bin.config.Register;
  *            line); cleared after reading $2002 and at dot 1 of the
  *            pre-render line.
  * </pre>
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class PPUStatus extends Register<PStatus> {
 }

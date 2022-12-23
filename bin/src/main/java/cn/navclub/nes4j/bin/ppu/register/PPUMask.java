@@ -26,6 +26,7 @@ import cn.navclub.nes4j.bin.config.PMask;
  * |+-------- Emphasize green (red on PAL/Dendy)
  * +--------- Emphasize blue
  * </pre>
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class PPUMask extends Register<PMask> {
     public boolean showSprite() {

@@ -154,6 +154,9 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
  * If byte 7 AND $0C = $00, and bytes 12-15 are all 0, then iNES.
  * Otherwise, iNES 0.7 or archaic iNES.
  * </pre>
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
+ *
  */
 @Getter
 public class Cartridge {
