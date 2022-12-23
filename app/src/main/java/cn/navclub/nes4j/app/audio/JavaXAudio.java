@@ -4,6 +4,8 @@ import cn.navclub.nes4j.bin.apu.Player;
 
 import javax.sound.sampled.*;
 
+import java.util.concurrent.locks.LockSupport;
+
 import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 
 @SuppressWarnings("all")
@@ -28,10 +30,11 @@ public class JavaXAudio implements Player {
 
     @Override
     public void output(float sample) {
-        this.sample[this.index++] = int8(Math.round(sample * 0xff));
+        var value = int8(Math.round(sample * 0xff));
+        this.sample[this.index++] = value;
         if (this.index == this.sample.length) {
             this.index = 0;
-            var s = this.line.write(this.sample, 0, this.sample.length);
+            this.line.write(this.sample, 0, this.sample.length);
         }
     }
 

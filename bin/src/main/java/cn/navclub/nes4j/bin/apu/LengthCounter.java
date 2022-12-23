@@ -36,12 +36,12 @@ public class LengthCounter implements CycleDriver {
         this.channel = channel;
     }
 
+    /**
+     * When clocked by the frame sequencer, if the halt flag is clear and the counter
+     * is non-zero, it is decremented.
+     */
     @Override
     public void tick() {
-        //
-        // When clocked by the frame sequencer, if the halt flag is clear and the counter
-        // is non-zero, it is decremented.
-        //
         if (this.halt || this.counter == 0 || !this.channel.enable) {
             return;
         }

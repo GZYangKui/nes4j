@@ -24,6 +24,10 @@ public abstract class Channel implements Component {
         this.timer = sequencer == null ? null : new Timer(this.sequencer);
     }
 
+    public Channel(APU apu) {
+        this(apu, null);
+    }
+
     @Override
     public byte read(int address) {
         throw new RuntimeException("Write-only register.");
@@ -50,7 +54,9 @@ public abstract class Channel implements Component {
     }
 
     /**
-     * 当前通道输出
+     * Waveform channel output
+     *
+     * @return Channel output value
      */
     public abstract int output();
 

@@ -100,8 +100,10 @@ public class NoiseChannel extends Channel {
      */
     @Override
     public int output() {
-        if (!this.enable || (this.sequencer.value() == 0 || this.lengthCounter.getCounter() == 0)) {
-            return 0;
+        if (!this.enable
+                || this.sequencer.value() == 1
+                || this.lengthCounter.getCounter() == 0) {
+            return this.sequencer.value();
         }
         return this.envelope.getVolume();
     }

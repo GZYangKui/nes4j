@@ -118,6 +118,16 @@ public class NES {
     }
 
     /**
+     * This is util method,read target address memory value
+     *
+     * @param address Memory address
+     * @return Memory address value
+     */
+    public byte I8Read(int address) {
+        return this.bus.read(address);
+    }
+
+    /**
      * Reset NES all core component
      */
     public void reset() {

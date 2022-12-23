@@ -88,7 +88,7 @@ public class PulseChannel extends Channel {
      * <li>overflow from the sweep unit's adder is silencing the channel, or</li>
      * <li>the length counter is zero, or</li>
      * <li>the timer has a value less than eight (t<8, noted above).</li>
-     * <li>If any of the above are true, then the pulse channel sends zero (silence) to the mixer.</li>
+     * If any of the above are true, then the pulse channel sends zero (silence) to the mixer.
      * </p>
      */
     @Override

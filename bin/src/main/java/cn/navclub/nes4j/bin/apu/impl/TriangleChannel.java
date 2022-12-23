@@ -12,7 +12,7 @@ public class TriangleChannel extends Channel {
     private final LinearCounter linearCounter;
 
     public TriangleChannel(APU apu) {
-        super(apu, null);
+        super(apu);
         this.linearCounter = new LinearCounter();
         this.sequencer = new TriangleSequencer();
         this.timer = new TTimer(this);
@@ -47,7 +47,7 @@ public class TriangleChannel extends Channel {
      *     +---------+        |\             |\         +---------+    +---------+
      *     |  Timer  |------->| >----------->| >------->|Sequencer|--->|   DAC   |
      *     +---------+        |/             |/         +---------+    +---------+
-     *</pre>
+     * </pre>
      */
     @Override
     public int output() {
