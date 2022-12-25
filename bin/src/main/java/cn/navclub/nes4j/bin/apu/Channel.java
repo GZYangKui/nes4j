@@ -5,19 +5,21 @@ import lombok.Getter;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 
-public abstract class Channel implements Component {
-    @Getter
-    protected Timer timer;
-    @Getter
-    protected boolean enable;
-    @Getter
-    protected Sequencer sequencer;
+public abstract class Channel<T extends Sequencer> implements Component {
     protected final APU apu;
     @Getter
     protected final LengthCounter lengthCounter;
 
+    @Getter
+    protected Timer<T> timer;
+    @Getter
+    protected T sequencer;
+    @Getter
+    protected boolean enable;
 
-    public Channel(final APU apu, final Sequencer sequencer) {
+
+
+    public Channel(final APU apu, T sequencer) {
         this.apu = apu;
         this.sequencer = sequencer;
         this.lengthCounter = new LengthCounter(this);

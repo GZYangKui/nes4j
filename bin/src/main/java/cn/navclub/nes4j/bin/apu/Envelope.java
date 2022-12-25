@@ -1,5 +1,6 @@
 package cn.navclub.nes4j.bin.apu;
 
+import cn.navclub.nes4j.bin.apu.impl.timer.Divider;
 import cn.navclub.nes4j.bin.function.CycleDriver;
 
 /**

@@ -2,6 +2,7 @@ package cn.navclub.nes4j.bin.apu.impl;
 
 import cn.navclub.nes4j.bin.apu.Channel;
 import cn.navclub.nes4j.bin.apu.APU;
+import cn.navclub.nes4j.bin.apu.Sequencer;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,7 +23,7 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
-public class DMChannel extends Channel {
+public class DMChannel extends Channel<Sequencer> {
     private final static int[] FREQ_TABLE = {
             0x1AC,
             0x17C,

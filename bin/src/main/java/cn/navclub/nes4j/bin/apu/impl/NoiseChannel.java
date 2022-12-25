@@ -6,7 +6,7 @@ import cn.navclub.nes4j.bin.apu.impl.sequencer.NoiseSequencer;
 import cn.navclub.nes4j.bin.apu.APU;
 import lombok.Getter;
 
-public class NoiseChannel extends Channel {
+public class NoiseChannel extends Channel<NoiseSequencer> {
     private static final int[] LOOK_TABLE = {
             0x004,
             0x008,
@@ -71,7 +71,7 @@ public class NoiseChannel extends Channel {
             var index = b & 0x0f;
             var mode = (b & 0x80) >> 7;
             this.timer.setPeriod(LOOK_TABLE[index]);
-            ((NoiseSequencer) this.sequencer).setMode(mode);
+            this.sequencer.setMode(mode);
         }
 
         if (address == 0x400f) {

@@ -5,9 +5,10 @@ import cn.navclub.nes4j.bin.apu.LinearCounter;
 import cn.navclub.nes4j.bin.apu.Timer;
 import cn.navclub.nes4j.bin.apu.impl.sequencer.TriangleSequencer;
 import cn.navclub.nes4j.bin.apu.APU;
+import cn.navclub.nes4j.bin.apu.impl.timer.TriangleTimer;
 import lombok.Getter;
 
-public class TriangleChannel extends Channel {
+public class TriangleChannel extends Channel<TriangleSequencer> {
     @Getter
     private final LinearCounter linearCounter;
 
@@ -15,7 +16,7 @@ public class TriangleChannel extends Channel {
         super(apu);
         this.linearCounter = new LinearCounter();
         this.sequencer = new TriangleSequencer();
-        this.timer = new TTimer(this);
+        this.timer = new TriangleTimer(this.sequencer, this);
     }
 
     @Override
@@ -58,34 +59,5 @@ public class TriangleChannel extends Channel {
             return 0;
         }
         return sequencer.value();
-    }
-
-    private static class TTimer extends Timer {
-        private final TriangleChannel channel;
-
-        public TTimer(TriangleChannel channel) {
-            super(channel.getSequencer());
-            this.channel = channel;
-        }
-
-        @Override
-        public void tick() {
-            if (this.counter == 0) {
-                this.counter = this.period;
-            } else {
-                this.counter--;
-                //
-                // When the timer generates a clock and the Length Counter and Linear Counter both
-                // have a non-zero count, the sequencer is clocked.
-                //
-                if (this.counter == 0) {
-                    var linearCounter = this.channel.linearCounter;
-                    var lengthCounter = this.channel.lengthCounter;
-                    if (lengthCounter.getCounter() != 0 && linearCounter.getCounter() != 0) {
-                        this.sequencer.tick();
-                    }
-                }
-            }
-        }
     }
 }

@@ -1,11 +1,14 @@
-package cn.navclub.nes4j.bin.apu;
+package cn.navclub.nes4j.bin.apu.impl.timer;
+
+import cn.navclub.nes4j.bin.apu.Sequencer;
+import cn.navclub.nes4j.bin.apu.Timer;
 
 /**
  * Divider implement
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
-public class Divider extends Timer {
+public class Divider extends Timer<Sequencer> {
     private boolean output;
 
     public Divider() {

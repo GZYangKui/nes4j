@@ -23,7 +23,7 @@ import lombok.Getter;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 @Getter
-public class PulseChannel extends Channel {
+public class PulseChannel extends Channel<SeqSequencer> {
     private final boolean second;
     private final Envelope envelope;
     private final SweepUnit sweepUnit;
@@ -47,7 +47,7 @@ public class PulseChannel extends Channel {
                 this.lengthCounter.setHalt((b & 0x20) != 0);
             }
             //Update duty
-            ((SeqSequencer) (this.sequencer)).setDuty((b & 0xc0) >> 6);
+            this.sequencer.setDuty((b & 0xc0) >> 6);
         }
 
         //Update sweep properties

@@ -16,6 +16,7 @@ module cn.navclub.nes4j.bin {
     exports cn.navclub.nes4j.bin.ppu.register;
     exports cn.navclub.nes4j.bin.apu;
     exports cn.navclub.nes4j.bin.eventbus;
+    exports cn.navclub.nes4j.bin.apu.impl.timer;
 
     uses Player;
 }
