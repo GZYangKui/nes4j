@@ -176,14 +176,21 @@ public class APU implements Component {
         this.frameCounter.tick();
 
         if (this.frameCounter.isOutput()) {
-            var index = this.frameCounter.getIndex() - 1;
-            if (index % 2 != 0) {
+            var index = this.frameCounter.getIndex();
+            //
+            // Length counters & sweep units
+            // (Half frame)
+            //
+            if (index % 2 == 0) {
                 this.pulse1.lengthTick();
                 this.pulse2.lengthTick();
                 this.noise.lengthTick();
                 this.triangle.lengthTick();
             }
-
+            //
+            // Envelopes & triangle's linear counter
+            // (Quarter frame)
+            //
             this.noise.getEnvelope().tick();
             this.pulse1.getEnvelope().tick();
             this.pulse2.getEnvelope().tick();
@@ -237,8 +244,8 @@ public class APU implements Component {
         var seqOut = PULSE_TABLE[p2 + p1];
         var tndOut = TND_TABLE[3 * t0 + 2 * n0 + d0];
 
-//        return tndOut + seqOut;
-        return TND_TABLE[3*t0];
+        return tndOut + seqOut;
+//        return TND_TABLE[3*t0];
     }
 
     public void fireIRQ() {

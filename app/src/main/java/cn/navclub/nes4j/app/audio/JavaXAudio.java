@@ -4,8 +4,6 @@ import cn.navclub.nes4j.bin.apu.Player;
 
 import javax.sound.sampled.*;
 
-import java.util.concurrent.locks.LockSupport;
-
 import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 
 @SuppressWarnings("all")
