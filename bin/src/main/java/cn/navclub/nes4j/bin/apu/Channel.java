@@ -5,6 +5,15 @@ import lombok.Getter;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 
+/**
+ * Abstract audio channel
+ *
+ * @param <T> Timer driver sequencer type
+ * @see cn.navclub.nes4j.bin.apu.impl.PulseChannel
+ * @see cn.navclub.nes4j.bin.apu.impl.TriangleChannel
+ * @see cn.navclub.nes4j.bin.apu.impl.DMChannel
+ * @see cn.navclub.nes4j.bin.apu.impl.NoiseChannel
+ */
 public abstract class Channel<T extends Sequencer> implements Component {
     protected final APU apu;
     @Getter
@@ -18,7 +27,6 @@ public abstract class Channel<T extends Sequencer> implements Component {
     protected boolean enable;
 
 
-
     public Channel(final APU apu, T sequencer) {
         this.apu = apu;
         this.sequencer = sequencer;
@@ -30,6 +38,14 @@ public abstract class Channel<T extends Sequencer> implements Component {
         this(apu, null);
     }
 
+    /**
+     * Due to apu all register only write except when open bus <a href="https://www.nesdev.org/wiki/APU#Status_($4015)">status register</a>
+     *
+     * @param address {@inheritDoc}
+     * @return {@inheritDoc}
+     * @exception  RuntimeException
+     */
+    @SuppressWarnings("all")
     @Override
     public byte read(int address) {
         throw new RuntimeException("Write-only register.");
