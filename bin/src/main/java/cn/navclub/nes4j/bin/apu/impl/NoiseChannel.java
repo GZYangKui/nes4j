@@ -75,7 +75,7 @@ public class NoiseChannel extends Channel {
         }
 
         if (address == 0x400f) {
-            this.envelope.setLock(true);
+            this.envelope.reset();
             this.lengthCounter.setCounter(b >>> 3);
         }
     }

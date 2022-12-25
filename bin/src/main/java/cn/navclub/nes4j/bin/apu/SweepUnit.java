@@ -13,19 +13,20 @@ import lombok.Getter;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class SweepUnit implements CycleDriver {
-    //Shift
-    private int shift;
-    //Enable flag
-    private boolean enable;
-    //Negative flag
-    private boolean negative;
     //Divider
     private final Divider divider;
+    private final PulseChannel channel;
+    //Shift
+    private int shift;
     //Record write operate from the last tick
     private boolean write;
+    //Enable flag
+    private boolean enable;
     @Getter
     private boolean silence;
-    private final PulseChannel channel;
+    //Negative flag
+    private boolean negative;
+
 
     public SweepUnit(PulseChannel channel) {
         this.channel = channel;

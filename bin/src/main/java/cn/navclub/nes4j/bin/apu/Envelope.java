@@ -1,8 +1,6 @@
 package cn.navclub.nes4j.bin.apu;
 
 import cn.navclub.nes4j.bin.function.CycleDriver;
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Envelope Generate
@@ -16,8 +14,6 @@ public class Envelope implements CycleDriver {
     private int constant;
     private boolean loop;
     private boolean disable;
-    @Setter
-    private boolean lock;
 
 
     public Envelope() {
@@ -31,20 +27,9 @@ public class Envelope implements CycleDriver {
         this.divider.setPeriod(constant + 1);
     }
 
-    /**
-     * When clocked by the frame sequencer, one of two actions occurs: if there was a
-     * write to the fourth channel register since the last clock, the counter is set
-     * to 15 and the divider is reset, otherwise the divider is clocked.
-     */
     @Override
     public void tick() {
-        if (this.lock) {
-            this.counter = 15;
-            this.lock = false;
-            this.divider.reset();
-        } else {
-            this.divider.tick();
-        }
+        this.divider.tick();
         //
         // When the divider outputs a clock, one of two actions occurs: if loop is set and
         // counter is zero, it is set to 15, otherwise if counter is non-zero, it is
@@ -69,6 +54,15 @@ public class Envelope implements CycleDriver {
             return this.constant;
         }
         return this.counter;
+    }
+
+    /**
+     * if there was a write to the fourth channel register since the last clock, the counter is set
+     * to 15 and the divider is reset
+     */
+    public void reset() {
+        this.counter = 15;
+        this.divider.reset();
     }
 
     /**
