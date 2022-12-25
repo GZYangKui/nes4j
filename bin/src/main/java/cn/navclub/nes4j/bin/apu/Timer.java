@@ -8,6 +8,8 @@ import lombok.Setter;
  * Decrement counter implementation
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
+ * @see cn.navclub.nes4j.bin.apu.impl.TriangleChannel.TTimer
+ * @see Divider
  */
 public class Timer implements CycleDriver {
     @Getter

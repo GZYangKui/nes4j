@@ -71,15 +71,20 @@ public class AddrMProvider {
 
 
     /**
+     * Judge whether the data obtained in the current addressing mode is spread across pages
      *
-     * 判断当前寻址模式下获取到数据是否跨页
-     *
+     * @param base Origin memory address
+     * @param addr Target memory address
      */
     public void pageCross(int base, int addr) {
         var pageCross = ((base & 0xff00) != (addr & 0xff00));
         if (!pageCross) {
             return;
         }
+        this.increment();
+    }
+
+    public void increment() {
         this.cycles++;
     }
 }

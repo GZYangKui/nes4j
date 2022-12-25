@@ -304,13 +304,13 @@ public class CPU {
         if (!condition) {
             return;
         }
-        this.bus.tick(1);
+        this.modeProvider.increment();
 
         var b = this.bus.read(this.pc);
         var jump = this.pc + 1 + b;
         var base = this.pc + 1;
 
-        //判断跳转是否跨页
+        // Page-cross check
         this.modeProvider.pageCross(base, jump);
 
         this.pc = jump;
@@ -345,9 +345,9 @@ public class CPU {
         this.NZUpdate(value);
     }
 
-    public void interrupt(CPUInterrupt interrupt) {
+    public int interrupt(CPUInterrupt interrupt) {
         if (interrupt == null || (interrupt != CPUInterrupt.NMI && this.status.contain(ICPUStatus.ID))) {
-            return;
+            return 0;
         }
 
         this.pushInt(this.pc);
@@ -361,8 +361,9 @@ public class CPU {
         this.push(flag.getBits());
 
         this.status.set(ICPUStatus.ID);
-        this.bus.tick(interrupt.getCycle());
         this.pc = this.bus.readInt(interrupt.getVector());
+
+        return interrupt.getCycle();
     }
 
     public int next() {
@@ -371,8 +372,7 @@ public class CPU {
         var state = (++this.pc);
 
         if (openCode == 0x00) {
-            this.interrupt(CPUInterrupt.BRK);
-            return 0;
+            return this.interrupt(CPUInterrupt.BRK);
         }
 
         var instruction6502 = Instruction.getInstance(openCode);

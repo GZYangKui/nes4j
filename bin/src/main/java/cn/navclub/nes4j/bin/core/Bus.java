@@ -232,4 +232,9 @@ public class Bus implements Component {
         this.apu.stop();
         this.ppu.stop();
     }
+
+    @Override
+    public void tick() {
+
+    }
 }

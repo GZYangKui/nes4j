@@ -1,19 +1,16 @@
 package cn.navclub.nes4j.bin.apu;
 
-import cn.navclub.nes4j.bin.function.CycleDriver;
-import lombok.Getter;
-import lombok.Setter;
-
 /**
- * 分频器实现
+ * Divider implement
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
-public class Divider implements CycleDriver {
-    private int counter;
-    //改变周期并不会影响当前计数
-    @Setter
-    @Getter
-    private int period;
+public class Divider extends Timer {
     private boolean output;
+
+    public Divider() {
+        super(null);
+    }
 
     public boolean output() {
         var temp = this.output;
@@ -26,7 +23,7 @@ public class Divider implements CycleDriver {
     @Override
     public void tick() {
         this.counter--;
-        //重置计数器并输出一个时钟
+        //Reset divider and clock
         if (this.counter == 0) {
             this.reset();
             this.output = true;
