@@ -1,5 +1,7 @@
 package cn.navclub.nes4j.bin.util;
 
+import java.io.*;
+
 /**
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
@@ -10,7 +12,7 @@ public class BinUtil {
     }
 
     /**
-     * 将字节数组转换为二进制
+     * Byte transform binary string
      */
     public static String toBinStr(byte value) {
         var sb = new StringBuilder();
@@ -21,7 +23,7 @@ public class BinUtil {
     }
 
     /**
-     * 将字节数组转换为整形
+     * Byte array transform to int
      */
     public static int toInt(byte[] arr) {
         if (arr.length < 4) {
@@ -45,5 +47,42 @@ public class BinUtil {
 
     public static int uint16(int i) {
         return i & 0xffff;
+    }
+
+    /**
+     * {@link BinUtil#snapshot(File, int, byte[], int, int)} util method
+     */
+    public static void snapshot(String file, int row, byte[] src, int offset, int length) {
+        snapshot(new File(file), row, src, offset, length);
+    }
+
+    /**
+     * Output target byte array to target file
+     *
+     * @param file   Target output file
+     * @param row    Each row show how many hex
+     * @param src    Target byte array
+     * @param offset Target byte array offset
+     * @param length Target byte array output length
+     */
+    public static void snapshot(File file, int row, byte[] src, int offset, int length) {
+        try (var buffer = new BufferedWriter(new FileWriter(file))) {
+            var sb = new StringBuilder();
+            length = Math.min(offset + length, src.length);
+            for (int i = offset; i < length; i++) {
+                sb.append("0x").append(toHexStr(src[i]));
+                var j = (i - offset) + 1;
+                if ((j % row == 0) || j == length) {
+                    sb.append("\r\n");
+                    buffer.write(sb.toString());
+                    sb.delete(0, sb.length());
+                } else {
+                    sb.append(",");
+                }
+            }
+            buffer.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
