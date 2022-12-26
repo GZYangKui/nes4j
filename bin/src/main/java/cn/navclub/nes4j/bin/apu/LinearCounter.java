@@ -7,7 +7,7 @@ import lombok.Setter;
 public class LinearCounter implements CycleDriver {
     @Getter
     private int counter;
-    //Stop flag
+    //Reload flag
     @Setter
     private boolean halt;
     @Getter
@@ -26,7 +26,7 @@ public class LinearCounter implements CycleDriver {
      */
     public void update(byte b) {
         this.reloadValue = (b & 0x7f);
-        this.control = (b & 0x80) != 0;
+        this.control = (b & 0x80) == 0x80;
     }
 
     /**
@@ -46,8 +46,6 @@ public class LinearCounter implements CycleDriver {
                 this.counter--;
             }
         }
-        if (!this.control) {
-            this.halt = false;
-        }
+        this.halt = this.control;
     }
 }

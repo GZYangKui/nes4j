@@ -91,7 +91,7 @@ public class FrameCounter implements Component {
         //Sequencer mode: 0 selects 4-step sequence, 1 selects 5-step sequence.
         this.mode = ((b & 0x80) >> 7);
         //Interrupt inhibit flag. If set, the frame interrupt flag is cleared, otherwise it is unaffected.
-        this.IRQDisable = (b & 0x40) != 0;
+        this.IRQDisable = (b & 0x40) == 0x40;
     }
 
     @Override

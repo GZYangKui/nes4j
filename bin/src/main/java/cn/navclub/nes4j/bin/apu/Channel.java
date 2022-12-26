@@ -94,9 +94,9 @@ public abstract class Channel<T extends Sequencer> implements Component {
         if (update) {
             var value = this.timer.getPeriod();
             if (first) {
-                value |= uint8(b);
+                value = (value & 0xff00) | uint8(b);
             } else {
-                value |= ((uint8(b) & 0x07) << 8);
+                value = (value & 0x00ff) | ((uint8(b) & 0x07) << 8);
             }
             this.timer.setPeriod(value);
         }

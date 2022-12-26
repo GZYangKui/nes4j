@@ -8,6 +8,23 @@ import cn.navclub.nes4j.bin.apu.APU;
 import cn.navclub.nes4j.bin.apu.impl.timer.TriangleTimer;
 import lombok.Getter;
 
+/**
+ * <p>
+ * The NES APU triangle channel generates a pseudo-triangle wave. It has no volume control; the waveform is either
+ * cycling or suspended. It includes a linear counter, an extra duration timer of higher accuracy than the length
+ * counter.
+ * </p>
+ * <p>
+ * The triangle channel contains the following: timer, length counter, linear counter, linear counter reload flag,
+ * control flag, sequencer.
+ * </p>
+ * <pre>
+ *      Linear Counter   Length Counter
+ *             |                |
+ *             v                v
+ * Timer ---> Gate ----------> Gate ---> Sequencer ---> (to mixer)
+ * </pre>
+ */
 public class TriangleChannel extends Channel<TriangleSequencer> {
     @Getter
     private final LinearCounter linearCounter;
@@ -25,11 +42,11 @@ public class TriangleChannel extends Channel<TriangleSequencer> {
         if (address == 0x4008) {
             this.linearCounter.update(b);
             if (!this.linearCounter.isControl()) {
-            this.lengthCounter.setHalt((b & 0x80) != 0);
+                this.lengthCounter.setHalt((b & 0x80) == 0x80);
             }
         }
 
-        if (address == 0x400B) {
+        if (address == 0x400b) {
             //When register $400B is written to, the halt flag is set.
             this.linearCounter.setHalt(true);
             if (this.enable) {
@@ -55,7 +72,6 @@ public class TriangleChannel extends Channel<TriangleSequencer> {
     @Override
     public int output() {
         if (!this.enable
-                || this.timer.getPeriod() < 3
                 || this.linearCounter.getCounter() == 0
                 || this.lengthCounter.getCounter() == 0) {
             return 0;
