@@ -88,10 +88,10 @@ public class APU implements Component {
         this.dmc = new DMChannel(this);
         this.noise = new NoiseChannel(this);
         this.triangle = new TriangleChannel(this);
-        this.frameCounter = new FrameCounter(this);
         this.player = Player.newInstance(context.getPlayer());
         this.pulse1 = new PulseChannel(this, false);
         this.pulse2 = new PulseChannel(this, true);
+        this.frameCounter = new FrameCounter(this, this::frameSequence);
     }
 
     @Override
@@ -215,31 +215,10 @@ public class APU implements Component {
             this.noise.tick();
         }
 
+
         this.triangle.tick();
 
         this.frameCounter.tick();
-
-        if (this.frameCounter.isOutput()) {
-            var index = this.frameCounter.getIndex();
-            //
-            // Length counters & sweep units
-            // (Half frame)
-            //
-            if (index % 2 == 0) {
-                this.pulse1.lengthTick();
-                this.pulse2.lengthTick();
-                this.noise.lengthTick();
-                this.triangle.lengthTick();
-            }
-            //
-            // Envelopes & triangle's linear counter
-            // (Quarter frame)
-            //
-            this.noise.getEnvelope().tick();
-            this.pulse1.getEnvelope().tick();
-            this.pulse2.getEnvelope().tick();
-            this.triangle.getLinearCounter().tick();
-        }
 
         if ((this.cycle / 2) % 40 == 0) {
             var output = this.lookupSample();
@@ -247,6 +226,7 @@ public class APU implements Component {
                 this.player.output(output);
             }
         }
+
         // At any time, if the interrupt flag is set, the CPU's IRQ line is continuously asserted
         // until the interrupt flag is cleared. The processor will continue on from where it was stalled.
         if (this.dmc.isIRQInterrupt()) {
@@ -288,9 +268,10 @@ public class APU implements Component {
         var seqOut = PULSE_TABLE[p2 + p1];
         var tndOut = TND_TABLE[3 * t0 + 2 * n0 + d0];
 
-        return tndOut + seqOut;
-//        return TND_TABLE[3*t0];
+//        return tndOut + seqOut;
+        return TND_TABLE[3*t0];
     }
+
 
     public void fireIRQ() {
         this.context.interrupt(CPUInterrupt.IRQ);
@@ -301,5 +282,26 @@ public class APU implements Component {
         if (this.player != null) {
             this.player.stop();
         }
+    }
+
+    private void frameSequence(int index) {
+        //
+        // Length counters & sweep units
+        // (Half frame)
+        //
+        if (index % 2 == 0) {
+            this.pulse1.lengthTick();
+            this.pulse2.lengthTick();
+            this.noise.lengthTick();
+            this.triangle.lengthTick();
+        }
+        //
+        // Envelopes & triangle's linear counter
+        // (Quarter frame)
+        //
+        this.noise.getEnvelope().tick();
+        this.pulse1.getEnvelope().tick();
+        this.pulse2.getEnvelope().tick();
+        this.triangle.getLinearCounter().tick();
     }
 }

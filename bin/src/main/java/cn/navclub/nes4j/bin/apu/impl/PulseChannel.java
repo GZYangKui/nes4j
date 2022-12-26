@@ -28,8 +28,6 @@ public class PulseChannel extends Channel<SeqSequencer> {
     private final Envelope envelope;
     private final SweepUnit sweepUnit;
 
-    private boolean silance;
-
     public PulseChannel(APU apu, boolean second) {
         super(apu, new SeqSequencer());
 
@@ -57,7 +55,9 @@ public class PulseChannel extends Channel<SeqSequencer> {
 
         if (address == 0x4003 || address == 0x4007) {
             this.envelope.reset();
-            this.lengthCounter.lookupTable(b);
+            if (this.enable) {
+                this.lengthCounter.lookupTable(b);
+            }
         }
 
         //Update timer period

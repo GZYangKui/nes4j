@@ -30,7 +30,7 @@ public abstract class Channel<T extends Sequencer> implements Component {
     public Channel(final APU apu, T sequencer) {
         this.apu = apu;
         this.sequencer = sequencer;
-        this.lengthCounter = new LengthCounter(this);
+        this.lengthCounter = new LengthCounter();
         this.timer = sequencer == null ? null : new Timer<>(this.sequencer);
     }
 
@@ -43,7 +43,7 @@ public abstract class Channel<T extends Sequencer> implements Component {
      *
      * @param address {@inheritDoc}
      * @return {@inheritDoc}
-     * @exception  RuntimeException
+     * @throws RuntimeException
      */
     @SuppressWarnings("all")
     @Override

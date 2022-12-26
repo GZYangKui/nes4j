@@ -23,7 +23,8 @@ public class TriangleTimer extends Timer<TriangleSequencer> {
         if (this.counter == 0) {
             this.counter = this.period;
         } else {
-            this.counter--;
+            if (this.counter > 0)
+                this.counter--;
             //
             // When the timer generates a clock and the Length Counter and Linear Counter both
             // have a non-zero count, the sequencer is clocked.

@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.function.Consumer;
+
 /**
  * <p>
  * The <b>NES APU frame counter</b> (or <b>frame sequencer</b>) generates low-frequency clocks for the channels
@@ -36,17 +38,15 @@ public class FrameCounter implements Component {
     private int mode;
     //2*CPU cycle=APU cycle
     private int cycle;
-    @Getter
     private int index;
-    @Getter
-    private boolean output;
     private final APU apu;
-
     private final int[][] sequencers;
+    private final Consumer<Integer> consumer;
 
-    public FrameCounter(APU apu) {
+    public FrameCounter(APU apu, Consumer<Integer> consumer) {
         this.index = 1;
         this.apu = apu;
+        this.consumer = consumer;
         this.sequencers = new int[][]{
                 {7457, 7456, 7458, 7458},
                 {7457, 7456, 7458, 14910}
@@ -98,12 +98,17 @@ public class FrameCounter implements Component {
     public void tick() {
         this.cycle++;
         var value = this.sequencers[this.mode][this.index - 1];
-        this.output = this.cycle > value;
-        if (this.output) {
+        var output = this.cycle > value;
+        if (output) {
+            //Touch current step
+            this.consumer.accept(this.index);
+            //Next step
             this.index = (this.index + 1) % 5;
+
             if (this.index == 0) {
                 this.index += 1;
             }
+
             this.cycle %= value;
             //
             // At any time if the interrupt flag is set and the IRQ disable is clear, the
@@ -113,6 +118,7 @@ public class FrameCounter implements Component {
                 this.interrupt = true;
                 this.apu.fireIRQ();
             }
+
         }
     }
 

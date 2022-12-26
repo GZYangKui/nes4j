@@ -30,12 +30,6 @@ public class LengthCounter implements CycleDriver {
     @Setter
     private boolean halt;
 
-    private final Channel channel;
-
-    public LengthCounter(Channel channel) {
-        this.channel = channel;
-    }
-
     /**
      * When clocked by the frame sequencer, if the halt flag is clear and the counter
      * is non-zero, it is decremented.
@@ -80,9 +74,6 @@ public class LengthCounter implements CycleDriver {
      * @param b Register valuer
      */
     public void lookupTable(byte b) {
-        if (!this.channel.enable) {
-            return;
-        }
         var index = ((b & 0xf0) >> 4) * 2;
         var offset = ((b & 0x08) >> 3) & 0x01;
         this.counter = LOOKUP_TABLE[index + offset];

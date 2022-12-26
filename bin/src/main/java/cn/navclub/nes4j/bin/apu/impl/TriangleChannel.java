@@ -25,14 +25,16 @@ public class TriangleChannel extends Channel<TriangleSequencer> {
         if (address == 0x4008) {
             this.linearCounter.update(b);
             if (!this.linearCounter.isControl()) {
-                this.lengthCounter.setHalt((b & 0x80) != 0);
+            this.lengthCounter.setHalt((b & 0x80) != 0);
             }
         }
 
         if (address == 0x400B) {
             //When register $400B is written to, the halt flag is set.
             this.linearCounter.setHalt(true);
-            this.lengthCounter.lookupTable(b);
+            if (this.enable) {
+                this.lengthCounter.lookupTable(b);
+            }
         }
 
         this.updateTimeValue(address, b);
