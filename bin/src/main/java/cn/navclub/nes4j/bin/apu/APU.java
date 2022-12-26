@@ -9,7 +9,51 @@ import lombok.Getter;
 import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 
 /**
- * <a href="https://www.nesdev.org/wiki/APU">APU Document</a>
+ * <pre>
+ *
+ * The <a href="https://www.nesdev.org/wiki/APU">APU</a> is composed of five channels: square 1, square 2, triangle, noise,
+ * delta modulation channel (DMC). Each has a variable-rate timer clocking a
+ * waveform generator, and various modulators driven by low-frequency clocks from
+ * a frame sequencer. The DMC plays samples while the other channels play
+ * waveforms. The waveform channels have duration control, some have a volume
+ * envelope unit, and a couple have a frequency sweep unit.
+ *
+ * Square 1/Square 2
+ *
+ * $4000/4 ddle nnnn   duty, loop env/disable length, env disable, vol/env
+ * period
+ * $4001/5 eppp nsss   enable sweep, period, negative, shift
+ * $4002/6 pppp pppp   period low
+ * $4003/7 llll lppp   length index, period high
+ *
+ * Triangle
+ *
+ * $4008   clll llll   control, linear counter load
+ * $400A   pppp pppp   period low
+ * $400B   llll lppp   length index, period high
+ *
+ * Noise
+ *
+ * $400C   --le nnnn   loop env/disable length, env disable, vol/env period
+ * $400E   s--- pppp   short mode, period index
+ * $400F   llll l---   length index
+ *
+ * DMC
+ *
+ * $4010   il-- ffff   IRQ enable, loop, frequency index
+ * $4011   -ddd dddd   DAC
+ * $4012   aaaa aaaa   sample address
+ * $4013   llll llll   sample length
+ *
+ * Common
+ *
+ * $4015   ---d nt21   length ctr enable: DMC, noise, triangle, pulse 2, 1
+ * $4017   fd-- ----   5-frame cycle, disable frame interrupt
+ *
+ * Status (read)
+ *
+ * $4015   if-d nt21   DMC IRQ, frame IRQ, length counter statuses
+ * </pre>
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
