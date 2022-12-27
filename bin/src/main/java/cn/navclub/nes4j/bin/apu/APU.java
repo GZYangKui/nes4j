@@ -213,12 +213,12 @@ public class APU implements Component {
             this.pulse1.tick();
             this.pulse2.tick();
             this.noise.tick();
+            this.frameCounter.tick();
         }
 
 
         this.triangle.tick();
 
-        this.frameCounter.tick();
 
         if ((this.cycle / 2) % 40 == 0) {
             var output = this.lookupSample();
@@ -268,7 +268,6 @@ public class APU implements Component {
         var seqOut = PULSE_TABLE[p2 + p1];
         var tndOut = TND_TABLE[3 * t0 + 2 * n0 + d0];
         return tndOut + seqOut;
-//        return seqOut;
     }
 
 

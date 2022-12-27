@@ -35,8 +35,9 @@ public class Timer<T extends Sequencer> implements CycleDriver {
                 this.sequencer.tick();
             }
         } else {
-            if (this.counter > 0)
+            if (this.counter > 0) {
                 this.counter--;
+            }
         }
     }
 }

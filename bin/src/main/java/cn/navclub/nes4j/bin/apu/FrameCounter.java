@@ -28,9 +28,16 @@ import java.util.function.Consumer;
  */
 @Slf4j
 public class FrameCounter implements Component {
+
+    /**
+     * <p>
+     * The frame interrupt flag is connected to the CPU's IRQ line. It is set at a particular point in the 4-step sequence
+     * (see below) provided the interrupt inhibit flag in $4017 is clear, and can be cleared either by reading $4015
+     * (which also returns its old status) or by setting the interrupt inhibit flag.
+     * </p>
+     */
     @Setter
     @Getter
-    //Whether happen interrupt
     private boolean interrupt;
     //IRQ is disable
     private boolean IRQDisable;

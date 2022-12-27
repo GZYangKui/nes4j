@@ -78,7 +78,6 @@ public class Render implements CycleDriver {
     protected int scanline;
     //Record already trigger frame counter
     private long frameCounter;
-    private int spriteCount;
     //
     // Current scan line sprite pixel.
     //
@@ -230,11 +229,9 @@ public class Render implements CycleDriver {
         if (this.mask.enableRender()) {
             if (this.cycles == 257 && visibleLine && this.mask.showSprite()) {
                 this.spriteEval();
-            } else {
-                spriteCount = 0;
             }
 
-            if (nextLine || (visibleLine && visibleCycle)) {
+            if ((visibleLine && (nextLine || visibleCycle))) {
                 var v = this.ppu.v;
                 switch (this.cycles % 8) {
                     case 0 -> this.tileMut();
@@ -267,10 +264,11 @@ public class Render implements CycleDriver {
             if (cycles == 256) {
                 this.incY();
             }
-
             //
+            // At dot 257 of each scanline
             // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
             // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
+            //
             if (this.cycles == 257) {
                 this.ppu.v = uint16((this.ppu.v & 0xfbe0) | (this.ppu.t & 0x041f));
             }
@@ -281,27 +279,29 @@ public class Render implements CycleDriver {
 
         System.arraycopy(this.background, 8, this.background, 0, 8);
 
-        var x = (this.ppu.v & 0x1f) / 16;
-        var y = ((this.ppu.v >> 5) & 0x1f) / 16;
-        //Top left
-        var tl = (x == 0 && y == 0);
-        //Top right
-        var tr = (x == 1 && y == 0);
-        //Bottom left
-        var bl = (x == 0 && y == 1);
-        //Bottom right
-        var br = (x == 1 && y == 1);
+        var coarseX = (this.ppu.v & 0x1f);
+        var coarseY = ((this.ppu.v >> 5) & 0x1f);
+
+        var x = (coarseX % 4) / 2;
+        var y = (coarseY % 4) / 2;
+
+
+        var topLeft = (x == 0 && y == 0);
+        var topRight = (x == 1 && y == 0);
+        var bottomLeft = (x == 0 && y == 1);
+        var bottomRight = (x == 1 && y == 1);
+
         var idx = 0;
-        if (tl) {
+        if (topLeft) {
             idx = this.tileAttr;
         }
-        if (tr) {
+        if (topRight) {
             idx = this.tileAttr >> 2;
         }
-        if (bl) {
+        if (bottomLeft) {
             idx = this.tileAttr >> 4;
         }
-        if (br) {
+        if (bottomRight) {
             idx = this.tileAttr >> 6;
         }
 
@@ -323,7 +323,8 @@ public class Render implements CycleDriver {
                 case 3 -> sysPalette[palette[3]];
                 default -> sysPalette[ppu.palette[0]];
             };
-            this.background[i + 8] = (rgb[0] << 16 | rgb[1] << 8 | rgb[2]);
+            var value = (rgb[0] << 16 | rgb[1] << 8 | rgb[2]);
+            this.background[i + 8] = value;
         }
         this.shift = 0;
         this.incX();
@@ -343,8 +344,8 @@ public class Render implements CycleDriver {
      * </pre>
      */
     private void readTileIdx(int v) {
-        var idx = 0x2000 | (v & 0x0fff);
-        this.tileIdx = this.ppu.iRead(idx);
+        var address = 0x2000 | (v & 0x0fff);
+        this.tileIdx = this.ppu.iRead(address);
     }
 
     /**
@@ -476,10 +477,9 @@ public class Render implements CycleDriver {
                 var cover = (value >> 30 & 0x01) == 0;
                 if (this.mask.showLeftMostSprite(x) && (cover || !this.mask.showBackground())) {
                     pixel = color;
-                }
-
-                if (index == 0 && x < 255) {
-                    this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
+                    if (index == 0 && x < 255 && this.mask.showBackground()) {
+                        this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
+                    }
                 }
             }
         }
@@ -576,17 +576,16 @@ public class Render implements CycleDriver {
                     b |= ((attr & 0x20) << 25);
 
                     var index = x + (hf ? (7 - j) : j);
-
-                    if (index < this.foreground.length) this.foreground[index] = b;
+                    if (index < this.foreground.length) {
+                        this.foreground[index] = b;
+                    }
                 }
             }
             count++;
         }
         if (count > 8) {
-            count = 8;
             this.ppu.status.set(PStatus.SPRITE_OVERFLOW);
         }
-        this.spriteCount = count;
     }
 
     private byte[] spritePalette(int idx) {

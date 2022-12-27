@@ -163,7 +163,7 @@ public class PPU implements Component {
             if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
                 addr = addr - 0x10;
             }
-            temp = this.palette[addr & 0x3f1f - 0x3f00];
+            temp = this.palette[addr % 32];
         }
 
         this.v += this.ctr.VRamIncrement();
@@ -179,7 +179,7 @@ public class PPU implements Component {
         }
         //Read name table data
         else if (address < 0x3000) {
-            b = this.vram[address & 0x27ff - 0x2000];
+            b = this.vram[(address & 0x27ff) - 0x2000];
         }
         //unknown ppu read memory
         else {
@@ -206,7 +206,7 @@ public class PPU implements Component {
             if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
                 addr = addr - 0x10;
             }
-            this.palette[addr & 0x3f1f - 0x3f00] = b;
+            this.palette[addr % 32] = b;
         }
 
         this.v += this.ctr.VRamIncrement();
