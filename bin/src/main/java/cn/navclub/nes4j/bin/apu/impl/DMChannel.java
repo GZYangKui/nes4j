@@ -77,8 +77,8 @@ public class DMChannel extends Channel<Sequencer> {
         // cycle. A rate of 428 means the output level changes every 214 APU cycles.
         //
         if (address == 0x4010) {
-            this.loop = (b & 0x40) != 0;
-            this.IRQEnable = (b & 0x80) != 0;
+            this.loop = (b & 0x40) == 0x40;
+            this.IRQEnable = (b & 0x80) == 0x80;
             this.period = (FREQ_TABLE[b & 0x0f]);
         }
         //

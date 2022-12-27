@@ -57,8 +57,8 @@ public class SweepUnit implements CycleDriver {
     public void update(byte value) {
         this.write = true;
         this.shift = value & 0x07;
-        this.enable = ((value & 0x80) != 0);
-        this.negative = (value & 0x08) != 0;
+        this.enable = ((value & 0x80) == 0x80);
+        this.negative = (value & 0x08) == 0x08;
         this.divider.setPeriod(((value & 0x70) >> 4) + 1);
     }
 

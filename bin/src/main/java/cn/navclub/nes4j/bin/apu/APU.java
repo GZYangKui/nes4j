@@ -268,6 +268,7 @@ public class APU implements Component {
         var seqOut = PULSE_TABLE[p2 + p1];
         var tndOut = TND_TABLE[3 * t0 + 2 * n0 + d0];
         return tndOut + seqOut;
+//        return seqOut;
     }
 
 

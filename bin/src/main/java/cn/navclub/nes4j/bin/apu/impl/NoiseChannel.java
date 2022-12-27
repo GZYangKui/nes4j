@@ -103,7 +103,7 @@ public class NoiseChannel extends Channel<NoiseSequencer> {
         if (!this.enable
                 || this.sequencer.value() == 1
                 || this.lengthCounter.getCounter() == 0) {
-            return this.sequencer.value();
+            return 0;
         }
         return this.envelope.getVolume();
     }

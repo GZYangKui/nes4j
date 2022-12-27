@@ -46,9 +46,10 @@ public class Envelope implements CycleDriver {
             //
             if (this.loop && this.counter == 0)
                 this.counter = 15;
-            else {
-                this.counter -= (this.counter != 0 ? 1 : 0);
+            else if (this.counter > 0) {
+                this.counter--;
             }
+
         });
     }
 

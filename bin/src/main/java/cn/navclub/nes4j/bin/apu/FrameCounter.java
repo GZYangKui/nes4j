@@ -92,6 +92,9 @@ public class FrameCounter implements Component {
         this.mode = ((b & 0x80) >> 7);
         //Interrupt inhibit flag. If set, the frame interrupt flag is cleared, otherwise it is unaffected.
         this.IRQDisable = (b & 0x40) == 0x40;
+        if (this.IRQDisable) {
+            this.interrupt = false;
+        }
     }
 
     @Override

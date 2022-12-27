@@ -4,6 +4,8 @@ import cn.navclub.nes4j.bin.function.CycleDriver;
 import lombok.Getter;
 import lombok.Setter;
 
+import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
+
 public class LengthCounter implements CycleDriver {
     private static final int[] LOOKUP_TABLE = {
             0x0a, 0xfe,
@@ -26,7 +28,6 @@ public class LengthCounter implements CycleDriver {
     @Getter
     @Setter
     private int counter;
-    //判断是否停止计数
     @Setter
     private boolean halt;
 
@@ -74,8 +75,6 @@ public class LengthCounter implements CycleDriver {
      * @param b Register valuer
      */
     public void lookupTable(byte b) {
-        var index = ((b & 0xf0) >> 4) * 2;
-        var offset = ((b & 0x08) >> 3) & 0x01;
-        this.counter = LOOKUP_TABLE[index + offset];
+        this.counter = LOOKUP_TABLE[uint8(b) >> 3];
     }
 }

@@ -24,6 +24,13 @@ import lombok.Setter;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class SeqSequencer implements Sequencer {
+    /**
+     * <p>
+     * The reason for the odd output from the sequencer is that the counter is initialized to zero
+     * but counts downward rather than upward. Thus it reads the sequence lookup table in the order
+     * 0, 7, 6, 5, 4, 3, 2, 1.
+     * </p>
+     */
     private final byte[][] sequences = new byte[][]{
             {0, 0, 0, 0, 0, 0, 0, 1},
             {0, 0, 0, 0, 0, 0, 1, 1},

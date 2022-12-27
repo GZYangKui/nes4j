@@ -8,6 +8,9 @@ import cn.navclub.nes4j.bin.function.CycleDriver;
  * a waveform, or the event sequence of the Frame Counter device.
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
+ * @see cn.navclub.nes4j.bin.apu.impl.sequencer.NoiseSequencer
+ * @see cn.navclub.nes4j.bin.apu.impl.sequencer.TriangleSequencer
+ * @see cn.navclub.nes4j.bin.apu.impl.sequencer.SeqSequencer
  */
 public interface Sequencer extends CycleDriver {
     /**
