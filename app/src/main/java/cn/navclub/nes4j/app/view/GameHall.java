@@ -21,7 +21,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 游戏大厅
+ * Visible Game wall
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class GameHall {
     public static final String INES_OPEN_GAME = "ines-open-game";

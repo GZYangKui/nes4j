@@ -13,6 +13,9 @@
                 <MenuItem text="%nes4j.reset"/>
                 <MenuItem text="%nes4j.palette"/>
             </Menu>
+            <Menu text="%nes4j.options">
+                <MenuItem text="%nes4j.handle" onAction="#handle"/>
+            </Menu>
             <Menu text="%nes4j.tool">
                 <MenuItem text="%nes4j.debug" onAction="#debugger"/>
             </Menu>

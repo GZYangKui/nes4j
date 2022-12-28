@@ -13,6 +13,11 @@ import org.controlsfx.control.Notifications;
 
 import java.util.Arrays;
 
+/**
+ * Visible handle config pane.
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
+ */
 public class DHandle extends Dialog<KeyMapper[]> {
     private final VBox content;
 

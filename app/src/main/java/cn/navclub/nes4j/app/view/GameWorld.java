@@ -4,6 +4,7 @@ import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.INes;
 import cn.navclub.nes4j.app.audio.JavaXAudio;
 import cn.navclub.nes4j.app.concurrent.TaskService;
+import cn.navclub.nes4j.app.dialog.DHandle;
 import cn.navclub.nes4j.app.event.GameEventWrap;
 import cn.navclub.nes4j.app.model.KeyMapper;
 import cn.navclub.nes4j.app.util.StrUtil;
@@ -142,6 +143,16 @@ public class GameWorld extends Stage {
             this.instance.setDebugger(null);
 
         System.gc();
+    }
+
+    @FXML
+    public void handle() {
+        var dialog = new DHandle(INes.config().getMapper());
+        var optional = dialog.showAndWait();
+        optional.ifPresent(keyMappers -> {
+            INes.config().setMapper(keyMappers);
+            INes.config().save();
+        });
     }
 
 
