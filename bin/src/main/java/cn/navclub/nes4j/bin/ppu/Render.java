@@ -39,9 +39,11 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
  */
 public class Render implements CycleDriver {
 
+    private static final int[] OPAQUE;
     private static final int[][] DEF_SYS_PALETTE;
 
     static {
+        OPAQUE = new int[]{0, 0, 0};
         DEF_SYS_PALETTE = new int[][]{
                 {0x80, 0x80, 0x80}, {0x00, 0x3D, 0xA6}, {0x00, 0x12, 0xB0}, {0x44, 0x00, 0x96}, {0xA1, 0x00, 0x5E},
                 {0xC7, 0x00, 0x28}, {0xBA, 0x06, 0x00}, {0x8C, 0x17, 0x00}, {0x5C, 0x2F, 0x00}, {0x10, 0x45, 0x00},
@@ -539,8 +541,7 @@ public class Render implements CycleDriver {
                         case 1 -> this.sysPalette[palette[1]];
                         case 2 -> this.sysPalette[palette[2]];
                         case 3 -> this.sysPalette[palette[3]];
-                        //Transparent
-                        default -> new int[]{0, 0, 0};
+                        default -> OPAQUE;
                     };
 
                     var b = 0;
