@@ -53,7 +53,7 @@ public class NES {
         } else {
             this.cartridge = new Cartridge(builder.file);
         }
-        this.speed = 1;
+        this.speed = 9;
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
@@ -152,7 +152,7 @@ public class NES {
 
     public void videoOutput(Frame frame) {
         if (this.gameLoopCallback != null) {
-            LockSupport.parkNanos(this.speed * 10000000L);
+            LockSupport.parkNanos(this.speed * 1000000L);
             this.gameLoopCallback.accept(frame, this.joyPad, this.joyPad1);
             frame.clear();
         }

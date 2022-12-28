@@ -285,27 +285,8 @@ public class Render implements CycleDriver {
         var x = (coarseX % 4) / 2;
         var y = (coarseY % 4) / 2;
 
-
-        var topLeft = (x == 0 && y == 0);
-        var topRight = (x == 1 && y == 0);
-        var bottomLeft = (x == 0 && y == 1);
-        var bottomRight = (x == 1 && y == 1);
-
-        var idx = 0;
-        if (topLeft) {
-            idx = this.tileAttr;
-        }
-        if (topRight) {
-            idx = this.tileAttr >> 2;
-        }
-        if (bottomLeft) {
-            idx = this.tileAttr >> 4;
-        }
-        if (bottomRight) {
-            idx = this.tileAttr >> 6;
-        }
-
-        idx = 1 + (idx & 0x03) * 4;
+        var shift = x << 1 | y << 2;
+        var idx = 1 + ((this.tileAttr >> shift) & 0x03) * 4;
 
         var palette = new byte[]{
                 this.ppu.palette[0],
