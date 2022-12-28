@@ -3,6 +3,7 @@ package cn.navclub.nes4j.app.dialog;
 import cn.navclub.nes4j.app.INes;
 import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.util.StrUtil;
+import cn.navclub.nes4j.bin.config.NMapper;
 import cn.navclub.nes4j.bin.config.NameMirror;
 import cn.navclub.nes4j.bin.config.TV;
 import cn.navclub.nes4j.bin.io.Cartridge;
@@ -18,6 +19,7 @@ import java.util.Arrays;
 public class DNesHeader extends Dialog<Boolean> {
     @FXML
     private ToggleGroup vGroup;
+
     @FXML
     private ChoiceBox<String> cb0;
     @FXML
@@ -26,6 +28,8 @@ public class DNesHeader extends Dialog<Boolean> {
     private ChoiceBox<NameMirror> cb2;
     @FXML
     private ChoiceBox<TV> cb3;
+    @FXML
+    private ChoiceBox<NMapper> cbMapper;
 
     public DNesHeader(File file, Window owner) {
         Cartridge cartridge = new Cartridge(file);
@@ -40,20 +44,26 @@ public class DNesHeader extends Dialog<Boolean> {
 
         Arrays.stream(TV.values()).forEach(it -> this.cb3.getItems().add(it));
         Arrays.stream(NameMirror.values()).forEach(it -> this.cb2.getItems().add(it));
+        Arrays.stream(NMapper.values()).forEach(it -> this.cbMapper.getItems().add(it));
 
         this.cb1.getSelectionModel().select(StrUtil.toKB(cartridge.getChSize()));
         this.cb0.getSelectionModel().select(StrUtil.toKB(cartridge.getRgbSize()));
         this.cb2.getSelectionModel().select(cartridge.getMirrors().ordinal());
         this.cb3.getSelectionModel().select(cartridge.getTv().ordinal());
+        this.cbMapper.getSelectionModel().select(cartridge.getMapper());
         this.vGroup.selectToggle(this.vGroup.getToggles().get(cartridge.getFormat().ordinal()));
 
 
         pane.setContent(gridPane);
         pane.getButtonTypes().addAll(ButtonType.APPLY);
-        ((Button) (pane.lookupButton(ButtonType.APPLY))).setText(INes.localeValue("nes4j.run"));
-
+        var btn = ((Button) (pane.lookupButton(ButtonType.APPLY)));
+        if (cartridge.getMapper().impl) {
+            btn.setText(INes.localeValue("nes4j.run"));
+        } else {
+            btn.setText(INes.localeValue("nes4j.unsupport"));
+        }
         this.initOwner(owner);
         this.setTitle(StrUtil.getFileName(file));
-        this.setResultConverter(buttonType -> !(buttonType == null));
+        this.setResultConverter(buttonType -> !(buttonType == null) && cartridge.getMapper().impl);
     }
 }

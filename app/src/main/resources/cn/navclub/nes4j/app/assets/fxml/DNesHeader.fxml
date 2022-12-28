@@ -16,7 +16,7 @@
         <RadioButton toggleGroup="${vGroup}" text="NES 2.0"/>
     </HBox>
     <Label GridPane.columnIndex="2" text="Mapper #:"/>
-    <ChoiceBox GridPane.columnIndex="3"/>
+    <ChoiceBox GridPane.columnIndex="3" fx:id="cbMapper"/>
     <Label text="RPG ROM:" GridPane.rowIndex="1"/>
     <ChoiceBox GridPane.rowIndex="1" GridPane.columnIndex="1" fx:id="cb0">
         <items>

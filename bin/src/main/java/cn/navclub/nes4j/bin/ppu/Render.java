@@ -276,7 +276,7 @@ public class Render implements CycleDriver {
     }
 
     private void tileMut() {
-
+        //Copy upper 8 byte to lower 8 byte
         System.arraycopy(this.background, 8, this.background, 0, 8);
 
         var coarseX = (this.ppu.v & 0x1f);
@@ -395,7 +395,7 @@ public class Render implements CycleDriver {
      */
     private void incX() {
         var v = this.ppu.v;
-        if ((v & 0x001f) == 31) {
+        if ((v & 0x1f) == 31) {
             //coarse x=0
             v &= ~0x001f;
             //Switch horizontal name table
