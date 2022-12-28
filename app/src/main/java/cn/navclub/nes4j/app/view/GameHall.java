@@ -108,7 +108,10 @@ public class GameHall {
                 if (!file.exists() || file.listFiles() == null) {
                     return List.of();
                 }
-                return Arrays.stream(file.listFiles()).filter(File::isFile).toList();
+                return Arrays
+                        .stream(file.listFiles()).filter(File::isFile)
+                        .filter(it -> it.getName().endsWith(".nes"))
+                        .toList();
             }
         };
     }

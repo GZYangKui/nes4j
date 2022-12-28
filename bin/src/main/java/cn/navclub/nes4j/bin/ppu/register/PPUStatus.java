@@ -16,7 +16,7 @@ import cn.navclub.nes4j.bin.config.Register;
  * ---- ----
  * VSO. ....
  * |||| ||||
- * |||+-++++- PPU open bus. Returns stale PPU bus contents.
+ * |||+-++++- <a href="https://www.nesdev.org/wiki/Open_bus_behavior#PPU_open_bus">PPU open bus.</a> Returns stale PPU bus contents.
  * ||+------- Sprite overflow. The intent was for this flag to be set
  * ||         whenever more than eight sprites appear on a scanline, but a
  * ||         hardware bug causes the actual behavior to be more complicated
@@ -32,6 +32,7 @@ import cn.navclub.nes4j.bin.config.Register;
  *            line); cleared after reading $2002 and at dot 1 of the
  *            pre-render line.
  * </pre>
+ *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class PPUStatus extends Register<PStatus> {

@@ -9,7 +9,7 @@ import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 
 
 /**
- * 6502 指令集
+ * 6502 instructions
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
@@ -22,8 +22,8 @@ public enum Instruction {
             InstructionWrap.create(int8(0x69), 2, 2, Immediate),
             InstructionWrap.create(int8(0x65), 2, 3, ZeroPage),
             InstructionWrap.create(int8(0x75), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0x6D), 3, 4, Absolute),
-            InstructionWrap.create(int8(0x7D), 3, 4, Absolute_X),
+            InstructionWrap.create(int8(0x6d), 3, 4, Absolute),
+            InstructionWrap.create(int8(0x7d), 3, 4, Absolute_X),
             InstructionWrap.create(int8(0x79), 3, 4, Absolute_Y),
             InstructionWrap.create(int8(0x61), 2, 6, Indirect_X),
             InstructionWrap.create(int8(0x71), 2, 5, Indirect_Y),
@@ -34,14 +34,14 @@ public enum Instruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#LDA">相关文档</a>
      */
     LDA(new InstructionWrap[]{
-            InstructionWrap.create(int8(0xA9), 2, 2, Immediate),
-            InstructionWrap.create(int8(0xA5), 2, 3, ZeroPage),
-            InstructionWrap.create(int8(0xB5), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0xAD), 3, 4, Absolute),
-            InstructionWrap.create(int8(0xBD), 3, 4, Absolute_X),
-            InstructionWrap.create(int8(0xB9), 3, 4, Absolute_Y),
-            InstructionWrap.create(int8(0xA1), 2, 6, Indirect_X),
-            InstructionWrap.create(int8(0xB1), 2, 5, Indirect_Y),
+            InstructionWrap.create(int8(0xa9), 2, 2, Immediate),
+            InstructionWrap.create(int8(0xa5), 2, 3, ZeroPage),
+            InstructionWrap.create(int8(0xb5), 2, 4, ZeroPage_X),
+            InstructionWrap.create(int8(0xad), 3, 4, Absolute),
+            InstructionWrap.create(int8(0xbd), 3, 4, Absolute_X),
+            InstructionWrap.create(int8(0xb9), 3, 4, Absolute_Y),
+            InstructionWrap.create(int8(0xa1), 2, 6, Indirect_X),
+            InstructionWrap.create(int8(0xb1), 2, 5, Indirect_Y),
     }),
     /**
      * 将累加器中的值写入内存中
@@ -50,8 +50,8 @@ public enum Instruction {
     STA(new InstructionWrap[]{
             InstructionWrap.create(int8(0x85), 2, 3, ZeroPage),
             InstructionWrap.create(int8(0x95), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0x8D), 3, 4, Absolute),
-            InstructionWrap.create(int8(0x9D), 3, 5, Absolute_X),
+            InstructionWrap.create(int8(0x8d), 3, 4, Absolute),
+            InstructionWrap.create(int8(0x9d), 3, 5, Absolute_X),
             InstructionWrap.create(int8(0x99), 3, 5, Absolute_Y),
             InstructionWrap.create(int8(0x81), 2, 6, Indirect_X),
             InstructionWrap.create(int8(0x91), 2, 6, Indirect_Y)
@@ -63,7 +63,7 @@ public enum Instruction {
     STX(new InstructionWrap[]{
             InstructionWrap.create(int8(0x86), 2, 3, ZeroPage),
             InstructionWrap.create(int8(0x96), 2, 4, ZeroPage_Y),
-            InstructionWrap.create(int8(0x8E), 3, 4, Absolute),
+            InstructionWrap.create(int8(0x8e), 3, 4, Absolute),
     }),
 
     /**
@@ -74,7 +74,7 @@ public enum Instruction {
     STY(new InstructionWrap[]{
             InstructionWrap.create(int8(0x84), 2, 3, ZeroPage),
             InstructionWrap.create(int8(0x94), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0X8C), 3, 4, Absolute)
+            InstructionWrap.create(int8(0X8c), 3, 4, Absolute)
     }),
 
     /**
@@ -86,8 +86,8 @@ public enum Instruction {
             InstructionWrap.create(int8(0x29), 2, 2, Immediate),
             InstructionWrap.create(int8(0x25), 2, 3, ZeroPage),
             InstructionWrap.create(int8(0x35), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0x2D), 3, 4, Absolute),
-            InstructionWrap.create(int8(0x3D), 3, 4, Absolute_X),
+            InstructionWrap.create(int8(0x2d), 3, 4, Absolute),
+            InstructionWrap.create(int8(0x3d), 3, 4, Absolute_X),
             InstructionWrap.create(int8(0x39), 3, 4, Absolute_Y),
             InstructionWrap.create(int8(0x21), 2, 6, Indirect_X),
             InstructionWrap.create(int8(0x31), 2, 5, Indirect_Y),
@@ -100,8 +100,8 @@ public enum Instruction {
             InstructionWrap.create(int8(0x09), 2, 2, Immediate),
             InstructionWrap.create(int8(0x05), 2, 3, ZeroPage),
             InstructionWrap.create(int8(0x15), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0x0D), 3, 4, Absolute),
-            InstructionWrap.create(int8(0x1D), 3, 4, Absolute_X),
+            InstructionWrap.create(int8(0x0d), 3, 4, Absolute),
+            InstructionWrap.create(int8(0x1d), 3, 4, Absolute_X),
             InstructionWrap.create(int8(0x19), 3, 4, Absolute_Y),
             InstructionWrap.create(int8(0x01), 2, 6, Indirect_X),
             InstructionWrap.create(int8(0x11), 2, 5, Indirect_Y)
@@ -115,8 +115,8 @@ public enum Instruction {
             InstructionWrap.create(int8(0x49), 2, 2, Immediate),
             InstructionWrap.create(int8(0x45), 2, 3, ZeroPage),
             InstructionWrap.create(int8(0x55), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0x4D), 3, 4, Absolute),
-            InstructionWrap.create(int8(0x5D), 3, 4, Absolute_X),
+            InstructionWrap.create(int8(0x4d), 3, 4, Absolute),
+            InstructionWrap.create(int8(0x5d), 3, 4, Absolute_X),
             InstructionWrap.create(int8(0x59), 3, 4, Absolute_Y),
             InstructionWrap.create(int8(0x41), 2, 6, Indirect_X),
             InstructionWrap.create(int8(0x51), 2, 5, Indirect_Y)
@@ -135,7 +135,7 @@ public enum Instruction {
      *
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#PHP">相关文档</a>
      */
-    PHP(int8(0X08), 1, 3),
+    PHP(int8(0x08), 1, 3),
 
     /**
      * 从系统栈中获取值并更新累加寄存器
@@ -156,22 +156,22 @@ public enum Instruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#ASL">相关文档</a>
      */
     ASL(new InstructionWrap[]{
-            InstructionWrap.create(int8(0x0A), 1, 2, Accumulator),
+            InstructionWrap.create(int8(0x0a), 1, 2, Accumulator),
             InstructionWrap.create(int8(0x06), 2, 5, ZeroPage),
             InstructionWrap.create(int8(0x16), 2, 6, ZeroPage_X),
-            InstructionWrap.create(int8(0x0E), 3, 6, Absolute),
-            InstructionWrap.create(int8(0x1E), 3, 7, Absolute_X)
+            InstructionWrap.create(int8(0x0e), 3, 6, Absolute),
+            InstructionWrap.create(int8(0x1e), 3, 7, Absolute_X)
     }),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#LSR">相关文档</a>
      */
     LSR(new InstructionWrap[]{
-            InstructionWrap.create(int8(0x4A), 1, 2, Accumulator),
+            InstructionWrap.create(int8(0x4a), 1, 2, Accumulator),
             InstructionWrap.create(int8(0x46), 2, 5, ZeroPage),
             InstructionWrap.create(int8(0x56), 2, 6, ZeroPage_X),
-            InstructionWrap.create(int8(0x4E), 3, 6, Absolute),
-            InstructionWrap.create(int8(0x5E), 3, 7, Absolute_X)
+            InstructionWrap.create(int8(0x4e), 3, 6, Absolute),
+            InstructionWrap.create(int8(0x5e), 3, 7, Absolute_X)
     }),
 
     /**
@@ -179,14 +179,14 @@ public enum Instruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CMP">相关文档</a>
      */
     CMP(new InstructionWrap[]{
-            InstructionWrap.create(int8(0xC9), 2, 2, Immediate),
-            InstructionWrap.create(int8(0xC5), 2, 3, ZeroPage),
-            InstructionWrap.create(int8(0xD5), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0xCD), 3, 4, Absolute),
-            InstructionWrap.create(int8(0xDD), 3, 4, Absolute_X),
-            InstructionWrap.create(int8(0xD9), 3, 4, Absolute_Y),
-            InstructionWrap.create(int8(0xC1), 2, 6, Indirect_X),
-            InstructionWrap.create(int8(0xD1), 2, 5, Indirect_Y)
+            InstructionWrap.create(int8(0xc9), 2, 2, Immediate),
+            InstructionWrap.create(int8(0xc5), 2, 3, ZeroPage),
+            InstructionWrap.create(int8(0xd5), 2, 4, ZeroPage_X),
+            InstructionWrap.create(int8(0xcd), 3, 4, Absolute),
+            InstructionWrap.create(int8(0xdd), 3, 4, Absolute_X),
+            InstructionWrap.create(int8(0xd9), 3, 4, Absolute_Y),
+            InstructionWrap.create(int8(0xc1), 2, 6, Indirect_X),
+            InstructionWrap.create(int8(0xd1), 2, 5, Indirect_Y)
     }),
 
     /**
@@ -195,9 +195,9 @@ public enum Instruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CMX">相关文档</a>
      */
     CPX(new InstructionWrap[]{
-            InstructionWrap.create(int8(0xE0), 2, 2, Immediate),
-            InstructionWrap.create(int8(0xE4), 2, 3, ZeroPage),
-            InstructionWrap.create(int8(0xEC), 2, 4, Absolute),
+            InstructionWrap.create(int8(0xe0), 2, 2, Immediate),
+            InstructionWrap.create(int8(0xe4), 2, 3, ZeroPage),
+            InstructionWrap.create(int8(0xec), 3, 4, Absolute),
     }),
 
     /**
@@ -206,9 +206,9 @@ public enum Instruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CMY">相关文档</a>
      */
     CPY(new InstructionWrap[]{
-            InstructionWrap.create(int8(0xC0), 2, 2, Immediate),
-            InstructionWrap.create(int8(0xC4), 2, 3, ZeroPage),
-            InstructionWrap.create(int8(0xCC), 2, 4, Absolute),
+            InstructionWrap.create(int8(0xc0), 2, 2, Immediate),
+            InstructionWrap.create(int8(0xc4), 2, 3, ZeroPage),
+            InstructionWrap.create(int8(0xcc), 3, 4, Absolute),
     }
     ),
 
@@ -216,11 +216,11 @@ public enum Instruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#LDX">相关文档</a>
      */
     LDX(new InstructionWrap[]{
-            InstructionWrap.create(int8(0xA2), 2, 2, Immediate),
-            InstructionWrap.create(int8(0xA6), 2, 3, ZeroPage),
-            InstructionWrap.create(int8(0xB6), 2, 4, ZeroPage_Y),
-            InstructionWrap.create(int8(0xAE), 3, 4, Absolute),
-            InstructionWrap.create(int8(0xBE), 3, 4, Absolute_Y)
+            InstructionWrap.create(int8(0xa2), 2, 2, Immediate),
+            InstructionWrap.create(int8(0xa6), 2, 3, ZeroPage),
+            InstructionWrap.create(int8(0xb6), 2, 4, ZeroPage_Y),
+            InstructionWrap.create(int8(0xae), 3, 4, Absolute),
+            InstructionWrap.create(int8(0xbe), 3, 4, Absolute_Y)
     }
     ),
 
@@ -228,11 +228,11 @@ public enum Instruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#LDY">相关文档</a>
      */
     LDY(new InstructionWrap[]{
-            InstructionWrap.create(int8(0xA0), 2, 2, Immediate),
-            InstructionWrap.create(int8(0xA4), 2, 3, ZeroPage),
+            InstructionWrap.create(int8(0xa0), 2, 2, Immediate),
+            InstructionWrap.create(int8(0xa4), 2, 3, ZeroPage),
             InstructionWrap.create(int8(0xb4), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0xAC), 3, 4, Absolute),
-            InstructionWrap.create(int8(0xBC), 3, 4, Absolute_X)
+            InstructionWrap.create(int8(0xac), 3, 4, Absolute),
+            InstructionWrap.create(int8(0xbc), 3, 4, Absolute_X)
     }
     ),
 
@@ -240,10 +240,10 @@ public enum Instruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INC">相关文档</a>
      */
     INC(new InstructionWrap[]{
-            InstructionWrap.create(int8(0xE6), 2, 5, ZeroPage),
-            InstructionWrap.create(int8(0xF6), 2, 6, ZeroPage_X),
-            InstructionWrap.create(int8(0xEE), 3, 6, Absolute),
-            InstructionWrap.create(int8(0xFE), 3, 7, Absolute_X),
+            InstructionWrap.create(int8(0xe6), 2, 5, ZeroPage),
+            InstructionWrap.create(int8(0xf6), 2, 6, ZeroPage_X),
+            InstructionWrap.create(int8(0xee), 3, 6, Absolute),
+            InstructionWrap.create(int8(0xfe), 3, 7, Absolute_X),
     }
     ),
 
@@ -259,17 +259,17 @@ public enum Instruction {
      */
     BIT(new InstructionWrap[]{
             InstructionWrap.create(int8(0x24), 2, 3, ZeroPage),
-            InstructionWrap.create(int8(0X2C), 3, 4, Absolute)
+            InstructionWrap.create(int8(0X2c), 3, 4, Absolute)
     }),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#DCE">相关文档</a>
      */
     DEC(new InstructionWrap[]{
-            InstructionWrap.create(int8(0xC6), 2, 5, ZeroPage),
-            InstructionWrap.create(int8(0xD6), 2, 6, ZeroPage_X),
-            InstructionWrap.create(int8(0xCE), 3, 6, Absolute),
-            InstructionWrap.create(int8(0xDE), 3, 7, Absolute_X)
+            InstructionWrap.create(int8(0xc6), 2, 5, ZeroPage),
+            InstructionWrap.create(int8(0xd6), 2, 6, ZeroPage_X),
+            InstructionWrap.create(int8(0xce), 3, 6, Absolute),
+            InstructionWrap.create(int8(0xde), 3, 7, Absolute_X)
     }),
 
     /**
@@ -284,22 +284,22 @@ public enum Instruction {
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#ROR">相关文档</a>
      */
     ROR(new InstructionWrap[]{
-            InstructionWrap.create(int8(0x6A), 1, 2, Accumulator),
+            InstructionWrap.create(int8(0x6a), 1, 2, Accumulator),
             InstructionWrap.create(int8(0x66), 2, 5, ZeroPage),
             InstructionWrap.create(int8(0x76), 2, 6, ZeroPage_X),
-            InstructionWrap.create(int8(0x6E), 3, 6, Absolute),
-            InstructionWrap.create(int8(0x7E), 3, 7, Absolute_X),
+            InstructionWrap.create(int8(0x6e), 3, 6, Absolute),
+            InstructionWrap.create(int8(0x7e), 3, 7, Absolute_X),
     }),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#ROL">相关文档</a>
      */
     ROL(new InstructionWrap[]{
-            InstructionWrap.create(int8(0x2A), 1, 2, Accumulator),
+            InstructionWrap.create(int8(0x2a), 1, 2, Accumulator),
             InstructionWrap.create(int8(0x26), 2, 5, ZeroPage),
             InstructionWrap.create(int8(0x36), 2, 6, ZeroPage_X),
-            InstructionWrap.create(int8(0x2E), 3, 6, Absolute),
-            InstructionWrap.create(int8(0x3E), 3, 7, Absolute_X),
+            InstructionWrap.create(int8(0x2e), 3, 6, Absolute),
+            InstructionWrap.create(int8(0x3e), 3, 7, Absolute_X),
     }),
 
     /**
@@ -315,13 +315,13 @@ public enum Instruction {
             InstructionWrap.create(int8(0xe1), 2, 6, Indirect_X),
             InstructionWrap.create(int8(0xf1), 2, 5, Indirect_Y),
             //un-office sbc+NOP
-            InstructionWrap.create((byte) 0xeb, 2, 2, Immediate)
+            InstructionWrap.create(int8(0xeb), 2, 2, Immediate)
     }),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#DCX">相关文档</a>
      */
-    DEX(int8(0xCA), 1, 2),
+    DEX(int8(0xca), 1, 2),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#DCY">相关文档</a>
@@ -331,7 +331,7 @@ public enum Instruction {
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#RTS">相关文档</a>
      */
-    RTS(int8(0X60), 1, 6),
+    RTS(int8(0x60), 1, 6),
 
     /**
      * 清除进位标识
@@ -343,7 +343,7 @@ public enum Instruction {
      * 清除数字标识
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CLD">相关文档</a>
      */
-    CLD(int8(0xD8), 1, 2),
+    CLD(int8(0xd8), 1, 2),
 
     /**
      * 清除中断标识
@@ -357,20 +357,20 @@ public enum Instruction {
      *
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#CLV">相关文档</a>
      */
-    CLV(int8(0xB8), 1, 2),
+    CLV(int8(0xb8), 1, 2),
 
     /**
      * 自增X寄存器
      *
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INX">相关文档</a>
      */
-    INX(int8(0XE8), 1, 2),
+    INX(int8(0xe8), 1, 2),
 
     /**
      * 自增Y寄存器
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#INY">相关文档</a>
      */
-    INY(int8(0xC8), 1, 2),
+    INY(int8(0xc8), 1, 2),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#NOP">相关文档</a>
@@ -385,7 +385,7 @@ public enum Instruction {
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BCS">相关文档</a>
      */
-    BCS(int8(0xB0), 2, 2, Relative),
+    BCS(int8(0xb0), 2, 2, Relative),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BEQ">相关文档</a>
@@ -395,12 +395,12 @@ public enum Instruction {
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BNE">相关文档</a>
      */
-    BNE(int8(0XD0), 2, 2, Relative),
+    BNE(int8(0xd0), 2, 2, Relative),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BPL">相关文档</a>
      */
-    BPL(int8(0X10), 2, 2, Relative),
+    BPL(int8(0x10), 2, 2, Relative),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#BMI">相关文档</a>
@@ -430,7 +430,7 @@ public enum Instruction {
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#SED">相关文档</a>
      */
-    SED(int8(0xF8), 1, 2),
+    SED(int8(0xf8), 1, 2),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#SEI">相关文档</a>
@@ -440,27 +440,27 @@ public enum Instruction {
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TAX">相关文档</a>
      */
-    TAX(int8(0xAA), 1, 2),
+    TAX(int8(0xaa), 1, 2),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TAY">相关文档</a>
      */
-    TAY(int8(0xA8), 1, 2),
+    TAY(int8(0xa8), 1, 2),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TSX">相关文档</a>
      */
-    TSX(int8(0xBA), 1, 2),
+    TSX(int8(0xba), 1, 2),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TXA">相关文档</a>
      */
-    TXA(int8(0x8A), 1, 2),
+    TXA(int8(0x8a), 1, 2),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TXS">相关文档</a>
      */
-    TXS(int8(0x9A), 1, 2),
+    TXS(int8(0x9a), 1, 2),
 
     /**
      * <a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#TYA">相关文档</a>

@@ -155,6 +155,14 @@ public class GameWorld extends Stage {
         });
     }
 
+    @FXML
+    public void reset() {
+        if (this.instance == null) {
+            return;
+        }
+        this.instance.reset();
+    }
+
 
     private void gameLoopCallback(Frame frame, JoyPad joyPad, JoyPad joyPad1) {
         var w = Frame.width;

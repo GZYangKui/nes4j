@@ -8,11 +8,11 @@ import lombok.Getter;
 @Getter
 public enum CPUInterrupt {
     //PPU
-    NMI(2, 0xfffa),
+    NMI(7, 0xfffa),
     //APU
-    IRQ(2, 0xfffe),
+    IRQ(7, 0xfffe),
     //CPU
-    BRK(1, 0xfffe);
+    BRK(7, 0xfffe);
 
     private final int cycle;
     private final int vector;

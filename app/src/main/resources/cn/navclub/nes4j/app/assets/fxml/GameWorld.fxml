@@ -10,7 +10,7 @@
         <MenuBar fx:id="menuBar">
             <Menu text="%nes4j.view">
                 <MenuItem text="%nes4j.pplay"/>
-                <MenuItem text="%nes4j.reset"/>
+                <MenuItem text="%nes4j.reset" onAction="#reset"/>
                 <MenuItem text="%nes4j.palette"/>
             </Menu>
             <Menu text="%nes4j.options">

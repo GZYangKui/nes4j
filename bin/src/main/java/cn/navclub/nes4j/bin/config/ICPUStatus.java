@@ -2,19 +2,19 @@ package cn.navclub.nes4j.bin.config;
 
 public enum ICPUStatus {
     //Carry flag
-    CF,
+    CARRY,
     //Zero flag
-    ZF,
+    ZERO,
     //Interrupt disable
-    ID,
+    INTERRUPT_DISABLE,
     //Decimal mode
-    DM,
+    DECIMAL_MODE,
     //Break command
-    BK,
+    BREAK_COMMAND,
     //Empty
-    BK2,
+    EMPTY,
     //Overflow flag
-    OF,
+    OVERFLOW,
     //Negative flag
-    NF
+    NEGATIVE
 }

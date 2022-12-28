@@ -125,7 +125,6 @@ public class Bus implements Component {
     public void write(int address, byte b) {
         address = this.map(address);
 
-
         if (address >= 0 && address <= RAM_MIRROR_END) {
             this.ram[address] = b;
         }

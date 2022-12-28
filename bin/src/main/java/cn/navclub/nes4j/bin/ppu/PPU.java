@@ -114,7 +114,7 @@ public class PPU implements Component {
     }
 
     public void OAMAddrWrite(byte b) {
-        this.oamAddr = (b & 0xff);
+        this.oamAddr = uint8(b);
     }
 
     public void AddrWrite(byte b) {
@@ -221,6 +221,12 @@ public class PPU implements Component {
         return b;
     }
 
+    /**
+     * The PPU uses the current VRAM address for both reading and writing PPU memory thru $2007, and for fetching nametable data to draw the background. As it's drawing the background, it updates the address to point to the nametable data currently being drawn. Bits 10-11 hold the base address of the nametable minus $2000. Bits 12-14 are the Y offset of a scanline within a tile.
+     *
+     * @param addr PPU address
+     * @return Current nametable data address
+     */
     private int ramMirror(int addr) {
         var mirrorRam = addr & 0x2fff;
         var ramIndex = mirrorRam - 0x2000;
@@ -289,6 +295,9 @@ public class PPU implements Component {
      * Output one frame video sign.
      */
     protected void fireNMI() {
+        if (!this.ctr.generateVBlankNMI()) {
+            return;
+        }
         this.status.set(PStatus.V_BLANK_OCCUR);
         this.context.interrupt(CPUInterrupt.NMI);
     }

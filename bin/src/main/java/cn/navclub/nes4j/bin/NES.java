@@ -81,14 +81,9 @@ public class NES {
             } else {
                 //fire ppu or apu interrupt
                 cycles += this.cpu.interrupt(this.getInterrupt());
-                var programCounter = this.cpu.getPc();
                 if (this.debugger != null && this.debugger.hack(this)) {
                     //lock current program process
                     LockSupport.park();
-                }
-                //Check program counter whether in legal memory area
-                if (programCounter < 0x8000 || programCounter >= 0x10000) {
-                    throw new RuntimeException("Text memory area except in 0x8000 to 0xffff current 0x" + Integer.toHexString(programCounter));
                 }
                 cycles += this.cpu.next();
                 this.instructions++;
