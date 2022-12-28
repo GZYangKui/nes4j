@@ -78,8 +78,7 @@ public class Render implements CycleDriver {
     private int cycles;
     //Record current scan line index
     protected int scanline;
-    //Record already trigger frame counter
-    private long frameCounter;
+
     //
     // Current scan line sprite pixel.
     //
@@ -93,8 +92,12 @@ public class Render implements CycleDriver {
     // +---------------------------------------------------- Priority (0: in front of background; 1: behind background)
     //
     private final int[] foreground;
+    //sprite palette
+    private final byte[] spritePalette;
     // Background pixel
     private final int[] background;
+    //background palette
+    private final byte[] backgroundPalette;
     //Record current pixel on scanline
     protected int pixel;
     //Background pixel shift
@@ -107,6 +110,9 @@ public class Render implements CycleDriver {
 
         this.background = new int[16];
         this.foreground = new int[256];
+
+        this.spritePalette = new byte[4];
+        this.backgroundPalette = new byte[4];
 
         this.sysPalette = new int[DEF_SYS_PALETTE.length][];
 
@@ -123,7 +129,6 @@ public class Render implements CycleDriver {
     public void reset() {
         this.cycles = 340;
         this.scanline = 240;
-        this.frameCounter = 0;
         this.frame.clear();
     }
 
@@ -159,7 +164,6 @@ public class Render implements CycleDriver {
             this.scanline++;
             if (this.scanline > 261) {
                 this.scanline = 0;
-                this.frameCounter++;
             }
         }
     }
@@ -290,20 +294,18 @@ public class Render implements CycleDriver {
         var shift = x << 1 | y << 2;
         var idx = 1 + ((this.tileAttr >> shift) & 0x03) * 4;
 
-        var palette = new byte[]{
-                this.ppu.palette[0],
-                this.ppu.palette[idx],
-                this.ppu.palette[idx + 1],
-                this.ppu.palette[idx + 2]
-        };
+        this.backgroundPalette[0] = this.ppu.palette[0];
+        this.backgroundPalette[1] = this.ppu.palette[idx];
+        this.backgroundPalette[2] = this.ppu.palette[idx + 1];
+        this.backgroundPalette[3] = this.ppu.palette[idx + 2];
 
         for (int i = 0; i < 8; i++) {
             var lower = (this.leftByte >> (7 - i)) & 0x01;
             var upper = (this.rightByte >> (7 - i)) & 0x01;
             var rgb = switch (lower | upper << 1) {
-                case 1 -> sysPalette[palette[1]];
-                case 2 -> sysPalette[palette[2]];
-                case 3 -> sysPalette[palette[3]];
+                case 1 -> sysPalette[this.backgroundPalette[1]];
+                case 2 -> sysPalette[this.backgroundPalette[2]];
+                case 3 -> sysPalette[this.backgroundPalette[3]];
                 default -> sysPalette[ppu.palette[0]];
             };
             var value = (rgb[0] << 16 | rgb[1] << 8 | rgb[2]);
@@ -526,21 +528,22 @@ public class Render implements CycleDriver {
                     }
                 }
 
+                this.spritePalette(attr & 0x03);
+
                 address = bank + idx * 16 + df;
 
                 var l = uint8(this.ppu.iRead(address));
                 var r = uint8(this.ppu.iRead(address + 8));
 
-                var palette = this.spritePalette(attr & 0x03);
 
                 for (int j = 0; j < 8; j++) {
                     var lower = (l >> (7 - j)) & 0x01;
                     var upper = (r >> (7 - j)) & 0x01;
 
                     var arr = switch (lower | upper << 1) {
-                        case 1 -> this.sysPalette[palette[1]];
-                        case 2 -> this.sysPalette[palette[2]];
-                        case 3 -> this.sysPalette[palette[3]];
+                        case 1 -> this.sysPalette[this.spritePalette[1]];
+                        case 2 -> this.sysPalette[this.spritePalette[2]];
+                        case 3 -> this.sysPalette[this.spritePalette[3]];
                         default -> OPAQUE;
                     };
 
@@ -570,13 +573,12 @@ public class Render implements CycleDriver {
         }
     }
 
-    private byte[] spritePalette(int idx) {
+    private void spritePalette(int idx) {
         var offset = 0x11 + idx * 4;
-        return new byte[]{
-                0,
-                ppu.palette[offset],
-                ppu.palette[offset + 1],
-                ppu.palette[offset + 2]
-        };
+
+        this.spritePalette[0] = 0;
+        this.spritePalette[1] = ppu.palette[offset];
+        this.spritePalette[2] = ppu.palette[offset + 1];
+        this.spritePalette[3] = ppu.palette[offset + 2];
     }
 }
