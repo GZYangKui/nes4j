@@ -482,6 +482,24 @@ public enum Instruction {
 
     ARR(InstructionWrap.create(int8(0x6b), 2, 2, Immediate)),
     /**
+     * RRA
+     * ROR oper + ADC oper
+     * <p>
+     * M = C -> [76543210] -> C, A + M + C -> A, C
+     * <p>
+     * N	Z	C	I	D	V
+     * +	+	+	-	-	+
+     */
+    RRA(new InstructionWrap[]{
+            InstructionWrap.create(int8(0x67), 2, 5, ZeroPage),
+            InstructionWrap.create(int8(0x77), 2, 6, ZeroPage_X),
+            InstructionWrap.create(int8(0x6f), 3, 6, Absolute),
+            InstructionWrap.create(int8(0x7f), 3, 7, Absolute_X),
+            InstructionWrap.create(int8(0x7b), 3, 7, Absolute_Y),
+            InstructionWrap.create(int8(0x63), 2, 8, Indirect_X),
+            InstructionWrap.create(int8(0x73), 2, 8, Indirect_Y),
+    }),
+    /**
      * M AND SP -> A, X, SP
      */
     LAS(InstructionWrap.create(int8(0xbb), 3, 4, Absolute_Y)),

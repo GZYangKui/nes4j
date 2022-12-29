@@ -388,7 +388,8 @@ public class CPU {
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 
-//        System.out.println(Integer.toHexString(this.pc - 1) + ":" + instruction + "(" + BinUtil.toHexStr(instruction6502.getOpenCode()) + ")");
+        //System.out.println(Integer.toHexString(this.pc - 1) + ":" + instruction + "(" + BinUtil.toHexStr(instruction6502.getOpenCode()) + ")");
+
 
         if (instruction == Instruction.JMP) {
             this.pc = this.modeProvider.getAbsAddr(mode);
@@ -672,6 +673,11 @@ public class CPU {
             var data = this.ra & this.rx;
             var addr = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
             this.bus.WriteU8(addr, data);
+        }
+
+        if (instruction == Instruction.RRA) {
+            this.ror(instruction6502.getAddressMode());
+            this.adc(instruction6502.getAddressMode(), false);
         }
 
         //根据是否发生重定向来判断是否需要更改程序计数器的值

@@ -300,11 +300,11 @@ public class Cartridge {
      * 判断当前文件是INES格式还是NES_2.0格式
      */
     private NESFormat parseFormat(byte[] headers) {
-        if (!(headers[0] == 'N' && headers[1] == 'E' && headers[2] == 'S' && headers[3] == 0X1A)) {
+        if (!(headers[0] == 'N' && headers[1] == 'E' && headers[2] == 'S' && headers[3] == 0x1a)) {
             throw new RuntimeException("Only support ines and nes_2.0 binary format.");
         }
         final NESFormat nesFormat;
-        if ((headers[7] & 0x0C) == 0x08) {
+        if ((headers[7] & 0x0c) == 0x08) {
             nesFormat = NESFormat.NES_20;
         } else {
             nesFormat = NESFormat.INES;
