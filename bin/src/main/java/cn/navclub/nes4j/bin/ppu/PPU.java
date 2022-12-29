@@ -55,6 +55,8 @@ public class PPU implements Component {
     protected byte w;
     //Fine X scroll (3 bits)
     protected byte x;
+    //PPU cycle
+    private long cycles;
 
     public PPU(final NES context, byte[] ch, NameMirror mirrors) {
         this.oamAddr = 0;
@@ -84,6 +86,7 @@ public class PPU implements Component {
         this.v = 0;
         this.w = 0;
         this.x = 0;
+        this.cycles = 0;
         this.render.reset();
         this.ctr.setBits(int8(0));
         this.mask.setBits(int8(0));
@@ -92,6 +95,7 @@ public class PPU implements Component {
 
     @Override
     public void tick() {
+        this.cycles++;
         for (int i = 0; i < 3; i++) {
             this.render.tick();
         }
@@ -241,12 +245,36 @@ public class PPU implements Component {
         return ramIndex;
     }
 
+    /**
+     * <p>
+     * Another way of seeing the explanation above is that when you reach the end of a nametable,
+     * you must switch to the next one, hence, changing the nametable address.
+     * </p>
+     * <p>
+     * After power/reset, writes to this register are ignored for about 30,000 cycles.
+     * </p>
+     * <p>
+     * If the PPU is currently in vertical blank, and the PPUSTATUS ($2002) vblank flag is still set (1), changing
+     * the NMI flag in bit 7 of $2000 from 0 to 1 will immediately generate an NMI. This can result in graphical
+     * errors (most likely a misplaced scroll) if the NMI routine is executed too late in the blanking period to
+     * finish on time. To avoid this problem it is prudent to read $2002 immediately before writing $2000 to clear
+     * the vblank flag.
+     * </p>
+     * <p>
+     * For more explanation of sprite size, see: <a href="https://www.nesdev.org/wiki/Sprite_size">Sprite size</a>
+     *
+     * @param b Update byte value
+     */
     public void writeCtr(byte b) {
-        var temp = this.ctr.generateVBlankNMI();
-        this.ctr.update(b);
-        if (!temp && this.ctr.generateVBlankNMI() && this.status.contain(PStatus.V_BLANK_OCCUR)) {
+        if (this.cycles < 30_000) {
+            return;
+        }
+        var bit = this.ctr.getBits();
+        var firmNMI = ((bit & 0x80) == 0) && ((b & 0x80) == 0x80);
+        if (firmNMI && this.render.isVBlank() && this.status.contain(PStatus.V_BLANK_OCCUR)) {
             this.fireNMI();
         }
+        this.ctr.update(b);
         //t: ...NN.. ........ <- d: ......NN
         this.t = uint16(this.t & 0xf3ff | (uint8(b) & 0x03) << 10);
     }
@@ -295,10 +323,9 @@ public class PPU implements Component {
      * Output one frame video sign.
      */
     protected void fireNMI() {
-        if (!this.ctr.generateVBlankNMI()) {
-            return;
-        }
         this.status.set(PStatus.V_BLANK_OCCUR);
-        this.context.interrupt(CPUInterrupt.NMI);
+        if (this.ctr.generateVBlankNMI()) {
+            this.context.interrupt(CPUInterrupt.NMI);
+        }
     }
 }

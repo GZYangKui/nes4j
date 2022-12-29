@@ -32,7 +32,6 @@ public class NES {
     private final Cartridge cartridge;
     private final EventBus eventBus;
     private final TCallback<Frame, JoyPad, JoyPad> gameLoopCallback;
-
     //CPU延迟时钟
     private int stall;
     @Setter
@@ -72,7 +71,7 @@ public class NES {
     }
 
     public void execute() {
-        this.cpu.reset();
+        this.reset();
         while (!stop) {
             var cycles = 0;
             if (this.stall > 0) {
@@ -122,12 +121,14 @@ public class NES {
         return this.bus.read(address);
     }
 
+
     /**
      * Reset NES all core component
      */
     public void reset() {
         //Reset release debug lock
         this.release();
+        this.cycles = 0;
         this.apu.reset();
         this.ppu.reset();
         this.cpu.reset();
@@ -146,8 +147,8 @@ public class NES {
     }
 
     public void videoOutput(Frame frame) {
+        LockSupport.parkNanos(this.speed * 1000000L);
         if (this.gameLoopCallback != null) {
-            LockSupport.parkNanos(this.speed * 1000000L);
             this.gameLoopCallback.accept(frame, this.joyPad, this.joyPad1);
             frame.clear();
         }
