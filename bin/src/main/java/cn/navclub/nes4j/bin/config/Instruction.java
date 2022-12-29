@@ -484,7 +484,7 @@ public enum Instruction {
     /**
      * M AND SP -> A, X, SP
      */
-    LAS(InstructionWrap.create(int8(0xbb), 3, 4, Immediate)),
+    LAS(InstructionWrap.create(int8(0xbb), 3, 4, Absolute_Y)),
     /**
      * Store * AND oper in A and X
      */
@@ -534,13 +534,13 @@ public enum Instruction {
     }),
 
     ISC(new InstructionWrap[]{
-            InstructionWrap.create(int8(0xE7), 2, 5, ZeroPage),
-            InstructionWrap.create(int8(0xF7), 2, 6, ZeroPage_X),
-            InstructionWrap.create(int8(0xEF), 3, 6, Absolute),
-            InstructionWrap.create(int8(0xFF), 3, 7, Absolute_X),
-            InstructionWrap.create(int8(0xFB), 3, 7, Absolute_Y),
-            InstructionWrap.create(int8(0xE3), 2, 8, Indirect_X),
-            InstructionWrap.create(int8(0xF3), 2, 8, Indirect_Y)
+            InstructionWrap.create(int8(0xe7), 2, 5, ZeroPage),
+            InstructionWrap.create(int8(0xf7), 2, 6, ZeroPage_X),
+            InstructionWrap.create(int8(0xef), 3, 6, Absolute),
+            InstructionWrap.create(int8(0xff), 3, 7, Absolute_X),
+            InstructionWrap.create(int8(0xfb), 3, 7, Absolute_Y),
+            InstructionWrap.create(int8(0xe3), 2, 8, Indirect_X),
+            InstructionWrap.create(int8(0xf3), 2, 8, Indirect_Y)
     }),
 
     SLO(new InstructionWrap[]{
@@ -565,41 +565,41 @@ public enum Instruction {
     }),
 
     SAX(new InstructionWrap[]{
-            InstructionWrap.create((byte) 0x87, 2, 3, ZeroPage),
-            InstructionWrap.create((byte) 0x97, 2, 4, ZeroPage_Y),
-            InstructionWrap.create((byte) 0x8f, 3, 4, Absolute),
-            InstructionWrap.create((byte) 0x83, 2, 6, Indirect_X),
+            InstructionWrap.create(int8(0x87), 2, 3, ZeroPage),
+            InstructionWrap.create(int8(0x97), 2, 4, ZeroPage_Y),
+            InstructionWrap.create(int8(0x8f), 3, 4, Absolute),
+            InstructionWrap.create(int8(0x83), 2, 6, Indirect_X),
     }),
 
 
     NOP_S(new InstructionWrap[]{
-            InstructionWrap.create(int8(0x1A), 1, 2, Implied),
-            InstructionWrap.create(int8(0x3A), 1, 2, Implied),
-            InstructionWrap.create(int8(0x5A), 1, 2, Implied),
-            InstructionWrap.create(int8(0x7A), 1, 2, Implied),
-            InstructionWrap.create(int8(0xDA), 1, 2, Implied),
-            InstructionWrap.create(int8(0xFA), 1, 2, Implied),
+            InstructionWrap.create(int8(0x1a), 1, 2, Implied),
+            InstructionWrap.create(int8(0x3a), 1, 2, Implied),
+            InstructionWrap.create(int8(0x5a), 1, 2, Implied),
+            InstructionWrap.create(int8(0x7a), 1, 2, Implied),
+            InstructionWrap.create(int8(0xda), 1, 2, Implied),
+            InstructionWrap.create(int8(0xfa), 1, 2, Implied),
             InstructionWrap.create(int8(0x80), 2, 2, Immediate),
             InstructionWrap.create(int8(0x82), 2, 2, Immediate),
             InstructionWrap.create(int8(0x89), 2, 2, Immediate),
-            InstructionWrap.create(int8(0xC2), 2, 2, Immediate),
-            InstructionWrap.create(int8(0xE2), 2, 2, Immediate),
+            InstructionWrap.create(int8(0xc2), 2, 2, Immediate),
+            InstructionWrap.create(int8(0xe2), 2, 2, Immediate),
             InstructionWrap.create(int8(0x04), 2, 3, ZeroPage),
             InstructionWrap.create(int8(0x44), 2, 3, ZeroPage),
-            InstructionWrap.create(int8(0x64), 2, 3, ZeroPage_X),
+            InstructionWrap.create(int8(0x64), 2, 3, ZeroPage),
             InstructionWrap.create(int8(0x14), 2, 4, ZeroPage_X),
             InstructionWrap.create(int8(0x34), 2, 4, ZeroPage_X),
             InstructionWrap.create(int8(0x54), 2, 4, ZeroPage_X),
             InstructionWrap.create(int8(0x74), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0xD4), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0xF4), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0x0C), 3, 4, Absolute),
-            InstructionWrap.create(int8(0x1C), 3, 4, Absolute_X),
-            InstructionWrap.create(int8(0x3C), 3, 4, Absolute_X),
-            InstructionWrap.create(int8(0x5C), 3, 4, Absolute_X),
-            InstructionWrap.create(int8(0x7C), 3, 4, Absolute_X),
-            InstructionWrap.create(int8(0xDC), 3, 4, Absolute_X),
-            InstructionWrap.create(int8(0xFC), 3, 4, Absolute_X),
+            InstructionWrap.create(int8(0xd4), 2, 4, ZeroPage_X),
+            InstructionWrap.create(int8(0xf4), 2, 4, ZeroPage_X),
+            InstructionWrap.create(int8(0x0c), 3, 4, Absolute),
+            InstructionWrap.create(int8(0x1c), 3, 4, Absolute_X),
+            InstructionWrap.create(int8(0x3c), 3, 4, Absolute_X),
+            InstructionWrap.create(int8(0x5c), 3, 4, Absolute_X),
+            InstructionWrap.create(int8(0x7c), 3, 4, Absolute_X),
+            InstructionWrap.create(int8(0xdc), 3, 4, Absolute_X),
+            InstructionWrap.create(int8(0xfc), 3, 4, Absolute_X),
     });
 
     private final InstructionWrap wrap;

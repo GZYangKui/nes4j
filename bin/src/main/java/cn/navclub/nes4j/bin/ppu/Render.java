@@ -102,8 +102,6 @@ public class Render implements CycleDriver {
     protected int pixel;
     //Background pixel shift
     private int shift;
-    @Getter
-    private boolean vBlank;
 
     public Render(PPU ppu) {
         this.ppu = ppu;
@@ -142,7 +140,6 @@ public class Render implements CycleDriver {
 
         if (this.scanline == 241 && this.cycles == 1) {
             this.ppu.fireNMI();
-            this.vBlank = true;
             //A frame render finish immediate output video
             this.ppu.context.videoOutput(this.frame);
         }
@@ -159,7 +156,6 @@ public class Render implements CycleDriver {
         // During pixels 280 through 304 of this scanline, the vertical scroll bits are reloaded if rendering is enabled.
         //
         if (this.scanline == 261 && this.cycles == 1) {
-            this.vBlank = false;
             this.ppu.status.clear(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT, PStatus.SPRITE_OVERFLOW);
         }
 

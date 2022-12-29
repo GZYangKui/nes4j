@@ -271,7 +271,7 @@ public class PPU implements Component {
         }
         var bit = this.ctr.getBits();
         var firmNMI = ((bit & 0x80) == 0) && ((b & 0x80) == 0x80);
-        if (firmNMI && this.render.isVBlank() && this.status.contain(PStatus.V_BLANK_OCCUR)) {
+        if (firmNMI && this.status.contain(PStatus.V_BLANK_OCCUR)) {
             this.fireNMI();
         }
         this.ctr.update(b);
