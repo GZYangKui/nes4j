@@ -388,7 +388,11 @@ public class CPU {
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 
-        //System.out.println(Integer.toHexString(this.pc - 1) + ":" + instruction + "(" + BinUtil.toHexStr(instruction6502.getOpenCode()) + ")");
+        if ((this.pc - 1) == 0xe7c7 || this.pc - 1 == 0xe7c0) {
+            var str = "bbbb";
+        }
+
+      //  System.out.println(Integer.toHexString(this.pc - 1) + ":" + instruction + "(" + BinUtil.toHexStr(instruction6502.getOpenCode()) + ")");
 
 
         if (instruction == Instruction.JMP) {
@@ -458,9 +462,6 @@ public class CPU {
         //刷新累加寄存器值到内存
         if (instruction == Instruction.STA) {
             var addr = this.modeProvider.getAbsAddr(mode);
-            if (this.pc - 1 == 0xe992) {
-                var str = "555";
-            }
             this.bus.WriteU8(addr, this.ra);
         }
 

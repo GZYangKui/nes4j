@@ -23,61 +23,37 @@ nes4j
 git clone https://gitee.com/navigatorCode/nes4j.git
 ```
 
-### 配置参数
-
-```json
-{
-  /**UI控制键与任天堂手柄映射关系**/
-  "mapper": [
-    {
-      "keyCode": "A",
-      "button": "BTN_A"
-    },
-    {
-      "keyCode": "S",
-      "button": "BTN_B"
-    },
-    {
-      "keyCode": "UP",
-      "button": "BTN_UP"
-    },
-    {
-      "keyCode": "DOWN",
-      "button": "BTN_DN"
-    },
-    {
-      "keyCode": "SPACE",
-      "button": "BTN_SE"
-    },
-    {
-      "keyCode": "ENTER",
-      "button": "BTN_ST"
-    },
-    {
-      "keyCode": "LEFT",
-      "button": "BTN_LF"
-    },
-    {
-      "keyCode": "RIGHT",
-      "button": "BTN_RT"
-    }
-  ]
-}
-```
-
 ### 启动项目
 
 ```shell
  mvn run
 ```
+
 或 直接点击[Launcher](app/src/main/java/cn/navclub/nes4j/app/Launcher.java)运行
+
+## 应用截图
+
+### 应用界面
+
+![APP](SNAPSHOTS/app.png)
+
+### 游戏界面
+
+![Contra](SNAPSHOTS/contra.png)
 
 ## 参与贡献
 
 我们强烈欢迎有兴趣的开发者参与到项目建设中来，同时欢迎大家对项目提出宝贵意见建议和功能需求，项目正在积极开发，欢迎 PR 👏。
 
+## 版权说明
 
-## 捐赠支持
+目前市场上绝大部分游戏版权为[任天堂](https://www.nintendo.com/)所有,请勿在未取得任天堂授权的情况下私自分游戏.
+如果因此引发的任何侵权行为均与本软件无关.如果本软件中设计任何侵权素材请发送邮件到GZYangKui@126.com通知我删除对应侵权素材.
 
-如果您觉得我们的开源项目对您有帮助，那就请项目开发者们来一杯咖啡☕️吧！当前我们接受来自于**微信**、**支付宝**或者**码云**
-的捐赠，请在捐赠时备注自己的昵称或附言。
+## 开发文档
+
+如果你也想编写自己的模拟器或想了解模拟器内部结构,以下资源可以给你提供一些模拟器基础知识:
+
+* [NES Documentation (PDF)](http://nesdev.com/NESDoc.pdf)
+* [NES Reference Guide (Wiki)](http://wiki.nesdev.com/w/index.php/NES_reference_guide)
+* [6502 CPU Reference](http://www.obelisk.me.uk/6502/reference.html)

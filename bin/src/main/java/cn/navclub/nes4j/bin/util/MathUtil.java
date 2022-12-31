@@ -1,5 +1,7 @@
 package cn.navclub.nes4j.bin.util;
 
+import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
+
 /**
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
@@ -48,7 +50,7 @@ public class MathUtil {
     }
 
     public static int u8add(int a, int b) {
-        return (a + b) & 0xff;
+        return uint8(a + b);
     }
 
     public static int u8sbc(int a, int b) {
