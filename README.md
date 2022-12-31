@@ -1,58 +1,64 @@
 # nes4j
 
-## 项目介绍
+## Project introduction
 
-**nes4j**是使用java语言实现任天堂红白机模拟器,主要包括[CPU](https://www.nesdev.org/wiki/CPU)、
-[PPU](https://www.nesdev.org/wiki/PPU_programmer_reference)和[APU](https://www.nesdev.org/wiki/APU)三部分组成.其中PPU是红白机
-实现难度最大的一个模块,理解起来有点困难.
+**nes4j**The Nintendo Red and White Machine Simulator is implemented in Java language, mainly
+including [CPU](https://www.nesdev.org/wiki/CPU)、
+[PPU](https://www.nesdev.org/wiki/PPU_programmer_reference) and [APU](https://www.nesdev.org/wiki/APU) Three parts.PPU
+is a red and white machine
+It is difficult to understand the most difficult module.
 
-## 项目结构
+## Project Structure
 
 ```
 nes4j
-├── app UI模块(javafx)
-├── bin 模拟器核心模块(CPU/PPU/APU)
-└── document 开发文档
+├── app UI module(javafx)
+├── bin Simulator core module (CPU/PPU/APU)
+└── document Development Documentation
 ```
 
-## 快速启动
+## Quick start
 
-### 下载项目
+### Download project
 
 ``` shell
 git clone https://gitee.com/navigatorCode/nes4j.git
 ```
 
-### 启动项目
+### Start project
 
 ```shell
  mvn run
 ```
 
-或 直接点击[Launcher](app/src/main/java/cn/navclub/nes4j/app/Launcher.java)运行
+Or click directly [Launcher](app/src/main/java/cn/navclub/nes4j/app/Launcher.java) run
 
-## 应用截图
+##   
 
-### 应用界面
+### Application screenshot
 
 ![APP](SNAPSHOTS/app.png)
 
-### 游戏界面
+### Game interface
 
 ![Contra](SNAPSHOTS/contra.png)
 
-## 参与贡献
+## Participatory contributions
 
-我们强烈欢迎有兴趣的开发者参与到项目建设中来，同时欢迎大家对项目提出宝贵意见建议和功能需求，项目正在积极开发，欢迎 PR 👏。
+We strongly welcome interested developers to participate in the project construction, and welcome everyone to put
+forward valuable suggestions and functional requirements for the project. The project is being actively developed, and
+welcome PR 👏。
 
-## 版权说明
+## Copyright Description
 
-目前市场上绝大部分游戏版权为[任天堂](https://www.nintendo.com/)所有,请勿在未取得任天堂授权的情况下私自分游戏.
-如果因此引发的任何侵权行为均与本软件无关.如果本软件中设计任何侵权素材请发送邮件到GZYangKui@126.com通知我删除对应侵权素材.
+At present, most of the game copyrights in the market are owned by [Nintendo]((https://www.nintendo.com/)).
+Do not distribute the game without permission from Nintendo If any infringement is caused thereby, it has nothing
+to do with the software. If any infringing material is designed in the software, please send an email to
+GZYangKui@126.com Notify me to delete the corresponding infringing materials.
 
-## 开发文档
+## Development Documentation
 
-如果你也想编写自己的模拟器或想了解模拟器内部结构,以下资源可以给你提供一些模拟器基础知识:
+If you want to write your own simulator or understand the internal structure of the simulator, the following resources can provide you with some basic knowledge of the simulator:
 
 * [NES Documentation (PDF)](http://nesdev.com/NESDoc.pdf)
 * [NES Reference Guide (Wiki)](http://wiki.nesdev.com/w/index.php/NES_reference_guide)
