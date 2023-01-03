@@ -9,6 +9,7 @@ import cn.navclub.nes4j.bin.ppu.PPU;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 
 /**
@@ -22,8 +23,6 @@ public class Bus implements Component {
     private static final int RPG_UNIT = 16 * 1024;
     private final NES context;
     private final byte[] ram;
-    //Dynamic change rpg rom
-    private final byte[] rpgrom;
     //Player1
     private final JoyPad joyPad;
     //Player2
@@ -31,7 +30,6 @@ public class Bus implements Component {
     @Getter
     private final PPU ppu;
     private final APU apu;
-    private final Cartridge cartridge;
 
     public Bus(NES context, JoyPad joyPad, JoyPad joyPad1) {
         this.context = context;
@@ -41,17 +39,8 @@ public class Bus implements Component {
 
         this.ram = new byte[2048];
 
-
         this.apu = context.getApu();
         this.ppu = context.getPpu();
-
-        this.rpgrom = new byte[RPG_UNIT * 2];
-
-        this.cartridge = context.getCartridge();
-        if (cartridge.getMapper() == NMapper.NROM) {
-            System.arraycopy(this.cartridge.getRgbrom(), 0, this.rpgrom, 0, RPG_UNIT);
-        }
-        System.arraycopy(this.cartridge.getRgbrom(), ((this.cartridge.getRgbSize() / RPG_UNIT) - 1) * RPG_UNIT, rpgrom, RPG_UNIT, RPG_UNIT);
     }
 
     /**
@@ -88,7 +77,6 @@ public class Bus implements Component {
         }
         //player2
         else if (address == 0x4017) {
-//            b = this.joyPad1.read();
             b = 0;
         }
         //apu only write register
@@ -110,7 +98,7 @@ public class Bus implements Component {
         }
         //Read rpg-rom data
         else if (address >= RPG_ROM && address <= RPG_ROM_END) {
-            b = this.rpgrom[address - 0x8000];
+            b = this.context.getMapper().readRom(address - 0x8000);
         }
         //Default return 0
         else {
@@ -120,7 +108,10 @@ public class Bus implements Component {
     }
 
     /**
-     * 向内存中写入一字节数据
+     * Write a byte to target memory address
+     *
+     * @param address Target memory address
+     * @param b       Write data
      */
     public void write(int address, byte b) {
         address = this.map(address);
@@ -189,36 +180,36 @@ public class Bus implements Component {
 
         //Write to cpu memory
         else if (address >= RPG_ROM && address <= RPG_ROM_END) {
-            var mapper = this.cartridge.getMapper();
-            switch (mapper) {
-                case NROM -> throw new RuntimeException("RPG-ROM belong only memory area.");
-                case UX_ROM -> {
-                    var bank = b & 0x0f;
-                    var srcPos = bank * RPG_UNIT;
-                    System.arraycopy(this.cartridge.getRgbrom(), srcPos, this.rpgrom, 0, RPG_UNIT);
-                }
-                default -> throw new RuntimeException("un-support mapper:" + mapper + "");
-            }
+            this.context.getMapper().writeRom(address, b);
         }
 
     }
 
     /**
-     * 向指定位置写入无符号字节
+     * Write unsigned data to target memory address
+     *
+     * @param address Target memory address
+     * @param value   Unsigned byte data
      */
     public void WriteU8(int address, int value) {
-        this.write(address, (byte) value);
+        this.write(address, int8(value));
     }
 
     /**
-     * 读无符号字节
+     * Read unsigned data from target memory address
+     *
+     * @param address Target memory address
+     * @return Unsigned byte data
      */
     public int ReadU8(int address) {
         return uint8(this.read(address));
     }
 
     /**
-     * 以小端序形式读取数据
+     * Little endian read continue two memory address value
+     *
+     * @param address Memory address offset
+     * @return Two address memory value
      */
     public int readInt(int address) {
         var lsb = this.read(address);

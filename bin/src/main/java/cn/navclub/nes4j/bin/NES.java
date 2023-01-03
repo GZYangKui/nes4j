@@ -3,6 +3,8 @@ package cn.navclub.nes4j.bin;
 import cn.navclub.nes4j.bin.apu.APU;
 import cn.navclub.nes4j.bin.apu.Player;
 import cn.navclub.nes4j.bin.core.*;
+import cn.navclub.nes4j.bin.core.impl.NRMapper;
+import cn.navclub.nes4j.bin.core.impl.UXMapper;
 import cn.navclub.nes4j.bin.debug.Debugger;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
 import cn.navclub.nes4j.bin.eventbus.EventBus;
@@ -26,6 +28,7 @@ public class NES {
     private final CPU cpu;
     private final APU apu;
     private final PPU ppu;
+    private final Mapper mapper;
     private final Thread thread;
     private final JoyPad joyPad;
     private final JoyPad joyPad1;
@@ -58,8 +61,8 @@ public class NES {
         this.player = builder.player;
         this.eventBus = new EventBus();
         this.thread = Thread.currentThread();
-
         this.gameLoopCallback = builder.gameLoopCallback;
+        this.mapper = this.cartridge.getMapper().newProvider(this.cartridge);
 
         this.apu = new APU(this);
         this.ppu = new PPU(this, cartridge.getChrom(), cartridge.getMirrors());

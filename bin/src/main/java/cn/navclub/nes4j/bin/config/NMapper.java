@@ -1,33 +1,45 @@
 package cn.navclub.nes4j.bin.config;
 
+import cn.navclub.nes4j.bin.core.Mapper;
+import cn.navclub.nes4j.bin.core.impl.NRMapper;
+import cn.navclub.nes4j.bin.core.impl.UXMapper;
+import cn.navclub.nes4j.bin.io.Cartridge;
+
+
 /**
  * <a href="https://www.nesdev.org/wiki/Category:INES_Mappers">INES Mappers</a>
  */
 public enum NMapper {
-    NROM(true),
+    NROM(NRMapper.class),
     MMC1,
-    /**
-     * CPU $8000-$BFFF: 16 KB switchable PRG ROM bank
-     * CPU $C000-$FFFF: 16 KB PRG ROM bank, fixed to the last bank
-     * <p>
-     * 7  bit  0
-     * ---- ----
-     * xxxx pPPP
-     * ||||
-     * ++++- Select 16 KB PRG ROM bank for CPU $8000-$BFFF
-     * (UNROM uses bits 2-0; UOROM uses bits 3-0)
-     */
-    UX_ROM(true),
+    UX_ROM(UXMapper.class),
     MAPPER_003,
     MMC3,
     UNKNOWN;
-    public final boolean impl;
 
-    NMapper(boolean impl) {
-        this.impl = impl;
+    private final Class<? extends Mapper> provider;
+
+    NMapper(Class<? extends Mapper> provider) {
+        this.provider = provider;
     }
 
     NMapper() {
-        this(false);
+        this(null);
+    }
+
+    @SuppressWarnings("all")
+    public <T> T newProvider(Cartridge cartridge) {
+        try {
+            return (T) this
+                    .provider
+                    .getDeclaredConstructor(Cartridge.class)
+                    .newInstance(cartridge);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean isImpl() {
+        return this.provider != null;
     }
 }

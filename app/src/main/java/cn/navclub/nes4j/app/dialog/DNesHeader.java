@@ -57,13 +57,13 @@ public class DNesHeader extends Dialog<Boolean> {
         pane.setContent(gridPane);
         pane.getButtonTypes().addAll(ButtonType.APPLY);
         var btn = ((Button) (pane.lookupButton(ButtonType.APPLY)));
-        if (cartridge.getMapper().impl) {
+        if (cartridge.getMapper().isImpl()) {
             btn.setText(INes.localeValue("nes4j.run"));
         } else {
             btn.setText(INes.localeValue("nes4j.unsupport"));
         }
         this.initOwner(owner);
         this.setTitle(StrUtil.getFileName(file));
-        this.setResultConverter(buttonType -> !(buttonType == null) && cartridge.getMapper().impl);
+        this.setResultConverter(buttonType -> !(buttonType == null) && cartridge.getMapper().isImpl());
     }
 }

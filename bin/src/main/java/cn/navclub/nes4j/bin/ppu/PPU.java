@@ -22,8 +22,6 @@ import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class PPU implements Component {
-    @Getter
-    private final byte[] ch;
     //The data necessary for render the screen
     @Getter
     protected final byte[] vram;
@@ -67,12 +65,9 @@ public class PPU implements Component {
         this.vram = new byte[2048];
         this.mask = new PPUMask();
         this.ctr = new PPUControl();
-        this.ch = new byte[8 * 1024];
         this.status = new PPUStatus();
         this.palette = new byte[32];
         this.render = new Render(this);
-
-        System.arraycopy(ch, 0, this.ch, 0, Math.min(this.ch.length, ch.length));
     }
 
     public PPU(NES context, NameMirror mirrors) {
@@ -154,7 +149,7 @@ public class PPU implements Component {
         var temp = this.byteBuf;
 
         if (addr >= 0 && addr <= 0x1fff) {
-            this.byteBuf = this.ch[addr];
+            this.byteBuf = this.context.getMapper().readCom(addr);
         }
 
         if (addr >= 0x2000 && addr <= 0x2fff) {
@@ -179,7 +174,7 @@ public class PPU implements Component {
         final byte b;
         //Read chr-rom data
         if (address < 0x2000) {
-            b = this.ch[address];
+            b = this.context.getMapper().readCom(address);
         }
         //Read name table data
         else if (address < 0x3000) {
@@ -198,7 +193,7 @@ public class PPU implements Component {
         var addr = this.v;
 
         if (addr >= 0x00 && addr <= 0x1fff) {
-            this.ch[addr] = b;
+            this.context.getMapper().writeCom(addr, b);
         }
 
         if (addr >= 0x2000 && addr <= 0x2fff) {
