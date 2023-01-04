@@ -127,7 +127,7 @@ public class Render implements CycleDriver {
     }
 
     public void reset() {
-        this.cycles = 340;
+        this.cycles = 0;
         this.scanline = 240;
         this.frame.clear();
     }
@@ -246,6 +246,9 @@ public class Render implements CycleDriver {
             }
 
             if (nextLine || visibleCycle) {
+                if (!nextLine) {
+                    this.renderPixel();
+                }
                 var v = this.ppu.v;
                 switch (this.cycles % 8) {
                     case 0 -> this.tileMut();
@@ -253,9 +256,6 @@ public class Render implements CycleDriver {
                     case 3 -> this.readTileAttr(v);
                     case 5 -> this.readTileByte(v, false);
                     case 7 -> this.readTileByte(v, true);
-                }
-                if (!nextLine) {
-                    this.renderPixel();
                 }
             }
 
