@@ -3,14 +3,11 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.config.*;
 import cn.navclub.nes4j.bin.core.register.CPUStatus;
-import cn.navclub.nes4j.bin.debug.OpenCodeFormat;
-import cn.navclub.nes4j.bin.ppu.PPU;
-import cn.navclub.nes4j.bin.util.BinUtil;
-import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.int8;
+import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
 import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
 
@@ -21,31 +18,31 @@ import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
  */
 @Slf4j
 public class CPU {
-    //栈开始位置
+    //Stack offset
     public static final int STACK = 0x0100;
-    //程序计数器重置地址
+    //Program counter reset offset
     private static final int PC_RESET = 0xfffc;
-    //程序栈重置地址
+    //Stack reset offset
     private static final int STACK_RESET = 0xfd;
 
-    //累加寄存器
+    //Accumulator register
     @Getter
     private int ra;
-    //X寄存器
+    //X register
     @Getter
     private int rx;
-    //Y寄存器
+    //Y register
     @Getter
     private int ry;
-    //程序计数器
+    //Program counter
     @Getter
     private int pc;
     @Getter
-    //栈指针寄存器,始终指向栈顶
+    //Stack pointer
     private int sp;
     private final Bus bus;
     private final AddrMProvider modeProvider;
-    //cpu状态
+    //CPU status
     private final CPUStatus status;
 
     public CPU(NES context) {
@@ -56,7 +53,7 @@ public class CPU {
 
 
     /**
-     * 重置寄存器和程序计数器
+     * Reset cpu all status
      */
     public void reset() {
         this.rx = 0;
@@ -74,10 +71,11 @@ public class CPU {
     }
 
     public void pushInt(int data) {
-        var lsb = data & 0xff;
-        var msb = (data >> 8) & 0xff;
-        this.push((byte) msb);
-        this.push((byte) lsb);
+        var lsb = uint8(data);
+        var msb = uint8(data >> 8);
+
+        this.push(int8(msb));
+        this.push(int8(lsb));
     }
 
     public byte pop() {
@@ -86,14 +84,12 @@ public class CPU {
     }
 
     public int popInt() {
-        var lsb = this.pop() & 0xff;
-        var msb = this.pop() & 0xff;
+        var lsb = uint8(this.pop());
+        var msb = uint8(this.pop());
         return lsb | msb << 8;
     }
 
-    /**
-     * LDA指令实现
-     */
+
     private void lda(AddressMode mode) {
         var address = this.modeProvider.getAbsAddr(mode);
         var value = this.bus.ReadU8(address);
@@ -101,8 +97,7 @@ public class CPU {
     }
 
     private void raUpdate(int value) {
-        //强制将累加器的值控制在一个字节内
-        value &= 0xff;
+        value = uint8(value);
         //Set ra
         this.ra = value;
         //Update Zero and negative flag
@@ -110,16 +105,16 @@ public class CPU {
     }
 
     /**
-     * 更新负标识和零标识
+     * Check CPU Negative and Zero flag
      */
     private void NZUpdate(int result) {
-        var b = (result & 0xff);
+        var b = uint8(result);
         this.status.update(ICPUStatus.ZERO, (b == 0));
         this.status.update(ICPUStatus.NEGATIVE, (b >> 7) == 1);
     }
 
     /**
-     * 逻辑运算 或、与、异或
+     * Or and not operator
      */
     private void logic(Instruction instruction, AddressMode addressMode) {
         var address = this.modeProvider.getAbsAddr(addressMode);
@@ -203,9 +198,9 @@ public class CPU {
             address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
             b = this.bus.ReadU8(address);
         }
-        //更新进位标识
+        //Check Carry flag
         this.status.update(ICPUStatus.CARRY, (b >> 7) == 1);
-        //左移1位
+        //Left shifter one bit
         b = b << 1;
         if (a) {
             this.raUpdate(b);
@@ -218,7 +213,7 @@ public class CPU {
     private void push(InstructionWrap instruction6502) {
         var instruction = instruction6502.getInstruction();
         if (instruction == Instruction.PHA) {
-            this.push((byte) this.ra);
+            this.push(int8(this.ra));
         } else {
             var flags = this.status.copy();
             flags.set(ICPUStatus.BREAK_COMMAND, ICPUStatus.EMPTY);
@@ -250,9 +245,9 @@ public class CPU {
         }
         var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
         var m = this.bus.ReadU8(address);
-        //设置Carry Flag
+        //Set carry Flag
         this.status.update(ICPUStatus.CARRY, a >= m);
-        //更新cpu状态
+        //Update cpu status
         this.NZUpdate(u8sbc(a, m));
     }
 
@@ -276,12 +271,12 @@ public class CPU {
         var addr = this.modeProvider.getAbsAddr(mode);
         var b = this.bus.read(addr);
         if (sbc) {
-            b = (byte) (-b - 1);
+            b = int8(-b - 1);
         }
-        var value = b & 0xff;
+        var value = uint8(b);
         var sum = this.ra + value + this.status.get(ICPUStatus.CARRY);
         this.status.update(ICPUStatus.CARRY, sum > 0xff);
-        var result = sum & 0xff;
+        var result = uint8(sum);
         this.status.update(ICPUStatus.OVERFLOW, (((b & 0xff ^ result) & (result ^ this.ra)) & 0x80) != 0);
         this.raUpdate(result);
     }
@@ -303,7 +298,7 @@ public class CPU {
     }
 
     private void branch(boolean condition) {
-        //条件不成立不跳转分支
+        //If condition was false not anything.
         if (!condition) {
             return;
         }
@@ -336,14 +331,8 @@ public class CPU {
                 this.bus.WriteU8(address, b);
                 yield b;
             }
-            case DEX -> {
-                this.rx = u8sbc(this.rx, 1);
-                yield this.rx;
-            }
-            default -> {
-                this.ry = u8sbc(this.ry, 1);
-                yield this.ry;
-            }
+            case DEX -> this.rx = u8sbc(this.rx, 1);
+            default -> this.ry = u8sbc(this.ry, 1);
         };
         this.NZUpdate(value);
     }
@@ -376,7 +365,6 @@ public class CPU {
     }
 
     public int next() {
-        this.modeProvider.setCycles(0);
         var openCode = this.bus.read(this.pc);
         var state = (++this.pc);
 
@@ -388,12 +376,24 @@ public class CPU {
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 
-        if ((this.pc - 1) == 0xe7c7 || this.pc - 1 == 0xe7c0) {
-            var str = "bbbb";
+        if (log.isDebugEnabled()) {
+            var operand = "";
+            if (mode != AddressMode.Implied && mode != AddressMode.Accumulator && mode != AddressMode.Relative) {
+                operand = "0x" + Integer.toHexString(this.modeProvider.getAbsAddr(mode));
+            }
+            log.debug(
+                    "[0x{}] A:{} X:{} Y:{} S:{} {} {}",
+                    Integer.toHexString(this.pc - 1),
+                    Integer.toHexString(this.ra),
+                    Integer.toHexString(this.rx),
+                    Integer.toHexString(this.ry),
+                    this.status,
+                    instruction,
+                    operand
+            );
         }
 
-      //  System.out.println(Integer.toHexString(this.pc - 1) + ":" + instruction + "(" + BinUtil.toHexStr(instruction6502.getOpenCode()) + ")");
-
+        this.modeProvider.setCycles(0);
 
         if (instruction == Instruction.JMP) {
             this.pc = this.modeProvider.getAbsAddr(mode);
@@ -420,7 +420,6 @@ public class CPU {
             this.lda(mode);
         }
 
-        //加减运算
         if (instruction == Instruction.ADC) {
             this.adc(instruction6502.getAddressMode(), false);
         }
@@ -429,23 +428,20 @@ public class CPU {
             this.sbc(instruction6502.getAddressMode());
         }
 
-        //或、与、异或逻辑运算
         if (instruction == Instruction.AND
                 || instruction == Instruction.ORA
                 || instruction == Instruction.EOR) {
             this.logic(instruction6502.getInstruction(), instruction6502.getAddressMode());
         }
 
-        //push累加寄存器/状态寄存器
         if (instruction == Instruction.PHA || instruction == Instruction.PHP) {
             this.push(instruction6502);
         }
-        //pull累加寄存器/状态寄存器
+
         if (instruction == Instruction.PLA || instruction == Instruction.PLP) {
             this.pull(instruction6502);
         }
 
-        //左移1位
         if (instruction == Instruction.ASL) {
             this.asl(instruction6502);
         }
@@ -454,38 +450,31 @@ public class CPU {
             this.rol(mode);
         }
 
-        //右移一位
         if (instruction == Instruction.ROR) {
             this.ror(mode);
         }
 
-        //刷新累加寄存器值到内存
         if (instruction == Instruction.STA) {
             var addr = this.modeProvider.getAbsAddr(mode);
             this.bus.WriteU8(addr, this.ra);
         }
 
-        //刷新y寄存器值到内存
         if (instruction == Instruction.STY) {
             this.bus.WriteU8(this.modeProvider.getAbsAddr(mode), this.ry);
         }
 
-        //刷新x寄存器值到内存中
         if (instruction == Instruction.STX) {
             this.bus.WriteU8(this.modeProvider.getAbsAddr(mode), this.rx);
         }
 
-        //清除进位标识
         if (instruction == Instruction.CLC) {
             this.status.clear(ICPUStatus.CARRY);
         }
 
-        //清除Decimal model
         if (instruction == Instruction.CLD) {
             this.status.clear(ICPUStatus.DECIMAL_MODE);
         }
 
-        //清除中断标识
         if (instruction == Instruction.CLI) {
             this.status.clear(ICPUStatus.INTERRUPT_DISABLE);
         }
@@ -658,7 +647,7 @@ public class CPU {
 
         if (instruction == Instruction.SHX) {
             var addr = this.modeProvider.getAbsAddr(mode);
-            var value = this.rx & u8add((addr >> 8) & 0xff, 1);
+            var value = this.rx & u8add(uint8(addr >> 8), 1);
             this.bus.WriteU8(addr, value);
         }
 
@@ -681,7 +670,10 @@ public class CPU {
             this.adc(instruction6502.getAddressMode(), false);
         }
 
-        //根据是否发生重定向来判断是否需要更改程序计数器的值
+        //
+        // Judge whether it is necessary to change the value of the program counter according to whether the
+        // redirection occurs
+        //
         if (this.pc == state) {
             this.pc += (instruction6502.getSize() - 1);
         }

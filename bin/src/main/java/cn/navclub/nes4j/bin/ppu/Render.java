@@ -136,7 +136,9 @@ public class Render implements CycleDriver {
     public void tick() {
         this.cycles++;
 
-        this.render();
+        if (this.mask.enableRender()) {
+            this.render();
+        }
 
         if (this.scanline == 241 && this.cycles == 1) {
             this.ppu.fireNMI();
@@ -232,12 +234,18 @@ public class Render implements CycleDriver {
         //
         var nextLine = this.cycles >= 321 && this.cycles <= 336;
 
-        if (this.mask.enableRender()) {
-            if (this.cycles == 257 && visibleLine && this.mask.showSprite()) {
+        if (visibleLine) {
+            //
+            // At dot 257 of each scanline
+            // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
+            // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
+            //
+            if (this.cycles == 257) {
                 this.spriteEval();
+                this.ppu.v = uint16((this.ppu.v & 0xfbe0) | (this.ppu.t & 0x041f));
             }
 
-            if ((visibleLine && (nextLine || visibleCycle))) {
+            if (nextLine || visibleCycle) {
                 var v = this.ppu.v;
                 switch (this.cycles % 8) {
                     case 0 -> this.tileMut();
@@ -252,17 +260,6 @@ public class Render implements CycleDriver {
             }
 
             //
-            // If rendering is enabled, at the end of vblank, shortly after the horizontal bits are copied from
-            // t to v at dot 257, the PPU will repeatedly copy the vertical bits from t to v from dots 280 to 304,
-            // completing the full initialization of v from t:
-            //
-            // v: GHIA.BC DEF..... <- t: GHIA.BC DEF.....
-            //
-            if (preLine && this.cycles >= 280 && this.cycles <= 304) {
-                this.ppu.v = uint16((this.ppu.v & 0x841f) | (this.ppu.t & 0x7be0));
-            }
-
-            //
             // If rendering is enabled, fine Y is incremented at dot 256 of each scanline, overflowing to coarse Y,and
             // finally adjusted to wrap among the nametables vertically.Bits 12-14 are fine Y. Bits 5-9 are coarse Y.
             // Bit 11 selects the vertical nametable.
@@ -270,14 +267,17 @@ public class Render implements CycleDriver {
             if (cycles == 256) {
                 this.incY();
             }
-            //
-            // At dot 257 of each scanline
-            // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
-            // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
-            //
-            if (this.cycles == 257) {
-                this.ppu.v = uint16((this.ppu.v & 0xfbe0) | (this.ppu.t & 0x041f));
-            }
+        }
+
+        //
+        // If rendering is enabled, at the end of vblank, shortly after the horizontal bits are copied from
+        // t to v at dot 257, the PPU will repeatedly copy the vertical bits from t to v from dots 280 to 304,
+        // completing the full initialization of v from t:
+        //
+        // v: GHIA.BC DEF..... <- t: GHIA.BC DEF.....
+        //
+        if (preLine && this.cycles >= 280 && this.cycles <= 304) {
+            this.ppu.v = uint16((this.ppu.v & 0x841f) | (this.ppu.t & 0x7be0));
         }
     }
 
