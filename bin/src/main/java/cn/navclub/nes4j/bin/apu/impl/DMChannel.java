@@ -57,11 +57,11 @@ public class DMChannel extends Channel<Sequencer> {
     private int counter;
 
     //IRQ whether enable
-    private boolean IRQEnable;
+    private boolean inhibit;
 
     @Getter
     @Setter
-    private boolean IRQInterrupt;
+    private boolean interrupt;
 
 
     public DMChannel(APU apu) {
@@ -78,7 +78,7 @@ public class DMChannel extends Channel<Sequencer> {
         //
         if (address == 0x4010) {
             this.loop = (b & 0x40) == 0x40;
-            this.IRQEnable = (b & 0x80) == 0x80;
+            this.inhibit = (b & 0x80) == 0x80;
             this.period = (FREQ_TABLE[b & 0x0f]);
         }
         //
@@ -233,8 +233,8 @@ public class DMChannel extends Channel<Sequencer> {
 
             if (this.currentLength == 0 && this.loop) {
                 this.reset();
-            } else if (this.currentLength == 0 && this.IRQEnable) {
-                this.IRQInterrupt = true;
+            } else if (this.currentLength == 0 && this.inhibit) {
+                this.interrupt = true;
             }
         }
     }

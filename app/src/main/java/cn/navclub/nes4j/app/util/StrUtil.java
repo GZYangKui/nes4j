@@ -13,7 +13,7 @@ public class StrUtil {
      */
     public static String getFileName(File file) {
         var name = file.getName();
-        var index = name.indexOf(".");
+        var index = name.lastIndexOf(".");
         if (index > 0) {
             name = name.substring(0, index);
         }

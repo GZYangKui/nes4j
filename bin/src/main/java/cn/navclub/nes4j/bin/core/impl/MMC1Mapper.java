@@ -59,7 +59,7 @@ public class MMC1Mapper extends Mapper {
             if ((++this.MMC1SR) == 5) {
                 System.arraycopy(
                         cartridge.getRgbrom(),
-                        this.MMC1SR * RPG_UNIT,
+                        this.MMC1_PB * RPG_UNIT,
                         this.rom,
                         address <= 0xbfff ? 0 : RPG_UNIT,
                         RPG_UNIT

@@ -132,7 +132,7 @@ public class APU implements Component {
             }
             this.dmc.setEnable(enable);
             //Writing to this register clears the DMC interrupt flag.
-            this.dmc.setIRQInterrupt(false);
+            this.dmc.setInterrupt(false);
         }
         //0x4000-0x4003 Square Channel1
         else if (address >= 0x4000 && address <= 0x4003) {
@@ -154,7 +154,21 @@ public class APU implements Component {
         else if (address >= 0x4010 && address <= 0x4013) {
             this.dmc.write(address, b);
         }
-        //Frame sequencer
+        //
+        // Both the 4 and 5-step modes operate at the same rate, but because the 5-step mode has an extra step,
+        // the effective update rate for individual units is slower in that mode (total update taking ~60Hz vs ~48Hz
+        // in NTSC). Writing to $4017 resets the frame counter and the quarter/half frame triggers happen simultaneously,
+        // but only on "
+        // odd" cycles (and only after the first "even" cycle after the write occurs) - thus, it happens either
+        // 2 or 3 cycles after the write (i.e. on the 2nd or 3rd cycle of the next instruction). After 2 or 3 clock
+        // cycles (depending on when the write is performed), the timer is reset. Writing to $4017 with bit 7 set ($80)
+        // will immediately clock all of its controlled units at the beginning of the 5-step sequence; with bit 7 clear,
+        // only the sequence is reset without clocking any of its units.
+        //
+        // Note that the frame counter is not exactly synchronized with the PPU NMI; it runs independently at a consistent
+        // rate which is approximately 240Hz (NTSC). Some games (e.g. Super Mario Bros., Zelda) manually synchronize
+        // it by writing $C0 or $FF to $4017 once per frame.
+        //
         else if (address == 0x4017) {
             this.frameCounter.write(address, b);
             this.tick();
@@ -194,7 +208,7 @@ public class APU implements Component {
         value |= (c3 > 0 ? 1 << 3 : 0);
         value |= (this.dmc.getCurrentLength() > 0 ? 1 << 4 : 0);
         value |= this.frameCounter.isInterrupt() ? 1 << 6 : 0;
-        value |= this.dmc.isIRQInterrupt() ? 1 << 7 : 0;
+        value |= this.dmc.isInterrupt() ? 1 << 7 : 0;
 
         //Reading this register clears the frame interrupt flag (but not the DMC interrupt flag).
         this.frameCounter.setInterrupt(false);
@@ -229,7 +243,7 @@ public class APU implements Component {
 
         // At any time, if the interrupt flag is set, the CPU's IRQ line is continuously asserted
         // until the interrupt flag is cleared. The processor will continue on from where it was stalled.
-        if (this.dmc.isIRQInterrupt()) {
+        if (this.dmc.isInterrupt()) {
             this.fireIRQ();
         }
     }
@@ -287,7 +301,7 @@ public class APU implements Component {
         // Length counters & sweep units
         // (Half frame)
         //
-        if (index % 2 == 0) {
+        if (index % 2 == 0 || index == -1) {
             this.pulse1.lengthTick();
             this.pulse2.lengthTick();
             this.noise.lengthTick();
