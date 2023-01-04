@@ -9,12 +9,13 @@ public class UXMapper extends Mapper {
         super(cartridge);
         System.arraycopy(
                 this.cartridge.getRgbrom(),
-                ((this.cartridge.getRgbSize() / RPG_UNIT) - 1) * RPG_UNIT,
+                getLastBank(),
                 this.rom,
                 RPG_UNIT,
                 RPG_UNIT
         );
     }
+
     /**
      * <pre>
      * CPU $8000-$BFFF: 16 KB switchable PRG ROM bank

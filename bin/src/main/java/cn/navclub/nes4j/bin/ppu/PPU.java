@@ -310,10 +310,6 @@ public class PPU implements Component {
     }
 
 
-    public int pixel() {
-        return this.render.pixel;
-    }
-
     /**
      * Output one frame video sign.
      */

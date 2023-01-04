@@ -76,26 +76,30 @@ public class NES {
     public void execute() {
         this.reset();
         while (!stop) {
-            var cycles = 0;
-            if (this.stall > 0) {
-                this.stall--;
-                cycles = 1;
-            } else {
-                //fire ppu or apu interrupt
-                cycles += this.cpu.interrupt(this.getInterrupt());
-                if (this.debugger != null && this.debugger.hack(this)) {
-                    //lock current program process
-                    LockSupport.park();
-                }
-                cycles += this.cpu.next();
-                this.instructions++;
-            }
-            for (int i = 0; i < cycles; i++) {
-                this.apu.tick();
-                this.ppu.tick();
-            }
-            this.cycles += cycles;
+            this.execute0();
         }
+    }
+
+    private synchronized void execute0() {
+        var cycles = 0;
+        if (this.stall > 0) {
+            this.stall--;
+            cycles = 1;
+        } else {
+            //fire ppu or apu interrupt
+            cycles += this.cpu.interrupt(this.getInterrupt());
+            if (this.debugger != null && this.debugger.hack(this)) {
+                //lock current program process
+                LockSupport.park();
+            }
+            cycles += this.cpu.next();
+            this.instructions++;
+        }
+        for (int i = 0; i < cycles; i++) {
+            this.apu.tick();
+            this.ppu.tick();
+        }
+        this.cycles += cycles;
     }
 
     public CPUInterrupt getInterrupt() {
@@ -128,7 +132,7 @@ public class NES {
     /**
      * Reset NES all core component
      */
-    public void reset() {
+    public synchronized void reset() {
         //Reset release debug lock
         this.release();
         this.cycles = 0;

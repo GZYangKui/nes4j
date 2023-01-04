@@ -98,8 +98,6 @@ public class Render implements CycleDriver {
     private final int[] background;
     //background palette
     private final byte[] backgroundPalette;
-    //Record current pixel on scanline
-    protected int pixel;
     //Background pixel shift
     private int shift;
 
@@ -302,6 +300,7 @@ public class Render implements CycleDriver {
         for (int i = 0; i < 8; i++) {
             var lower = (this.leftByte >> (7 - i)) & 0x01;
             var upper = (this.rightByte >> (7 - i)) & 0x01;
+
             var rgb = switch (lower | upper << 1) {
                 case 1 -> sysPalette[this.backgroundPalette[1]];
                 case 2 -> sysPalette[this.backgroundPalette[2]];
@@ -469,7 +468,6 @@ public class Render implements CycleDriver {
             }
         }
 
-        this.pixel = x;
         this.frame.update(x, y, pixel);
     }
 
@@ -477,9 +475,7 @@ public class Render implements CycleDriver {
         if (!this.mask.showBackground() || !this.mask.showLeftMostBackground(x)) {
             return 0;
         }
-        var pixel = this.background[this.ppu.x + this.shift];
-        this.shift++;
-        return pixel;
+        return this.background[this.ppu.x + this.shift++];
     }
 
     /**

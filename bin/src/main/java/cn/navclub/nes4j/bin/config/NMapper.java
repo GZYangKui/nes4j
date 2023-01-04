@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.config;
 
 import cn.navclub.nes4j.bin.core.Mapper;
+import cn.navclub.nes4j.bin.core.impl.MMC1Mapper;
 import cn.navclub.nes4j.bin.core.impl.NRMapper;
 import cn.navclub.nes4j.bin.core.impl.UXMapper;
 import cn.navclub.nes4j.bin.io.Cartridge;
@@ -11,7 +12,7 @@ import cn.navclub.nes4j.bin.io.Cartridge;
  */
 public enum NMapper {
     NROM(NRMapper.class),
-    MMC1,
+    MMC1(MMC1Mapper.class),
     UX_ROM(UXMapper.class),
     MAPPER_003,
     MMC3,

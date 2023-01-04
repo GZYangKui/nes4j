@@ -46,13 +46,15 @@ public abstract class Mapper {
      * @param b       Write target address value
      * @param address Target address
      */
-    public abstract void writeRom(int address, byte b);
+    public void writeRom(int address, byte b) {
+
+    }
 
     /**
      * Read from ch-rom
      *
-     * @param address
-     * @return
+     * @param address Target memory address
+     * @return Target memory address value
      */
     public byte readCom(int address) {
         return this.com[address];
@@ -62,6 +64,7 @@ public abstract class Mapper {
      * Write data to ch-rom address
      *
      * @param address Target address
+     * @param b       Write target address value
      */
     public void writeCom(int address, byte b) {
         this.com[address] = b;
@@ -74,5 +77,16 @@ public abstract class Mapper {
      */
     public NMapper type() {
         return this.cartridge.getMapper();
+    }
+
+    protected int getLastBank() {
+        return ((this.cartridge.getRgbSize() / RPG_UNIT) - 1) * RPG_UNIT;
+    }
+
+    /**
+     * NES instance reset call this function
+     */
+    public void reset() {
+
     }
 }
