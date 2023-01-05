@@ -5,6 +5,7 @@ import cn.navclub.nes4j.app.INes;
 import cn.navclub.nes4j.app.audio.JavaXAudio;
 import cn.navclub.nes4j.app.concurrent.TaskService;
 import cn.navclub.nes4j.app.dialog.DHandle;
+import cn.navclub.nes4j.app.event.FPSTracer;
 import cn.navclub.nes4j.app.event.GameEventWrap;
 import cn.navclub.nes4j.app.model.KeyMapper;
 import cn.navclub.nes4j.app.util.StrUtil;
@@ -22,6 +23,8 @@ import javafx.scene.control.*;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 import java.io.File;
@@ -39,11 +42,13 @@ public class GameWorld extends Stage {
     @SuppressWarnings("all")
     private final int scale;
 
+    private final FPSTracer tracer;
     private final IntBuffer intBuffer;
     private final GraphicsContext ctx;
     private final WritableImage image;
     private final BlockingQueue<GameEventWrap> eventQueue;
 
+    private int fps;
     private NES instance;
     private Debugger debugger;
     private TaskService<Void> service;
@@ -55,6 +60,8 @@ public class GameWorld extends Stage {
 
         this.ctx = canvas.getGraphicsContext2D();
         this.eventQueue = new LinkedBlockingDeque<>();
+
+        this.tracer = new FPSTracer(it -> this.fps = it);
 
         this.intBuffer = IntBuffer.allocate(this.scale * this.scale);
         this.image = new WritableImage(this.scale * Frame.width, this.scale * Frame.height);
@@ -100,7 +107,6 @@ public class GameWorld extends Stage {
 
     public void execute(File file) {
         this.dispose(null);
-
         this.service = TaskService.execute(new Task<>() {
             @Override
             protected Void call() {
@@ -118,6 +124,7 @@ public class GameWorld extends Stage {
         service.setOnFailed(event -> this.dispose(event.getSource().getException()));
 
         this.show();
+        this.tracer.start();
         this.setTitle(StrUtil.getFileName(file));
     }
 
@@ -133,6 +140,8 @@ public class GameWorld extends Stage {
 
         if (t != null)
             UIUtil.showError(t, INes.localeValue("nes4j.game.error"), null);
+
+        this.tracer.stop();
 
         this.ctx.clearRect(0, 0, this.canvas.getWidth(), this.canvas.getHeight());
     }
@@ -184,11 +193,22 @@ public class GameWorld extends Stage {
         if (event != null) {
             joyPad.updateBtnStatus(event.btn(), event.event() == KeyEvent.KEY_PRESSED);
         }
+
         Platform.runLater(() -> {
+            this.tracer.increment();
+
             this.setWidth(this.image.getWidth());
             this.setHeight(this.image.getHeight() + this.menuBar.getHeight());
 
+            //Clear whole canvas
+            this.ctx.clearRect(0, 0, this.canvas.getWidth(), this.canvas.getHeight());
+            //Draw image
             this.ctx.drawImage(image, 0, 0);
+
+            //Draw fps
+            this.ctx.setStroke(Color.RED);
+            this.ctx.setFont(Font.font(25));
+            this.ctx.strokeText(Integer.toString(this.fps), 10, 25);
         });
     }
 }

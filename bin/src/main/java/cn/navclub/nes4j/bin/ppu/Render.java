@@ -459,6 +459,7 @@ public class Render implements CycleDriver {
         if (this.mask.showBackground() && this.mask.showLeftMostBackground(x)) {
             pixel = this.background[this.ppu.x + this.shift];
         }
+
         this.shift = this.shift + 1;
 
         //Check sprite pixel if cover background pixel
@@ -466,12 +467,13 @@ public class Render implements CycleDriver {
             var value = this.foreground[x];
             var color = value & 0xffffff;
             var index = (value >> 24) & 0x3f;
-            var cover = (((value >> 30 & 0x01) == 0) && color != 0);
-            if (cover) {
-                if (pixel > 0 && index == 0 && x < 255) {
+            if (color != 0) {
+                if (pixel < 0 && index == 0 && x < 255) {
                     this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
                 }
-                pixel = color;
+                if ((value >> 30 & 0x01) == 0) {
+                    pixel = color;
+                }
             }
         }
 
@@ -545,6 +547,11 @@ public class Render implements CycleDriver {
                         default -> OPAQUE;
                     };
 
+                    var index = x + (hf ? (7 - j) : j);
+                    if (index >= this.foreground.length) {
+                        continue;
+                    }
+
                     var b = 0;
 
                     //Red
@@ -558,10 +565,7 @@ public class Render implements CycleDriver {
                     //Prior
                     b |= ((attr & 0x20) << 25);
 
-                    var index = x + (hf ? (7 - j) : j);
-                    if (index < this.foreground.length) {
-                        this.foreground[index] = b;
-                    }
+                    this.foreground[index] = b;
                 }
             }
             count++;
