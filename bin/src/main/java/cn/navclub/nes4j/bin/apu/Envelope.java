@@ -35,35 +35,56 @@ public class Envelope implements CycleDriver {
     private int constant;
     private boolean loop;
     private boolean cflag;
+    private boolean startFlag;
 
 
     public Envelope() {
         this.divider = new Divider((n) -> {
-            //
-            // When the divider outputs a clock, one of two actions occurs: if loop is set and
-            // counter is zero, it is set to 15, otherwise if counter is non-zero, it is
-            //decremented.
-            //
-            if (this.loop && this.counter == 0)
-                this.counter = 15;
-            else if (this.counter > 0) {
+            // When the divider is clocked while at 0, it is loaded with V and clocks the decay level
+            // counter. Then one of two actions occurs: If the counter is non-zero, it is decremented,
+            // otherwise if the loop flag is set, the decay level counter is loaded with 15.
+            if (this.counter > 0)
                 this.counter--;
+            else if (this.loop) {
+                this.counter = 15;
             }
-
         });
     }
 
     public void update(byte b) {
+        this.startFlag = true;
         this.constant = b & 0x0f;
         this.loop = (b & 0x20) == 0x20;
         this.cflag = (b & 0x10) == 0x10;
         this.divider.setPeriod(constant + 1);
     }
 
-
+    /**
+     * <p>
+     * When clocked by the frame counter, one of two actions occurs: if the start flag is clear,
+     * the divider is clocked, otherwise the start flag is cleared, the decay level counter is
+     * loaded with 15, and the divider's period is immediately reloaded.
+     * </p>
+     * <p>
+     * The envelope unit's volume output depends on the constant volume flag: if set, the envelope
+     * parameter directly sets the volume, otherwise the decay level is the current volume. The
+     * constant volume flag has no effect besides selecting the volume source; the decay level
+     * will still be updated when constant volume is selected.
+     * </p>
+     * <p>
+     * Each of the three envelope units' output is fed through additional gates at the sweep unit
+     * (pulse only), waveform generator (sequencer or LFSR), and length counter.
+     * </p>
+     */
     @Override
     public void tick() {
-        this.divider.tick();
+        if (!this.startFlag) {
+            this.divider.tick();
+        } else {
+            this.counter = 15;
+            this.divider.reset();
+            this.startFlag = false;
+        }
     }
 
     /**

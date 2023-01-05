@@ -46,6 +46,7 @@ public class FrameCounter implements Component {
     //2*CPU cycle=APU cycle
     private int cycle;
     private int index;
+    private int delay;
     private final APU apu;
     private final int[][] sequencers;
     private final Consumer<Integer> consumer;
@@ -103,11 +104,19 @@ public class FrameCounter implements Component {
         if (this.inhibit) {
             this.interrupt = false;
         }
+        //
+        // If the write occurs during an APU cycle, the effects occur 3 CPU cycles after the $4017 write cycle,
+        // and if the write occurs between APU cycles, the effects occurs 4 CPU cycles after the write cycle.
+        //
+        this.delay = (this.cycle % 2 == 0) ? 3 : 4;
     }
 
     @Override
     public void tick() {
         this.cycle++;
+        if (delay > 0 && (--this.delay) == 0) {
+            this.cycle = 0;
+        }
         var value = this.sequencers[this.mode][this.index - 1];
         var output = this.cycle > value;
         if (output) {

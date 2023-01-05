@@ -76,7 +76,9 @@ public class NoiseChannel extends Channel<NoiseSequencer> {
 
         if (address == 0x400f) {
             this.envelope.reset();
-            this.lengthCounter.setCounter(b >>> 3);
+            if (this.enable) {
+                this.lengthCounter.setCounter(b >>> 3);
+            }
         }
     }
 

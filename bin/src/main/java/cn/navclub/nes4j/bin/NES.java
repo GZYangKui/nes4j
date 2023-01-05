@@ -18,6 +18,8 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
 
@@ -35,7 +37,7 @@ public class NES {
     private final Cartridge cartridge;
     private final EventBus eventBus;
     private final TCallback<Frame, JoyPad, JoyPad> gameLoopCallback;
-    //CPU延迟时钟
+    //cpu stall cycle
     private int stall;
     @Setter
     private int speed;
@@ -44,10 +46,8 @@ public class NES {
     private long instructions;
     private Debugger debugger;
     private volatile boolean stop;
-    private CPUInterrupt interrupt;
     @Getter
     private final Class<? extends Player> player;
-
 
     private NES(NESBuilder builder) {
         if (builder.buffer != null) {
@@ -55,7 +55,7 @@ public class NES {
         } else {
             this.cartridge = new Cartridge(builder.file);
         }
-        this.speed = 8;
+        this.speed = 6;
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
@@ -86,8 +86,6 @@ public class NES {
             this.stall--;
             cycles = 1;
         } else {
-            //fire ppu or apu interrupt
-            cycles += this.cpu.interrupt(this.getInterrupt());
             if (this.debugger != null && this.debugger.hack(this)) {
                 //lock current program process
                 LockSupport.park();
@@ -100,14 +98,6 @@ public class NES {
             this.ppu.tick();
         }
         this.cycles += cycles;
-    }
-
-    public CPUInterrupt getInterrupt() {
-        var temp = interrupt;
-        if (temp != null) {
-            this.interrupt = null;
-        }
-        return temp;
     }
 
     public void setDebugger(Debugger debugger) {
@@ -147,10 +137,7 @@ public class NES {
      * @param interrupt interrupt type
      */
     public void interrupt(CPUInterrupt interrupt) {
-        if (this.interrupt == CPUInterrupt.NMI) {
-            return;
-        }
-        this.interrupt = interrupt;
+        this.cpu.interrupt(interrupt);
     }
 
     public void videoOutput(Frame frame) {

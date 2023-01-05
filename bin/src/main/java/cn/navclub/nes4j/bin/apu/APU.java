@@ -154,21 +154,7 @@ public class APU implements Component {
         else if (address >= 0x4010 && address <= 0x4013) {
             this.dmc.write(address, b);
         }
-        //
-        // Both the 4 and 5-step modes operate at the same rate, but because the 5-step mode has an extra step,
-        // the effective update rate for individual units is slower in that mode (total update taking ~60Hz vs ~48Hz
-        // in NTSC). Writing to $4017 resets the frame counter and the quarter/half frame triggers happen simultaneously,
-        // but only on "
-        // odd" cycles (and only after the first "even" cycle after the write occurs) - thus, it happens either
-        // 2 or 3 cycles after the write (i.e. on the 2nd or 3rd cycle of the next instruction). After 2 or 3 clock
-        // cycles (depending on when the write is performed), the timer is reset. Writing to $4017 with bit 7 set ($80)
-        // will immediately clock all of its controlled units at the beginning of the 5-step sequence; with bit 7 clear,
-        // only the sequence is reset without clocking any of its units.
-        //
-        // Note that the frame counter is not exactly synchronized with the PPU NMI; it runs independently at a consistent
-        // rate which is approximately 240Hz (NTSC). Some games (e.g. Super Mario Bros., Zelda) manually synchronize
-        // it by writing $C0 or $FF to $4017 once per frame.
-        //
+        //Update frame counter
         else if (address == 0x4017) {
             this.frameCounter.write(address, b);
             this.tick();
@@ -227,12 +213,10 @@ public class APU implements Component {
             this.pulse1.tick();
             this.pulse2.tick();
             this.noise.tick();
-            this.frameCounter.tick();
         }
 
-
         this.triangle.tick();
-
+        this.frameCounter.tick();
 
         if ((this.cycle / 2) % 40 == 0) {
             var output = this.lookupSample();

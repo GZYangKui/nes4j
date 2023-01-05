@@ -46,6 +46,6 @@ public class LinearCounter implements CycleDriver {
                 this.counter--;
             }
         }
-        this.halt = this.control;
+        this.halt = (this.halt && this.control);
     }
 }

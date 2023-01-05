@@ -307,6 +307,7 @@ public class Render implements CycleDriver {
                 case 3 -> sysPalette[this.backgroundPalette[3]];
                 default -> sysPalette[ppu.palette[0]];
             };
+            //Negative transparent otherwise opaque
             var value = (k == 0 ? 0x80000000 : 0);
             value |= (rgb[0] << 16 | rgb[1] << 8 | rgb[2]);
             this.background[i + 8] = value;
@@ -458,9 +459,8 @@ public class Render implements CycleDriver {
         var pixel = 0;
         if (this.mask.showBackground() && this.mask.showLeftMostBackground(x)) {
             pixel = this.background[this.ppu.x + this.shift];
+            this.shift = this.shift + 1;
         }
-
-        this.shift = this.shift + 1;
 
         //Check sprite pixel if cover background pixel
         if (this.mask.showSprite() && this.mask.showLeftMostSprite(x)) {
@@ -468,7 +468,7 @@ public class Render implements CycleDriver {
             var color = value & 0xffffff;
             var index = (value >> 24) & 0x3f;
             if (color != 0) {
-                if (pixel < 0 && index == 0 && x < 255) {
+                if (pixel > 0 && index == 0 && x < 255) {
                     this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
                 }
                 if ((value >> 30 & 0x01) == 0) {

@@ -67,7 +67,14 @@ public abstract class Channel<T extends Sequencer> implements Component {
         }
     }
 
+    /**
+     * When the enabled bit is cleared (via $4015), the length counter is forced to 0 and cannot be changed until
+     * enabled is set again (the length counter's previous value is lost).
+     */
     public void lengthTick() {
+        if (!this.enable) {
+            return;
+        }
         this.lengthCounter.tick();
     }
 

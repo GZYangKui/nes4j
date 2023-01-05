@@ -33,12 +33,18 @@ public class SweepUnit implements CycleDriver {
 
     public SweepUnit(PulseChannel channel) {
         this.channel = channel;
-
+        //
         // if the sweep unit is enabled and the
         // shift count is greater than 0, when the divider outputs a clock, the channel's
         // period in the third and fourth registers are updated with the result of the
         // shifter.
+        //
         this.divider = new Divider((n) -> {
+            //
+            // When the channel's period is less than 8 or the result of the shifter is
+            // greater than $7FF, the channel's DAC receives 0 and the sweep unit doesn't
+            // change the channel's period.Otherwise
+            //
             if (!this.silence && this.enable && this.shift > 0) {
                 this.channel.timer.setPeriod(result);
             }
@@ -99,15 +105,9 @@ public class SweepUnit implements CycleDriver {
             this.divider.reset();
         }
 
-        var timer = this.channel.timer;
+        var period = this.channel.timer.getPeriod();
+        this.result = this.calculate(period);
 
-        this.result = this.calculate(timer.getPeriod());
-
-        //
-        // When the channel's period is less than 8 or the result of the shifter is
-        // greater than $7FF, the channel's DAC receives 0 and the sweep unit doesn't
-        // change the channel's period.Otherwise
-        //
-        this.silence = (timer.period < 8 || result > 0x7ff);
+        this.silence = period < 8 || result > 0x7ff;
     }
 }
