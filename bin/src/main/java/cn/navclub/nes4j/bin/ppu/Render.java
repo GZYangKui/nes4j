@@ -300,14 +300,15 @@ public class Render implements CycleDriver {
         for (int i = 0; i < 8; i++) {
             var lower = (this.leftByte >> (7 - i)) & 0x01;
             var upper = (this.rightByte >> (7 - i)) & 0x01;
-
-            var rgb = switch (lower | upper << 1) {
+            var k = (lower | upper << 1);
+            var rgb = switch (k) {
                 case 1 -> sysPalette[this.backgroundPalette[1]];
                 case 2 -> sysPalette[this.backgroundPalette[2]];
                 case 3 -> sysPalette[this.backgroundPalette[3]];
                 default -> sysPalette[ppu.palette[0]];
             };
-            var value = (rgb[0] << 16 | rgb[1] << 8 | rgb[2]);
+            var value = (k == 0 ? 0x80000000 : 0);
+            value |= (rgb[0] << 16 | rgb[1] << 8 | rgb[2]);
             this.background[i + 8] = value;
         }
         this.shift = 0;
@@ -452,30 +453,31 @@ public class Render implements CycleDriver {
     private void renderPixel() {
         var x = this.cycles - 1;
         var y = this.scanline;
-        var pixel = this.backgroundPixel(x);
-        if (this.mask.showSprite()) {
+
+        //Fetch background pixel
+        var pixel = 0;
+        if (this.mask.showBackground() && this.mask.showLeftMostBackground(x)) {
+            pixel = this.background[this.ppu.x + this.shift];
+        }
+        this.shift = this.shift + 1;
+
+        //Check sprite pixel if cover background pixel
+        if (this.mask.showSprite() && this.mask.showLeftMostSprite(x)) {
             var value = this.foreground[x];
             var color = value & 0xffffff;
-            if (color != 0) {
-                var index = (value >> 24) & 0x3f;
-                var cover = (value >> 30 & 0x01) == 0;
-                if (this.mask.showLeftMostSprite(x) && (cover || !this.mask.showBackground())) {
-                    pixel = color;
-                    if (index == 0 && x < 255 && this.mask.showBackground()) {
-                        this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
-                    }
+            var index = (value >> 24) & 0x3f;
+            var cover = (((value >> 30 & 0x01) == 0) && color != 0);
+            if (cover) {
+                if (pixel > 0 && index == 0 && x < 255) {
+                    this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
                 }
+                pixel = color;
             }
         }
 
-        this.frame.update(x, y, pixel);
-    }
+        pixel |= (0xff << 24);
 
-    private int backgroundPixel(int x) {
-        if (!this.mask.showBackground() || !this.mask.showLeftMostBackground(x)) {
-            return 0;
-        }
-        return this.background[this.ppu.x + this.shift++];
+        this.frame.update(x, y, pixel);
     }
 
     /**

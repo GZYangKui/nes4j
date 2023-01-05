@@ -80,7 +80,7 @@ public class NES {
         }
     }
 
-    private synchronized void execute0() {
+    private void execute0() {
         var cycles = 0;
         if (this.stall > 0) {
             this.stall--;
@@ -132,7 +132,7 @@ public class NES {
     /**
      * Reset NES all core component
      */
-    public synchronized void reset() {
+    public void reset() {
         //Reset release debug lock
         this.release();
         this.cycles = 0;

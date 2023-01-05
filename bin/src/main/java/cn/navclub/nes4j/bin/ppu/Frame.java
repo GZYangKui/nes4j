@@ -16,7 +16,7 @@ public class Frame {
     }
 
     public final int getPixel(int pos) {
-        return this.pixels[pos] | (0xff << 24);
+        return this.pixels[pos];
     }
 
     public void update(int x, int y, int pixel) {
