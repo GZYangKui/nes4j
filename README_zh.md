@@ -1,5 +1,8 @@
 # nes4j
 
+![Build status](https://github.com/GZYangKui/nes4j/actions/workflows/maven.yml/badge.svg)
+<br/>
+
 ## 项目介绍
 
 **nes4j**是使用java语言实现任天堂红白机模拟器,主要包括[CPU](https://www.nesdev.org/wiki/CPU)、

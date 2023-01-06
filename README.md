@@ -1,4 +1,7 @@
-# nes4j
+# nes4j 
+
+![Build status](https://github.com/GZYangKui/nes4j/actions/workflows/maven.yml/badge.svg)
+<br/>
 
 ## Project introduction
 
