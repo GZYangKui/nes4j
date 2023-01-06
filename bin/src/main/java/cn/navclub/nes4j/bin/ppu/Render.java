@@ -100,6 +100,8 @@ public class Render implements CycleDriver {
     private final byte[] backgroundPalette;
     //Background pixel shift
     private int shift;
+    //Record product frame counter
+    private long frames;
 
     public Render(PPU ppu) {
         this.ppu = ppu;
@@ -139,9 +141,15 @@ public class Render implements CycleDriver {
         }
 
         if (this.scanline == 241 && this.cycles == 1) {
+            this.frames++;
             this.ppu.fireNMI();
-            //A frame render finish immediate output video
-            this.ppu.context.videoOutput(this.frame);
+            //
+            // A frame render finish if render enable immediate output video.
+            // If render was disable output frame will product a white screen.
+            //
+            if (this.mask.enableRender()) {
+                this.ppu.context.videoOutput(this.frame);
+            }
         }
 
         //

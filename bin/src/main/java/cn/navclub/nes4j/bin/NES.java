@@ -60,7 +60,7 @@ public class NES {
             this.cartridge = new Cartridge(builder.file);
         }
         this.speed = 6;
-        this.mute = true;
+        this.mute = false;
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
