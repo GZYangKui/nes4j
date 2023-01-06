@@ -41,6 +41,10 @@ public class NES {
     private int stall;
     @Setter
     private int speed;
+    //APU mute
+    @Setter
+    @Getter
+    private boolean mute;
     private long cycles;
     @Getter
     private long instructions;
@@ -56,6 +60,7 @@ public class NES {
             this.cartridge = new Cartridge(builder.file);
         }
         this.speed = 6;
+        this.mute = true;
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
