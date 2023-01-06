@@ -479,7 +479,8 @@ public class Render implements CycleDriver {
                 if (pixel > 0 && index == 0 && x < 255) {
                     this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
                 }
-                if ((value >> 30 & 0x01) == 0) {
+                //If sprite priority or background is transparent
+                if ((value >> 30 & 0x01) == 0 || pixel < 0) {
                     pixel = color;
                 }
             }
