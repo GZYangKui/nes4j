@@ -338,9 +338,8 @@ public class CPU {
     }
 
     public int interrupt(CPUInterrupt interrupt) {
-        if (interrupt == null
-                //When set, all interrupts except the NMI are inhibited.
-                || (this.status.contain(ICPUStatus.INTERRUPT_DISABLE) && interrupt != CPUInterrupt.NMI)) {
+        //When ICPUStatus#INTERRUPT_DISABLE flag was set, all interrupts except the NMI are inhibited.
+        if (this.status.contain(ICPUStatus.INTERRUPT_DISABLE) && interrupt != CPUInterrupt.NMI) {
             return 0;
         }
 

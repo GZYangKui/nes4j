@@ -261,9 +261,6 @@ public class PPU implements Component {
      * @param b Update byte value
      */
     public void writeCtr(byte b) {
-        if (this.cycles < 30_000) {
-            return;
-        }
         var bit = this.ctr.getBits();
         var firmNMI = ((bit & 0x80) == 0) && ((b & 0x80) == 0x80);
         if (firmNMI && this.status.contain(PStatus.V_BLANK_OCCUR)) {
