@@ -573,8 +573,11 @@ public class Render implements CycleDriver {
                     b |= ((i & 0x3f) << 24);
                     //Prior
                     b |= ((attr & 0x20) << 25);
-
-                    this.foreground[index] = b;
+                    var c = 1 << 30;
+                    var value = this.foreground[index];
+                    if (value == 0 || (b & c) < (value & c)) {
+                        this.foreground[index] = b;
+                    }
                 }
             }
             count++;
