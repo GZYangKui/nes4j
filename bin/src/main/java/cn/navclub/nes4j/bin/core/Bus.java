@@ -129,10 +129,10 @@ public class Bus implements Component {
         else if (address == 0x2001) {
             this.ppu.MaskWrite(b);
         }
-        //https://www.nesdev.org/wiki/PPU_programmer_reference#Status_($2002)_%3C_read
-        else if (address == 0x2002) {
-            throw new RuntimeException("Attempt write only read ppu register.");
-        }
+//        //https://www.nesdev.org/wiki/PPU_programmer_reference#Status_($2002)_%3C_read
+//        else if (address == 0x2002) {
+//            throw new RuntimeException("Attempt write only read ppu register.");
+//        }
 
         //https://www.nesdev.org/wiki/PPU_programmer_reference#OAM_address_($2003)_%3E_write
         else if (address == 0x2003) {

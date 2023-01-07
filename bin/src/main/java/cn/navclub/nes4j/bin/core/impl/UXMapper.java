@@ -7,12 +7,24 @@ public class UXMapper extends Mapper {
 
     public UXMapper(Cartridge cartridge) {
         super(cartridge);
+
+        //Fix last bank to 0xc000
         System.arraycopy(
                 this.cartridge.getRgbrom(),
                 getLastBank(),
                 this.rom,
-                RPG_UNIT,
-                RPG_UNIT
+                RPG_BANK_SIZE,
+                RPG_BANK_SIZE
+        );
+
+        //Default copy all ch-rom data to cached.
+        var ch = this.cartridge.getChrom();
+        System.arraycopy(
+                ch,
+                0,
+                this.com,
+                0,
+                Math.min(this.com.length, ch.length)
         );
     }
 
@@ -32,7 +44,7 @@ public class UXMapper extends Mapper {
     @Override
     public void writeRom(int address, byte b) {
         var bank = b & 0x0f;
-        var srcPos = bank * RPG_UNIT;
-        System.arraycopy(this.cartridge.getRgbrom(), srcPos, this.rom, 0, RPG_UNIT);
+        var srcPos = bank * RPG_BANK_SIZE;
+        System.arraycopy(this.cartridge.getRgbrom(), srcPos, this.rom, 0, RPG_BANK_SIZE);
     }
 }

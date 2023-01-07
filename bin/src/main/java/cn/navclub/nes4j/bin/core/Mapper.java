@@ -7,7 +7,8 @@ import cn.navclub.nes4j.bin.io.Cartridge;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public abstract class Mapper {
-    protected static final int RPG_UNIT = 16 * 1024;
+    protected static final int CHR_BANK_SIZE = 8 * 1024;
+    protected static final int RPG_BANK_SIZE = 16 * 1024;
 
     protected final byte[] rom;
     protected final byte[] com;
@@ -17,17 +18,7 @@ public abstract class Mapper {
     public Mapper(Cartridge cartridge) {
         this.cartridge = cartridge;
         this.com = new byte[8 * 1024];
-        this.rom = new byte[RPG_UNIT * 2];
-        var ch = this.cartridge.getChrom();
-
-        //Default copy all ch-rom data to cached.
-        System.arraycopy(
-                ch,
-                0,
-                this.com,
-                0,
-                Math.min(this.com.length, ch.length)
-        );
+        this.rom = new byte[RPG_BANK_SIZE * 2];
     }
 
     /**
@@ -80,7 +71,7 @@ public abstract class Mapper {
     }
 
     protected int getLastBank() {
-        return ((this.cartridge.getRgbSize() / RPG_UNIT) - 1) * RPG_UNIT;
+        return ((this.cartridge.getRgbSize() / RPG_BANK_SIZE) - 1) * RPG_BANK_SIZE;
     }
 
     /**
