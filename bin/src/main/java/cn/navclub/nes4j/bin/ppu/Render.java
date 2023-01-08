@@ -475,14 +475,12 @@ public class Render implements CycleDriver {
         if (value != -1 && this.mask.showSprite() && this.mask.showLeftMostSprite(x)) {
             var color = value & 0xffffff;
             var index = (value >> 24) & 0x3f;
-            if (color != 0) {
-                if (pixel > 0 && index == 0 && x < 255) {
-                    this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
-                }
-                //If sprite priority or background is transparent
-                if ((value >> 30 & 0x01) == 0 || pixel < 0) {
-                    pixel = color;
-                }
+            if (pixel > 0 && index == 0 && x < 255) {
+                this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
+            }
+            //If sprite priority or background is transparent
+            if ((value >> 30 & 0x01) == 0 || pixel < 0) {
+                pixel = color;
             }
         }
 
@@ -548,6 +546,13 @@ public class Render implements CycleDriver {
                 for (int j = 0; j < 8; j++) {
                     var lower = (l >> (7 - j)) & 0x01;
                     var upper = (r >> (7 - j)) & 0x01;
+                    var k = (lower | upper << 1);
+
+                    var index = x + (hf ? (7 - j) : j);
+
+                    if (k == 0 || index >= this.foreground.length) {
+                        continue;
+                    }
 
                     var arr = switch (lower | upper << 1) {
                         case 1 -> this.sysPalette[this.spritePalette[1]];
@@ -556,10 +561,6 @@ public class Render implements CycleDriver {
                         default -> OPAQUE;
                     };
 
-                    var index = x + (hf ? (7 - j) : j);
-                    if (index >= this.foreground.length) {
-                        continue;
-                    }
 
                     var b = 0;
 
