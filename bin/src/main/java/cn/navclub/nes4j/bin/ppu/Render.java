@@ -470,9 +470,9 @@ public class Render implements CycleDriver {
             this.shift = this.shift + 1;
         }
 
+        var value = this.foreground[x];
         //Check sprite pixel if cover background pixel
-        if (this.mask.showSprite() && this.mask.showLeftMostSprite(x)) {
-            var value = this.foreground[x];
+        if (value != -1 && this.mask.showSprite() && this.mask.showLeftMostSprite(x)) {
             var color = value & 0xffffff;
             var index = (value >> 24) & 0x3f;
             if (color != 0) {
@@ -495,7 +495,7 @@ public class Render implements CycleDriver {
      * <a href="https://www.nesdev.org/wiki/PPU_sprite_evaluation">Sprite Evaluation</a>
      */
     private void spriteEval() {
-        Arrays.fill(this.foreground, 0, this.foreground.length, 0);
+        Arrays.fill(this.foreground, 0, this.foreground.length, -1);
 
         var count = 0;
         var size = this.ppu.ctr.spriteSize();
@@ -573,9 +573,9 @@ public class Render implements CycleDriver {
                     b |= ((i & 0x3f) << 24);
                     //Prior
                     b |= ((attr & 0x20) << 25);
-                    var c = 1 << 30;
+
                     var value = this.foreground[index];
-                    if (value == 0 || (b & c) < (value & c)) {
+                    if (value == -1) {
                         this.foreground[index] = b;
                     }
                 }
