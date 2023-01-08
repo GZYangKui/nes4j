@@ -31,13 +31,16 @@ import cn.navclub.nes4j.bin.io.Cartridge;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class CNMapper extends Mapper {
+    private final int shifter;
+
     public CNMapper(Cartridge cartridge) {
         super(cartridge);
+        this.shifter = (cartridge.getChSize() - CHR_BANK_SIZE) / CHR_BANK_SIZE;
         System.arraycopy(cartridge.getRgbrom(), 0, this.rom, 0, cartridge.getRgbSize());
     }
 
     @Override
     public void writeRom(int address, byte b) {
-        System.arraycopy(cartridge.getChrom(), (b & 0x03) * CHR_BANK_SIZE, this.com, 0, CHR_BANK_SIZE);
+        System.arraycopy(cartridge.getChrom(), (b & this.shifter) * CHR_BANK_SIZE, this.com, 0, CHR_BANK_SIZE);
     }
 }
