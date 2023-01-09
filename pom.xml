@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <project xmlns="http://maven.apache.org/POM/4.0.0">
-    <groupId>cn.navclub.nes4j</groupId>
+    <groupId>cn.navclub</groupId>
     <artifactId>nes4j</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
