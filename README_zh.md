@@ -51,6 +51,131 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 + [CNROM](https://www.nesdev.org/wiki/INES_Mapper_003)
 
 > 更多卡带Mapper正在实现中,敬请期待。
+>
+>
+
+## 自定义音视频输出
+
+> 如果你觉得当前游戏输出程序无法满足你的需求,你可以给我们提PR,我们会尽可能满足你的需求,另外一种方法就是你自己引入nes4j-bin模块自己实现
+> 游戏视屏和音频输出
+
+### 首先引入依赖
+
++ Apache Maven
+
+```xml
+
+<dependency>
+    <groupId>cn.navclub</groupId>
+    <artifactId>nes4j-bin</artifactId>
+    <version>1.0.1</version>
+</dependency>
+```
+
++ Gradle(groovy)
+
+```groovy
+implementation group: 'cn.navclub', name: 'nes4j-bin', version: '1.0.1'
+```
+
+or
+
+```groovy
+implementation 'cn.navclub:nes4j-bin:1.0.1'
+```
+
++ Gradle(Kotlin)
+
+```kotlin
+implementation("cn.navclub:nes4j-bin:1.0.1")
+```
+
+### 创建NES实例并初始化
+
++ GameWorld.java
+
+```java
+
+import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.io.JoyPad;
+import cn.navclub.nes4j.bin.ppu.Frame;
+
+public class GameWorld {
+    public NES create() {
+        NES instance = NES.NESBuilder
+                .newBuilder()
+                //nes游戏rom
+                .file(file)
+                //音频输出程序 
+                .player(JavaXAudio.class)
+                //Game loop 回调
+                .gameLoopCallback(GameWorld.this::gameLoopCallback)
+                .build();
+        try {
+            //一旦当前方法被调用将会阻塞当前线程直到游戏结束或者异常发生
+            instance.execute();
+        } catch (Exception e) {
+            //todo 当异常发生当前游戏立即停止
+        }
+    }
+
+    //当PPU输出一帧视屏时回调该函数
+    private void gameLoopCallback(Frame frame, JoyPad joyPad, JoyPad joyPad1) {
+
+    }
+}
+
+```
+
++ JavaXAudio.java
+
+```java
+package cn.navclub.nes4j.app.audio;
+
+import cn.navclub.nes4j.bin.apu.Player;
+
+import javax.sound.sampled.*;
+
+import static cn.navclub.nes4j.bin.util.BinUtil.int8;
+
+@SuppressWarnings("all")
+public class JavaXAudio implements Player {
+    private final byte[] sample;
+    private final Line.Info info;
+    private final AudioFormat format;
+    private final SourceDataLine line;
+
+    private int index;
+
+
+    public JavaXAudio() throws LineUnavailableException {
+        this.sample = new byte[735 * 2];
+        this.format = new AudioFormat(44100, 8, 1, false, false);
+        this.info = new DataLine.Info(SourceDataLine.class, format);
+        this.line = (SourceDataLine) AudioSystem.getLine(info);
+
+        line.open(format);
+        line.start();
+    }
+
+    //当APU生成一个音频样本时回调该函数
+    @Override
+    public void output(float sample) {
+        var value = int8(Math.round(sample * 0xff));
+        this.sample[this.index++] = value;
+        if (this.index == this.sample.length) {
+            this.index = 0;
+            this.line.write(this.sample, 0, this.sample.length);
+        }
+    }
+
+    //When Nes instance stop or error occurred call this function
+    @Override
+    public void stop() {
+        this.line.close();
+    }
+}
+```
 
 ## 参与贡献
 

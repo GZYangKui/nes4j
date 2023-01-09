@@ -36,7 +36,7 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 
 Or click directly [Launcher](app/src/main/java/cn/navclub/nes4j/app/Launcher.java) run
 
-##       
+##                           
 
 ### Application screenshot
 
@@ -53,6 +53,131 @@ Or click directly [Launcher](app/src/main/java/cn/navclub/nes4j/app/Launcher.jav
 + [CNROM](https://www.nesdev.org/wiki/INES_Mapper_003)
 
 > More cartridge mapper are being implemented, please wait.
+
+## The core module is introduced separately
+
+> If you feel that the current game output program cannot meet your needs, you can provide PR to us, and we will try
+> our best to meet your needs. Another way is to introduce nes4j bin module yourself to achieve video and audio output
+> of
+> the game.
+
+### First introduce dependency
+
++ Apache Maven
+
+```xml
+
+<dependency>
+    <groupId>cn.navclub</groupId>
+    <artifactId>nes4j-bin</artifactId>
+    <version>1.0.1</version>
+</dependency>
+```
+
++ Gradle(groovy)
+
+```groovy
+implementation group: 'cn.navclub', name: 'nes4j-bin', version: '1.0.1'
+```
+
+or
+
+```groovy
+implementation 'cn.navclub:nes4j-bin:1.0.1'
+```
+
++ Gradle(Kotlin)
+
+```kotlin
+implementation("cn.navclub:nes4j-bin:1.0.1")
+```
+
+### Then create an NES instance and initialize
+
++ GameWorld.java
+
+```java
+
+import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.io.JoyPad;
+import cn.navclub.nes4j.bin.ppu.Frame;
+
+public class GameWorld {
+    public NES create() {
+        NES instance = NES.NESBuilder
+                .newBuilder()
+                //nes game rom
+                .file(file)
+                //Audio Handler 
+                .player(JavaXAudio.class)
+                //Game loop callback
+                .gameLoopCallback(GameWorld.this::gameLoopCallback)
+                .build();
+        try {
+            //Current method was called current will block current thread until game stop or exception occurred
+            instance.execute();
+        } catch (Exception e) {
+            //todo An error occurred during the game.Once error occurred game immediate stop 
+        }
+    }
+
+    //This function was callback when a game frame generate
+    private void gameLoopCallback(Frame frame, JoyPad joyPad, JoyPad joyPad1) {
+
+    }
+}
+
+```
+
++ JavaXAudio.java
+
+```java
+package cn.navclub.nes4j.app.audio;
+
+import cn.navclub.nes4j.bin.apu.Player;
+
+import javax.sound.sampled.*;
+
+import static cn.navclub.nes4j.bin.util.BinUtil.int8;
+
+@SuppressWarnings("all")
+public class JavaXAudio implements Player {
+    private final byte[] sample;
+    private final Line.Info info;
+    private final AudioFormat format;
+    private final SourceDataLine line;
+
+    private int index;
+
+
+    public JavaXAudio() throws LineUnavailableException {
+        this.sample = new byte[735 * 2];
+        this.format = new AudioFormat(44100, 8, 1, false, false);
+        this.info = new DataLine.Info(SourceDataLine.class, format);
+        this.line = (SourceDataLine) AudioSystem.getLine(info);
+
+        line.open(format);
+        line.start();
+    }
+
+    //When a audio sample generate call this function
+    @Override
+    public void output(float sample) {
+        var value = int8(Math.round(sample * 0xff));
+        this.sample[this.index++] = value;
+        if (this.index == this.sample.length) {
+            this.index = 0;
+            this.line.write(this.sample, 0, this.sample.length);
+        }
+    }
+
+    //When Nes instance stop or error occurred call this function
+    @Override
+    public void stop() {
+        this.line.close();
+    }
+}
+```
 
 ## Participatory contributions
 

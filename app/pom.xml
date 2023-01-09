@@ -49,6 +49,7 @@
         <dependency>
             <groupId>cn.navclub</groupId>
             <artifactId>nes4j-bin</artifactId>
+            <version>1.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

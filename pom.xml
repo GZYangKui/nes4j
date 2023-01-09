@@ -17,7 +17,6 @@
         <lombok.version>1.18.24</lombok.version>
         <logback.version>1.4.4</logback.version>
         <jackson.version>2.14.0-rc3</jackson.version>
-        <nes4j.bin.version>1.0.0</nes4j.bin.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
@@ -49,11 +48,6 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>cn.navclub</groupId>
-                <artifactId>nes4j-bin</artifactId>
-                <version>${nes4j.bin.version}</version>
             </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>
