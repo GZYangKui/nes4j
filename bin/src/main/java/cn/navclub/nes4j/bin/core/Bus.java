@@ -20,7 +20,6 @@ public class Bus implements Component {
     private static final int RPG_ROM = 0x8000;
     private static final int RPG_ROM_END = 0xFFFF;
     private static final int RAM_MIRROR_END = 0x1fff;
-    private static final int RPG_UNIT = 16 * 1024;
     private final NES context;
     private final byte[] ram;
     //Player1
@@ -44,7 +43,7 @@ public class Bus implements Component {
     }
 
     /**
-     * 从映射地址中获取真实地址
+     * Mapper to real memory address
      */
     private int map(int address) {
         //Mapper from 0x800-0x1fff to 0x000-0x7ff
