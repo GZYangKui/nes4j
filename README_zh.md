@@ -44,6 +44,14 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 
 ![Contra](SNAPSHOTS/contra.png)
 
+## 已实现卡带Mapper
+
++ [NROM](https://www.nesdev.org/wiki/NROM)
++ [UxROM](https://www.nesdev.org/wiki/UxROM)
++ [CNROM](https://www.nesdev.org/wiki/INES_Mapper_003)
+
+> 更多卡带Mapper正在实现中,敬请期待。
+
 ## 参与贡献
 
 我们强烈欢迎有兴趣的开发者参与到项目建设中来，同时欢迎大家对项目提出宝贵意见建议和功能需求，项目正在积极开发，欢迎 PR 👏。

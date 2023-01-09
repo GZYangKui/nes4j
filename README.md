@@ -1,4 +1,4 @@
-# nes4j 
+# nes4j
 
 ![Build status](https://github.com/GZYangKui/nes4j/actions/workflows/maven.yml/badge.svg)
 <br/>
@@ -36,7 +36,7 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 
 Or click directly [Launcher](app/src/main/java/cn/navclub/nes4j/app/Launcher.java) run
 
-##   
+##       
 
 ### Application screenshot
 
@@ -45,6 +45,14 @@ Or click directly [Launcher](app/src/main/java/cn/navclub/nes4j/app/Launcher.jav
 ### Game interface
 
 ![Contra](SNAPSHOTS/contra.png)
+
+## Support cartridge mapper
+
++ [NROM](https://www.nesdev.org/wiki/NROM)
++ [UxROM](https://www.nesdev.org/wiki/UxROM)
++ [CNROM](https://www.nesdev.org/wiki/INES_Mapper_003)
+
+> More cartridge mapper are being implemented, please wait.
 
 ## Participatory contributions
 
@@ -61,7 +69,8 @@ GZYangKui@126.com Notify me to delete the corresponding infringing materials.
 
 ## Development Documentation
 
-If you want to write your own simulator or understand the internal structure of the simulator, the following resources can provide you with some basic knowledge of the simulator:
+If you want to write your own simulator or understand the internal structure of the simulator, the following resources
+can provide you with some basic knowledge of the simulator:
 
 * [NES Documentation (PDF)](http://nesdev.com/NESDoc.pdf)
 * [NES Reference Guide (Wiki)](http://wiki.nesdev.com/w/index.php/NES_reference_guide)
