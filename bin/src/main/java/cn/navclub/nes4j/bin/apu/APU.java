@@ -220,7 +220,7 @@ public class APU implements Component {
 
         if ((this.cycle / 2) % 40 == 0) {
             var output = this.lookupSample();
-            if (this.player != null && output != 0 && !this.context.isMute()) {
+            if (this.player != null && !this.context.isMute()) {
                 this.player.output(output);
             }
         }
