@@ -67,7 +67,7 @@ public class NES {
         this.eventBus = new EventBus();
         this.thread = Thread.currentThread();
         this.gameLoopCallback = builder.gameLoopCallback;
-        this.mapper = this.cartridge.getMapper().newProvider(this.cartridge);
+        this.mapper = this.cartridge.getMapper().newProvider(this.cartridge, this);
 
         this.apu = new APU(this);
         this.ppu = new PPU(this, cartridge.getChrom(), cartridge.getMirrors());

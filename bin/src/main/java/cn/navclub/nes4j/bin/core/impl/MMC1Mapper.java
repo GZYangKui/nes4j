@@ -1,5 +1,7 @@
 package cn.navclub.nes4j.bin.core.impl;
 
+import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.config.NameMirror;
 import cn.navclub.nes4j.bin.core.Mapper;
 import cn.navclub.nes4j.bin.io.Cartridge;
 import cn.navclub.nes4j.bin.util.BinUtil;
@@ -27,13 +29,15 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 public class MMC1Mapper extends Mapper {
     //Shifter
     private int MMC1SR;
+    //Temp register
+    private int temp;
     //Control register
-    private int MMC1_PB;
+    private int control;
 
 
-    public MMC1Mapper(Cartridge cartridge) {
-        super(cartridge);
-        this.clear();
+    public MMC1Mapper(Cartridge cartridge, NES context) {
+        super(cartridge, context);
+        this.MMC1SR = 0b10000;
         System.arraycopy(cartridge.getRgbrom(), 0, this.rom, 0, RPG_BANK_SIZE);
         System.arraycopy(cartridge.getRgbrom(), getLastBank(), this.rom, RPG_BANK_SIZE, RPG_BANK_SIZE);
     }
@@ -53,67 +57,118 @@ public class MMC1Mapper extends Mapper {
      * with bit 7 set to clear the shift register is not needed.
      * </pre>
      *
+     * <b>Control register</b>
+     * <pre>
+     * 4bit0
+     * -----
+     * CPPMM
+     * |||||
+     * |||++- Mirroring (0: one-screen, lower bank; 1: one-screen, upper bank;
+     * |||               2: vertical; 3: horizontal)
+     * |++--- PRG ROM bank mode (0, 1: switch 32 KB at $8000, ignoring low bit of bank number;
+     * |                         2: fix first bank at $8000 and switch 16 KB bank at $C000;
+     * |                         3: fix last bank at $C000 and switch 16 KB bank at $8000)
+     * +----- CHR ROM bank mode (0: switch 8 KB at a time; 1: switch two separate 4 KB banks)
+     * </pre>
+     *
      * @param address Target address
      * @param b       Write target address value
      */
     @Override
     public void writeRom(int address, byte b) {
         if ((b & 0x80) == 0x80) {
-            this.clear();
+            this.MMC1SR = 0b10000;
             return;
         }
-        System.out.println(Integer.toHexString(address));
-        var bit = (uint8(b) & 0x01);
+
+        var temp = this.MMC1SR;
+
+        this.MMC1SR >>= 1;
+        this.MMC1SR |= ((uint8(b) & 0x01) << 4);
+
+        var internal = RInternal.values()[(address >> 13) & 0x03];
         //MMC1SR is full
-        if ((this.MMC1SR & 0x01) == 0x01) {
-            this.MMC1_PB = (this.MMC1SR >> 1) | bit << 4;
-            var mode = ((this.MMC1_PB >> 2) & 0x03);
-
-            this.clear();
-        } else {
-            this.MMC1SR >>= 1;
-            this.MMC1SR |= (bit << 4);
+        if ((temp & 0x01) == 0x01) {
+            if (internal == RInternal.CONTROL) {
+                this.control = MMC1SR;
+            } else {
+                this.temp = MMC1SR;
+            }
+            this.MMC1SR = 0b10000;
+            if (internal != RInternal.CONTROL) {
+                this.calculate(internal);
+            } else {
+                var value = this.control & 0x03;
+                if (value == 2) {
+                    this.context.getPpu().setMirrors(NameMirror.VERTICAL);
+                }
+                if (value == 3) {
+                    this.context.getPpu().setMirrors(NameMirror.HORIZONTAL);
+                }
+            }
         }
     }
 
-    private void clear() {
-        this.MMC1_PB = 0;
-        this.MMC1SR = 0b10000;
+    private void calculate(RInternal internal) {
+        //Switch PRG bank
+        if (internal == RInternal.PRG_BANK) {
+            var offset = this.temp * RPG_BANK_SIZE;
+            var mode = (this.control >> 2) & 0x03;
+            //(0, 1: switch 32 KB at $8000, ignoring low bit of bank number;
+            if ((mode | 1) <= 1) {
+                System.arraycopy(
+                        this.cartridge.getRgbrom(),
+                        offset,
+                        this.rom,
+                        0,
+                        2 * RPG_BANK_SIZE
+                );
+            }
+            // 2: fix first bank at $8000 and switch 16 KB bank at $C000;
+            else if (mode == 2) {
+                System.arraycopy(this.cartridge.getRgbrom(), 0, this.rom, 0, RPG_BANK_SIZE);
+                System.arraycopy(this.cartridge.getRgbrom(), offset, this.rom, RPG_BANK_SIZE, RPG_BANK_SIZE);
+            }
+            //3: fix last bank at $C000 and switch 16 KB bank at $8000)
+            else {
+                System.arraycopy(this.cartridge.getRgbrom(), getLastBank(), this.rom, RPG_BANK_SIZE, RPG_BANK_SIZE);
+                System.arraycopy(this.cartridge.getRgbrom(), offset, this.rom, 0, RPG_BANK_SIZE);
+            }
+        } else {
+            var mode = (this.control >> 4) & 0x01;
+            //
+            // 4bit0
+            // -----
+            // CCCCC
+            // |||||
+            // +++++- Select 4 KB or 8 KB CHR bank at PPU $0000 (low bit ignored in 8 KB mode)
+            //
+            if (internal == RInternal.CHR_BANK0 && mode == 1) {
+                System.arraycopy(this.cartridge.getChrom(),
+                        temp * CHR_BANK_SIZE, this.com, 0, CHR_BANK_SIZE);
+            }
+            //
+            // 4bit0
+            // -----
+            // CCCCC
+            // |||||
+            // +++++- Select 4 KB CHR bank at PPU $1000 (ignored in 8 KB mode)
+            //
+            if (internal == RInternal.CHR_BANK1 && mode == 1) {
+                System.arraycopy(this.cartridge.getChrom(),
+                        temp * CHR_BANK_SIZE / 2, this.com, 0x1000, CHR_BANK_SIZE / 2);
+            }
+        }
     }
 
-    /**
-     * <b>CHR bank 0 (internal, $A000-$BFFF)</b>
-     * <pre>
-     * 4bit0
-     * -----
-     * CCCCC
-     * |||||
-     * +++++- Select 4 KB or 8 KB CHR bank at PPU $0000 (low bit ignored in 8 KB mode)
-     *
-     * MMC1 can do CHR banking in 4KB chunks. Known carts with CHR RAM have 8 KiB, so that makes 2 banks.
-     * RAM vs ROM doesn't make any difference for address lines. For carts with 8 KiB of CHR (be it ROM or RAM),
-     * MMC1 follows the common behavior of using only the low-order bits: the bank number is in effect ANDed with 1.
-     *
-     * </pre>
-     * <b>CHR bank 1 (internal, $C000-$DFFF)</b>
-     * <pre>
-     * 4bit0
-     * -----
-     * CCCCC
-     * |||||
-     * +++++- Select 4 KB CHR bank at PPU $1000 (ignored in 8 KB mode)
-     * </pre>
-     *
-     * @param address {@inheritDoc}
-     * @param b       {@inheritDoc}
-     */
-    @Override
-    public void writeCom(int address, byte b) {
-        if (this.cartridge.getChSize() == 0) {
-            this.com[address] = b;
-        } else {
-            //todo switch ch bank
-        }
-
+    private enum RInternal {
+        //Control (internal, $8000-$9FFF)
+        CONTROL,
+        //CHR bank 0 (internal, $A000-$BFFF)
+        CHR_BANK0,
+        //CHR bank 1 (internal, $C000-$DFFF)
+        CHR_BANK1,
+        //PRG bank (internal, $E000-$FFFF)
+        PRG_BANK
     }
 }

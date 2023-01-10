@@ -1,5 +1,6 @@
 package cn.navclub.nes4j.bin.core;
 
+import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.config.NMapper;
 import cn.navclub.nes4j.bin.io.Cartridge;
 
@@ -12,10 +13,12 @@ public abstract class Mapper {
 
     protected final byte[] rom;
     protected final byte[] com;
+    protected final NES context;
     protected final Cartridge cartridge;
 
 
-    public Mapper(Cartridge cartridge) {
+    public Mapper(Cartridge cartridge, NES context) {
+        this.context = context;
         this.cartridge = cartridge;
         this.com = new byte[8 * 1024];
         this.rom = new byte[RPG_BANK_SIZE * 2];

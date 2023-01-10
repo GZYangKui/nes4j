@@ -1,12 +1,13 @@
 package cn.navclub.nes4j.bin.core.impl;
 
+import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.Mapper;
 import cn.navclub.nes4j.bin.io.Cartridge;
 
 public class UXMapper extends Mapper {
 
-    public UXMapper(Cartridge cartridge) {
-        super(cartridge);
+    public UXMapper(Cartridge cartridge, NES context) {
+        super(cartridge, context);
 
         //Fix last bank to 0xc000
         System.arraycopy(
