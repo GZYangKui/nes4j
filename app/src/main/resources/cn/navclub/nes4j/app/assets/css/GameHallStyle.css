@@ -5,51 +5,24 @@
     -fx-text-fill: -nes4j-game-hall-text-fill;
 }
 
-.assort .list-cell {
-    -fx-text-fill: -nes4j-game-hall-assort-fill;
-}
-
-.assort .list-cell:selected {
-    -fx-text-fill: -nes4j-game-hall-text-fill;
-}
-
 .navbar {
     -fx-padding: .5em;
+    -fx-border-width: 0 0 .1em 0;
+    -fx-border-color: -nes4j-game-hall-navbar-border;
     -fx-background-color: -nes4j-game-hall-navbar;
 }
 
-.navbar .logo-box {
-    -fx-spacing: .3em;
-    -fx-alignment: CENTER;
+.navbar {
+    -fx-pref-height: 4em;
 }
 
-.navbar VBox {
-    -fx-alignment: CENTER;
-}
-
-.navbar .x-box {
-    -fx-alignment: CENTER-RIGHT;
+.x-box {
     -fx-spacing: .6em;
-}
-
-.navbar .x-box .button {
-    -fx-padding: 0;
-    -fx-focus-traversable: false;
-    -fx-background-color: transparent;
-}
-
-.navbar .logo-box .app-name {
-    -fx-font-size: 1.8em;
-    -fx-text-fill: -nes4j-game-hall-app-name;
-}
-
-.assort, .assort .list-cell {
-    -fx-background-color: -nes4j-game-hall-assort;
-    -fx-focus-traversable: false;
-}
-
-.assort .list-cell:selected {
-    -fx-text-fill: -nes4j-game-hall-list-cell-active;
+    -fx-padding: .3em;
+    -fx-alignment: CENTER-LEFT;
+    -fx-border-width: 0 0 .1em 0;
+    -fx-background-color: -nes4j-game-hall-xbox;
+    -fx-border-color: -nes4j-game-hall-navbar-border;
 }
 
 .flow-pane {
@@ -74,5 +47,15 @@
 
 .flow-pane .game-tray:hover .label {
     -fx-text-fill: -nes4j-game-tray-hover-text-color;
+}
+
+.assort .list-cell {
+    -fx-background-color: -nes4j-game-hall-list-view;
+    -fx-focus-traversable: false;
+}
+
+.assort .list-cell:selected {
+    -fx-text-fill: -nes4j-game-hall-list-cell-text;
+    -fx-background-color: -nes4j-game-hall-list-cell-active;
 }
 

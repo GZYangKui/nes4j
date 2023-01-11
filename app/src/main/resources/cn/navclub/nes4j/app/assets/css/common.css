@@ -1,9 +1,12 @@
 .root {
     -nes4j-background-color: #fff;
     /**Game hall navbar background color**/
-    -nes4j-game-hall-navbar: #ff9833;
-    /**Game hall left assort background color**/
-    -nes4j-game-hall-assort: #304156;
+    -nes4j-game-hall-navbar: #ffffff;
+    /**Game hall navbar bottom border color**/
+    -nes4j-game-hall-navbar-border: #cdc7c7;
+    /**list view background color**/
+    -nes4j-game-hall-list-view: #ededed;
+    -nes4j-game-hall-xbox: -nes4j-game-hall-list-view;
     /**Game hall left assort text fill**/
     -nes4j-game-hall-assort-fill: #bfcbd9;
     /**Game hall center content background color**/
@@ -12,8 +15,10 @@
     -nes4j-game-hall-app-name: #ffffff;
     /**Game hall text color**/
     -nes4j-game-hall-text-fill: #000000;
-    /**Game hall list-cell select text color**/
-    -nes4j-game-hall-list-cell-active: rgba(64, 158, 255, 1);
+    /**Game hall list-cell select background color**/
+    -nes4j-game-hall-list-cell-active: linear-gradient(to right, #D6E0F0, #DDE4EF, #E6EAEF, #EAEBED);
+    /**Game hall list-cell select text fill*/
+    -nes4j-game-hall-list-cell-text: #5185fd;
     /**Default list view select row background color**/
     -nes4j-list-cell-select-color: rgba(10, 29, 47, 1);
     /**Game tray hover background color**/
@@ -33,15 +38,27 @@ ScrollPane, .list-view {
     -fx-padding: 0;
 }
 
-.list-view .list-cell {
-    -fx-background-color: -nes4j-background-color;
-}
-
-.list-view .list-cell:selected {
-    -fx-background-color: -nes4j-list-cell-select-color;
-}
-
 .empty {
     -fx-alignment: CENTER;
 }
 
+.search-text-field {
+    -fx-alignment: CENTER;
+    -fx-spacing: .2em;
+    -fx-padding: .1em .2em;
+    -fx-background-color: #f4f4f4;
+    -fx-background-radius: .2em;
+}
+
+.search-text-field .prefix {
+    -fx-background-color: #939393;
+    -fx-pref-width: .8em;
+    -fx-pref-height: .5em;
+    -fx-shape: "M474.453333 884.053333c-225.28 0-409.6-184.32-409.6-409.6s184.32-409.6 409.6-409.6 409.6 184.32 409.6 409.6-184.32 409.6-409.6 409.6z m0-68.266666c187.733333 0 341.333333-153.6 341.333334-341.333334s-153.6-341.333333-341.333334-341.333333-341.333333 153.6-341.333333 341.333333 153.6 341.333333 341.333333 341.333334z m252.586667 54.613333c-13.653333-13.653333-10.24-37.546667 3.413333-47.786667s37.546667-10.24 47.786667 3.413334l64.853333 78.506666c13.653333 13.653333 10.24 37.546667-3.413333 47.786667s-37.546667 10.24-47.786667-3.413333l-64.853333-78.506667z";
+}
+
+.search-text-field > .text-field {
+    -fx-background-color: transparent;
+    -fx-min-width: 15em;
+    -fx-font-size: 1.2em;
+}

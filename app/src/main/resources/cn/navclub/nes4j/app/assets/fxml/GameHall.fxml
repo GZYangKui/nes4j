@@ -3,61 +3,38 @@
 <?import javafx.scene.layout.*?>
 
 <?import javafx.scene.control.ListView?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ScrollPane?>
 <?import cn.navclub.nes4j.app.control.Empty?>
 <?import cn.navclub.nes4j.app.event.NodeDragEvent?>
+<?import cn.navclub.nes4j.app.control.SearchTextField?>
+<?import javafx.scene.shape.Circle?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml" stylesheets="@../css/GameHallStyle.css">
     <fx:define>
         <FlowPane styleClass="flow-pane" fx:id="flowPane"/>
     </fx:define>
-    <top>
-        <HBox fx:id="navbar" styleClass="navbar" NodeDragEvent.bind="">
-            <HBox styleClass="logo-box">
-                <Label text="INES" styleClass="app-name"/>
-            </HBox>
-            <VBox HBox.hgrow="ALWAYS">
-                <HBox styleClass="x-box">
-                    <Button onAction="#iconified">
-                        <graphic>
-                            <ImageView>
-                                <Image url="@../img/mwin.png"/>
-                            </ImageView>
-                        </graphic>
-                    </Button>
-                    <Button>
-                        <graphic>
-                            <ImageView>
-                                <Image url="@../img/max.png"/>
-                            </ImageView>
-                        </graphic>
-                    </Button>
-                    <Button onAction="#exit">
-                        <graphic>
-                            <ImageView>
-                                <Image url="@../img/xwin.png"/>
-                            </ImageView>
-                        </graphic>
-                    </Button>
-                </HBox>
-            </VBox>
-        </HBox>
-    </top>
     <left>
-        <ListView styleClass="assort" fx:id="listView"/>
+        <VBox>
+            <HBox styleClass="x-box" NodeDragEvent.bind="" prefHeight="${navbar.height}">
+                <Circle radius="8" fill="#c18b16" onMouseClicked="#iconified"/>
+                <Circle radius="8" fill="#59c837"/>
+                <Circle radius="8" fill="red" onMouseClicked="#exit"/>
+            </HBox>
+            <ListView styleClass="assort" fx:id="listView" VBox.vgrow="ALWAYS"/>
+        </VBox>
     </left>
     <center>
-        <StackPane>
-            <ScrollPane fitToHeight="true" fitToWidth="true">
-                <fx:reference source="flowPane"/>
-            </ScrollPane>
-            <Empty attach="$flowPane" text="暂无数据" fx:id="empty"/>
-        </StackPane>
-
+        <VBox styleClass="content">
+            <HBox fx:id="navbar" styleClass="navbar" NodeDragEvent.bind="">
+                <SearchTextField/>
+            </HBox>
+            <StackPane VBox.vgrow="ALWAYS">
+                <ScrollPane fitToHeight="true" fitToWidth="true">
+                    <fx:reference source="flowPane"/>
+                </ScrollPane>
+                <Empty attach="$flowPane" text="暂无数据" fx:id="empty"/>
+            </StackPane>
+        </VBox>
     </center>
 
 </BorderPane>
