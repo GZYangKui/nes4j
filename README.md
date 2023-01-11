@@ -4,6 +4,9 @@
 ![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)
 <br/>
 
+[nes4j](https://github.com/GZYangKui/nes4j-example/blob/master/video/32328_1673422550.gif?raw=true)
+
+
 ## Project introduction
 
 **nes4j**The Nintendo Red and White Machine Simulator is implemented in Java language, mainly
@@ -34,18 +37,6 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 ```shell
  mvn run
 ```
-
-Or click directly [Launcher](app/src/main/java/cn/navclub/nes4j/app/Launcher.java) run
-
-##                           
-
-### Application screenshot
-
-![APP](SNAPSHOTS/app.png)
-
-### Game interface
-
-![Contra](SNAPSHOTS/contra.png)
 
 ## Support cartridge mapper
 
@@ -201,3 +192,10 @@ can provide you with some basic knowledge of the simulator:
 * [NES Documentation (PDF)](http://nesdev.com/NESDoc.pdf)
 * [NES Reference Guide (Wiki)](http://wiki.nesdev.com/w/index.php/NES_reference_guide)
 * [6502 CPU Reference](http://www.obelisk.me.uk/6502/reference.html)
+
+## Special thanks
+
+| name                                    | describe                                                     |
+|-----------------------------------------|--------------------------------------------------------------|
+| [Jetbrain](https://www.jetbrains.com/)  | Provide a complete set of integrated development environment |
+| [NES forum](https://forums.nesdev.org/) | Provide technical support                                    |

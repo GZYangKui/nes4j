@@ -4,6 +4,8 @@
 ![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)
 <br/>
 
+[nes4j](https://github.com/GZYangKui/nes4j-example/blob/master/video/32328_1673422550.gif?raw=true)
+
 ## 项目介绍
 
 **nes4j**是使用java语言实现任天堂红白机模拟器,主要包括[CPU](https://www.nesdev.org/wiki/CPU)、
@@ -32,18 +34,6 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 ```shell
  mvn run
 ```
-
-或 直接点击[Launcher](app/src/main/java/cn/navclub/nes4j/app/Launcher.java)运行
-
-## 应用截图
-
-### 应用界面
-
-![APP](SNAPSHOTS/app.png)
-
-### 游戏界面
-
-![Contra](SNAPSHOTS/contra.png)
 
 ## 已实现卡带Mapper
 
@@ -194,3 +184,10 @@ public class JavaXAudio implements Player {
 * [NES Documentation (PDF)](http://nesdev.com/NESDoc.pdf)
 * [NES Reference Guide (Wiki)](http://wiki.nesdev.com/w/index.php/NES_reference_guide)
 * [6502 CPU Reference](http://www.obelisk.me.uk/6502/reference.html)
+
+## 特便感谢
+
+| 名称                                      | 描述           |
+|-----------------------------------------|--------------|
+| [Jetbrain](https://www.jetbrains.com/)  | 免费提供全套集成开发环境 |
+| [NES forum](https://forums.nesdev.org/) | 提供技术支持       |
