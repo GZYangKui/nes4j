@@ -4,7 +4,7 @@
 ![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)
 <br/>
 
-[nes4j](https://github.com/GZYangKui/nes4j-example/blob/master/video/32328_1673422550.gif?raw=true)
+![nes4j](https://github.com/GZYangKui/nes4j-example/blob/master/video/32328_1673422550.gif?raw=true)
 
 
 ## Project introduction
