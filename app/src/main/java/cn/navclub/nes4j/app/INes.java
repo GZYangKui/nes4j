@@ -1,8 +1,7 @@
 package cn.navclub.nes4j.app;
 
+import cn.navclub.nes4j.app.config.EventBusAddress;
 import cn.navclub.nes4j.app.config.NESConfig;
-import cn.navclub.nes4j.app.util.JsonUtil;
-import cn.navclub.nes4j.app.util.StrUtil;
 import cn.navclub.nes4j.app.view.GameHall;
 import cn.navclub.nes4j.bin.eventbus.EventBus;
 import javafx.application.Application;
@@ -10,8 +9,6 @@ import javafx.application.Application;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ResourceBundle;
 
 @Slf4j
@@ -30,7 +27,19 @@ public class INes extends Application {
 
     @Override
     public void start(Stage stage) {
+        this.localEventBus();
         new GameHall(stage);
+    }
+
+    /**
+     * Register app internal event-bus
+     */
+    public void localEventBus() {
+        //Open uri use system default browser
+        eventBus.<String>listener(EventBusAddress.OPEN_URI, message -> {
+            getHostServices().showDocument(message.body());
+            return null;
+        });
     }
 
     public static String localeValue(String key) {

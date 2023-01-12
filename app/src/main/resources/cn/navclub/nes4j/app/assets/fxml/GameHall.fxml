@@ -8,6 +8,8 @@
 <?import cn.navclub.nes4j.app.event.NodeDragEvent?>
 <?import cn.navclub.nes4j.app.control.SearchTextField?>
 <?import javafx.scene.shape.Circle?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml" stylesheets="@../css/GameHallStyle.css">
     <fx:define>
@@ -26,7 +28,31 @@
     <center>
         <VBox styleClass="content">
             <HBox fx:id="navbar" styleClass="navbar" NodeDragEvent.bind="">
-                <SearchTextField/>
+                <HBox styleClass="left-box">
+                    <Button>
+                        <graphic>
+                            <Label styleClass="prefix,back"/>
+                        </graphic>
+                    </Button>
+                    <SearchTextField/>
+                </HBox>
+                <HBox HBox.hgrow="ALWAYS" styleClass="right-box">
+                    <Button text="%nes4j.donate">
+                        <graphic>
+                            <Label styleClass="prefix,donate"/>
+                        </graphic>
+                    </Button>
+                    <Button text="%nes4j.setting">
+                        <graphic>
+                            <Label styleClass="prefix,setting"/>
+                        </graphic>
+                    </Button>
+                    <Button onAction="#github">
+                        <graphic>
+                            <Label styleClass="prefix,github"/>
+                        </graphic>
+                    </Button>
+                </HBox>
             </HBox>
             <StackPane VBox.vgrow="ALWAYS">
                 <ScrollPane fitToHeight="true" fitToWidth="true">

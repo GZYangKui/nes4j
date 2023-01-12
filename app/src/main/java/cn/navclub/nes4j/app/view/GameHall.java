@@ -3,6 +3,7 @@ package cn.navclub.nes4j.app.view;
 import cn.navclub.nes4j.app.INes;
 import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.concurrent.TaskService;
+import cn.navclub.nes4j.app.config.EventBusAddress;
 import cn.navclub.nes4j.app.control.GameTray;
 import cn.navclub.nes4j.app.dialog.DNesHeader;
 import cn.navclub.nes4j.bin.eventbus.Message;
@@ -114,6 +115,11 @@ public class GameHall {
                         .toList();
             }
         };
+    }
+
+    @FXML
+    public void github() {
+        INes.eventBus.publish(EventBusAddress.OPEN_URI, "https://github.com/GZYangKui/nes4j");
     }
 
     @FXML
