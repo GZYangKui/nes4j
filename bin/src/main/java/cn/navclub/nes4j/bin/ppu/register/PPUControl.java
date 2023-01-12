@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
-@Slf4j
+
 public class PPUControl extends Register<PControl> {
 
     public PPUControl() {

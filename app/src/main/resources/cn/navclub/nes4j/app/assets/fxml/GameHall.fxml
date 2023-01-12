@@ -16,7 +16,7 @@
         <FlowPane styleClass="flow-pane" fx:id="flowPane"/>
     </fx:define>
     <left>
-        <VBox>
+        <VBox styleClass="left-box">
             <HBox styleClass="x-box" NodeDragEvent.bind="" prefHeight="${navbar.height}">
                 <Circle radius="8" fill="#c18b16" onMouseClicked="#iconified"/>
                 <Circle radius="8" fill="#59c837"/>
@@ -29,11 +29,6 @@
         <VBox styleClass="content">
             <HBox fx:id="navbar" styleClass="navbar" NodeDragEvent.bind="">
                 <HBox styleClass="left-box">
-                    <Button>
-                        <graphic>
-                            <Label styleClass="prefix,back"/>
-                        </graphic>
-                    </Button>
                     <SearchTextField/>
                 </HBox>
                 <HBox HBox.hgrow="ALWAYS" styleClass="right-box">

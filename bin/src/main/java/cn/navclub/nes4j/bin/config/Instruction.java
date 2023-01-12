@@ -13,7 +13,6 @@ import static cn.navclub.nes4j.bin.util.BinUtil.int8;
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
-@Slf4j
 public enum Instruction {
     /**
      * More detail please visit:<a href="https://www.nesdev.org/obelisk-6502-guide/reference.html#ADC">ADC Document</a>

@@ -12,9 +12,6 @@ module cn.navclub.nes4j.app {
     requires cn.navclub.nes4j.bin;
     requires org.controlsfx.controls;
 
-    requires org.slf4j;
-    requires ch.qos.logback.core;
-    requires ch.qos.logback.classic;
     requires com.fasterxml.jackson.core;
     requires com.fasterxml.jackson.databind;
 

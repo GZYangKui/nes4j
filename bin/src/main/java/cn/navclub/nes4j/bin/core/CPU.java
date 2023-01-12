@@ -3,6 +3,8 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.config.*;
 import cn.navclub.nes4j.bin.core.register.CPUStatus;
+import cn.navclub.nes4j.bin.log.Logger;
+import cn.navclub.nes4j.bin.log.LoggerAdapter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,8 +18,9 @@ import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
-@Slf4j
 public class CPU {
+    private final static Logger logger = LoggerAdapter.logger(CPU.class);
+
     //Stack offset
     public static final int STACK = 0x0100;
     //Program counter reset offset
@@ -375,12 +378,12 @@ public class CPU {
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 
-        if (log.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             var operand = "";
             if (mode != AddressMode.Implied && mode != AddressMode.Accumulator && mode != AddressMode.Relative) {
                 operand = "0x" + Integer.toHexString(this.modeProvider.getAbsAddr(mode));
             }
-            log.debug(
+            logger.debug(
                     "[0x{}] A:{} X:{} Y:{} S:{} {} {}",
                     Integer.toHexString(this.pc - 1),
                     Integer.toHexString(this.ra),

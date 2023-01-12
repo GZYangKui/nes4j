@@ -13,6 +13,7 @@ import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -20,6 +21,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * Visible Game wall
@@ -44,12 +46,14 @@ public class GameHall {
         this.gameWorld = new GameWorld();
 
         Scene scene = new Scene(FXResource.loadFXML(this));
+
         this.stage = stage;
         this.stage.setWidth(1200);
         this.stage.setHeight(900);
-        this.stage.setTitle("ines");
+        this.stage.setTitle("nes4j");
         this.stage.setScene(scene);
         this.stage.initStyle(StageStyle.UNDECORATED);
+        this.stage.getIcons().add(FXResource.loadImage("nes4j.png"));
         this.stage.show();
 
         this.loadAssort();
@@ -117,9 +121,21 @@ public class GameHall {
         };
     }
 
+    /**
+     * <p>
+     * Open current project open source address.If user location in China will visit <a href="gitee.com">gitee</a>,
+     * otherwise visit <a href="https://github.com">github</a>.</p>
+     */
     @FXML
     public void github() {
-        INes.eventBus.publish(EventBusAddress.OPEN_URI, "https://github.com/GZYangKui/nes4j");
+        final String uri;
+        var tid = TimeZone.getDefault().getID();
+        if (tid.toLowerCase().contains("shanghai")) {
+            uri = "https://gitee.com/navigatorcode/nes4j";
+        } else {
+            uri = "https://github.com/GZYangKui/nes4j";
+        }
+        INes.eventBus.publish(EventBusAddress.OPEN_URI, uri);
     }
 
     @FXML

@@ -2,12 +2,9 @@ package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.apu.APU;
-import cn.navclub.nes4j.bin.config.NMapper;
-import cn.navclub.nes4j.bin.io.Cartridge;
 import cn.navclub.nes4j.bin.io.JoyPad;
 import cn.navclub.nes4j.bin.ppu.PPU;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
@@ -15,7 +12,6 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 /**
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
-@Slf4j
 public class Bus implements Component {
     private static final int RPG_ROM = 0x8000;
     private static final int RPG_ROM_END = 0xFFFF;

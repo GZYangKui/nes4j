@@ -3,8 +3,6 @@ package cn.navclub.nes4j.bin;
 import cn.navclub.nes4j.bin.apu.APU;
 import cn.navclub.nes4j.bin.apu.Player;
 import cn.navclub.nes4j.bin.core.*;
-import cn.navclub.nes4j.bin.core.impl.NRMapper;
-import cn.navclub.nes4j.bin.core.impl.UXMapper;
 import cn.navclub.nes4j.bin.debug.Debugger;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
 import cn.navclub.nes4j.bin.eventbus.EventBus;
@@ -15,15 +13,11 @@ import cn.navclub.nes4j.bin.ppu.Frame;
 import cn.navclub.nes4j.bin.ppu.PPU;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
 
-@Slf4j
 @Getter
 public class NES {
     private final Bus bus;

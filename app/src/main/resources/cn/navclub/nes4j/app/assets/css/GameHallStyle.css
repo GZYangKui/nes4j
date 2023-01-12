@@ -1,5 +1,6 @@
 @import "common.css";
 
+
 .navbar *, .assort, .flow-pane .game-tray .label, .empty .label {
     -fx-font-size: 1.4em;
     -fx-text-fill: -nes4j-game-hall-text-fill;

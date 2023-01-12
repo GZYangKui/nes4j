@@ -7,11 +7,10 @@ import cn.navclub.nes4j.bin.eventbus.EventBus;
 import javafx.application.Application;
 
 import javafx.stage.Stage;
-import lombok.extern.slf4j.Slf4j;
+
 
 import java.util.ResourceBundle;
 
-@Slf4j
 public class INes extends Application {
     public final static EventBus eventBus;
     public static final ResourceBundle RESOURCE_BUNDLE;

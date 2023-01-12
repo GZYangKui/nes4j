@@ -26,7 +26,6 @@ import java.util.function.Consumer;
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
-@Slf4j
 public class FrameCounter implements Component {
 
     /**
