@@ -6,11 +6,9 @@ module cn.navclub.nes4j.app {
     requires java.desktop;
     requires javafx.fxml;
     requires javafx.base;
-    requires javafx.media;
     requires javafx.graphics;
     requires javafx.controls;
     requires cn.navclub.nes4j.bin;
-    requires org.controlsfx.controls;
 
     requires com.fasterxml.jackson.core;
     requires com.fasterxml.jackson.databind;

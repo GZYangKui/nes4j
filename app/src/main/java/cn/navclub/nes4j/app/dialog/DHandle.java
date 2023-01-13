@@ -3,13 +3,14 @@ package cn.navclub.nes4j.app.dialog;
 import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.INes;
 import cn.navclub.nes4j.app.model.KeyMapper;
+import cn.navclub.nes4j.bin.logging.LoggerDelegate;
+import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import org.controlsfx.control.Notifications;
 
 import java.util.Arrays;
 
@@ -19,6 +20,8 @@ import java.util.Arrays;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class DHandle extends Dialog<KeyMapper[]> {
+    private static LoggerDelegate logger = LoggerFactory.logger(DHandle.class);
+
     private final VBox content;
 
     private final VBox center;
@@ -136,7 +139,7 @@ public class DHandle extends Dialog<KeyMapper[]> {
             var optional = Arrays.stream(this.mappers)
                     .filter(it -> it != keyMapper && it.getKeyCode() == event.getCode()).findAny();
             if (optional.isPresent()) {
-                Notifications.create().text("Hot key conflict.").position(Pos.TOP_RIGHT).showWarning();
+                logger.warning("Hot key conflict");
                 return;
             }
             keyMapper.setKeyCode(event.getCode());

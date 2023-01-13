@@ -1,0 +1,6 @@
+@import "common.css";
+
+.text-area {
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+}

@@ -1,17 +1,15 @@
 package cn.navclub.nes4j.app.util;
 
+import cn.navclub.nes4j.app.dialog.ExceptionDialog;
 import javafx.application.Platform;
-import org.controlsfx.dialog.ExceptionDialog;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 public class UIUtil {
-    public static void showError(Throwable t, String title, Consumer<Void> consumer) {
+    public static void showError(Throwable t, String headerText, Consumer<Void> consumer) {
         Platform.runLater(() -> {
-            var dialog = new ExceptionDialog(t);
-            dialog.setTitle(Optional.ofNullable(title).orElse("未知错误"));
-            dialog.showAndWait();
+            ExceptionDialog.showAndWait(t, headerText);
+
             if (consumer != null) {
                 consumer.accept(null);
             }
