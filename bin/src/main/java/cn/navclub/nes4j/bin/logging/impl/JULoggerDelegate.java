@@ -1,7 +1,7 @@
 package cn.navclub.nes4j.bin.logging.impl;
 
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
-import cn.navclub.nes4j.bin.logging.formatter.NFormatter;
+import cn.navclub.nes4j.bin.logging.handler.JUConsoleHandler;
 
 import java.util.logging.*;
 
@@ -13,15 +13,11 @@ import java.util.logging.*;
 public class JULoggerDelegate implements LoggerDelegate {
 
     private final Logger logger;
+
     @SuppressWarnings("all")
-    private final Handler handler;
+    private final Handler console;
 
     public JULoggerDelegate(Class<?> clazz, cn.navclub.nes4j.bin.logging.Level level) {
-        this.handler = new ConsoleHandler();
-        this.handler.setFormatter(new NFormatter());
-        this.logger = Logger.getLogger(clazz.getName());
-        this.logger.addHandler(handler);
-        this.logger.setUseParentHandlers(false);
         var level0 = switch (level) {
             case ALL -> Level.ALL;
             case TRACE -> Level.FINEST;
@@ -31,8 +27,11 @@ public class JULoggerDelegate implements LoggerDelegate {
             case FATAL, ERROR -> Level.SEVERE;
             case OFF -> Level.OFF;
         };
+        this.console = new JUConsoleHandler(level0);
+        this.logger = Logger.getLogger(clazz.getName());
         this.logger.setLevel(level0);
-        this.handler.setLevel(level0);
+        this.logger.addHandler(console);
+        this.logger.setUseParentHandlers(false);
     }
 
     @Override
