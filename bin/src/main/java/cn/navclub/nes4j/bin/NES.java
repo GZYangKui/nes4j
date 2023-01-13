@@ -29,7 +29,6 @@ public class NES {
     private final JoyPad joyPad;
     private final JoyPad joyPad1;
     private final Cartridge cartridge;
-    private final EventBus eventBus;
     private final TCallback<Frame, JoyPad, JoyPad> gameLoopCallback;
     //cpu stall cycle
     private int stall;
@@ -58,7 +57,6 @@ public class NES {
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
-        this.eventBus = new EventBus();
         this.thread = Thread.currentThread();
         this.gameLoopCallback = builder.gameLoopCallback;
         this.mapper = this.cartridge.getMapper().newProvider(this.cartridge, this);

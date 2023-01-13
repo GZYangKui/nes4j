@@ -3,20 +3,25 @@ package cn.navclub.nes4j.app;
 import cn.navclub.nes4j.app.config.NESConfig;
 import cn.navclub.nes4j.app.util.JsonUtil;
 import cn.navclub.nes4j.app.util.StrUtil;
-import cn.navclub.nes4j.bin.log.Logger;
-import cn.navclub.nes4j.bin.log.LoggerAdapter;
+import cn.navclub.nes4j.bin.logging.LoggerFactory;
+import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import javafx.application.Application;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Launcher {
+    private static final LoggerDelegate log = LoggerFactory.logger(Launcher.class);
 
-    private static final Logger logger = LoggerAdapter.logger(Launcher.class);
     private static final String DEFAULT_CONFIG_PATH = "config/config.json";
 
     public static void main(String[] args) throws Exception {
+        //Register global catch thread exception
+        Thread.setDefaultUncaughtExceptionHandler(
+                (t, e) -> log.fatal("Catch target thread {} un-catch exception.", e, t.getName()));
+        //Load application config
         INes.config = loadLocalConfig(args);
+        //Launch application
         Application.launch(INes.class, args);
     }
 

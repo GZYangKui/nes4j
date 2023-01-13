@@ -3,10 +3,9 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.config.*;
 import cn.navclub.nes4j.bin.core.register.CPUStatus;
-import cn.navclub.nes4j.bin.log.Logger;
-import cn.navclub.nes4j.bin.log.LoggerAdapter;
+import cn.navclub.nes4j.bin.logging.LoggerDelegate;
+import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
@@ -19,7 +18,7 @@ import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class CPU {
-    private final static Logger logger = LoggerAdapter.logger(CPU.class);
+    private final static LoggerDelegate logger = LoggerFactory.logger(CPU.class);
 
     //Stack offset
     public static final int STACK = 0x0100;

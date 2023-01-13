@@ -1,7 +1,7 @@
-package cn.navclub.nes4j.bin.log;
+package cn.navclub.nes4j.bin.logging;
 
 /**
- * Enum all log level
+ * Enum common log level
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */

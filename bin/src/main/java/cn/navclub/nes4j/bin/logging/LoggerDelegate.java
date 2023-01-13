@@ -1,6 +1,19 @@
-package cn.navclub.nes4j.bin.log;
+package cn.navclub.nes4j.bin.logging;
 
-public interface Logger {
+/**
+ * Nes4j log delegate
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
+ */
+public interface LoggerDelegate {
+    /**
+     * Output a trace level message
+     *
+     * @param message message content
+     * @param params  message params
+     */
+    void trace(String message, Object... params);
+
     /**
      * Output a debug level message
      *
@@ -32,6 +45,15 @@ public interface Logger {
      * @param throwable exception detail
      */
     void fatal(String msg, Throwable throwable);
+
+    /**
+     * Output a fatal level message with params
+     *
+     * @param msg       Message content
+     * @param throwable exception detail
+     * @param params    Params list
+     */
+    void fatal(String msg, Throwable throwable, Object... params);
 
     /**
      * Whether debug is enable

@@ -1,4 +1,4 @@
-package cn.navclub.nes4j.bin.log.formatter;
+package cn.navclub.nes4j.bin.logging.formatter;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
