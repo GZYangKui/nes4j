@@ -53,8 +53,6 @@ public class PPU implements Component {
     protected byte w;
     //Fine X scroll (3 bits)
     protected byte x;
-    //PPU cycle
-    private long cycles;
 
     public PPU(final NES context, byte[] ch, NameMirror mirrors) {
         this.oamAddr = 0;
@@ -81,7 +79,6 @@ public class PPU implements Component {
         this.v = 0;
         this.w = 0;
         this.x = 0;
-        this.cycles = 0;
         this.render.reset();
         this.ctr.setBits(int8(0));
         this.mask.setBits(int8(0));
@@ -90,7 +87,6 @@ public class PPU implements Component {
 
     @Override
     public void tick() {
-        this.cycles++;
         for (int i = 0; i < 3; i++) {
             this.render.tick();
         }

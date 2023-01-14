@@ -2,6 +2,8 @@ package cn.navclub.nes4j.bin.ppu;
 
 import cn.navclub.nes4j.bin.config.PStatus;
 import cn.navclub.nes4j.bin.function.CycleDriver;
+import cn.navclub.nes4j.bin.logging.LoggerDelegate;
+import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import cn.navclub.nes4j.bin.ppu.register.PPUMask;
 import lombok.Getter;
 
@@ -38,7 +40,6 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class Render implements CycleDriver {
-
     private static final int[][] DEF_SYS_PALETTE;
 
     static {
@@ -140,6 +141,8 @@ public class Render implements CycleDriver {
 
         if (this.scanline == 241 && this.cycles == 1) {
             this.frames++;
+            //Move to next scanline must reset shift
+            this.shift = 0;
             this.ppu.fireNMI();
             //
             // A frame render finish if render enable immediate output video.
@@ -236,41 +239,44 @@ public class Render implements CycleDriver {
         // 3.Pattern table tile low
         // 4.Pattern table tile high (+8 bytes from pattern table tile low)
         //
-        var nextLine = this.cycles >= 321 && this.cycles <= 336;
+        var preFetchCycle = this.cycles >= 321 && this.cycles <= 336;
 
-        if (visibleLine) {
-            //
-            // At dot 257 of each scanline
-            // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
-            // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
-            //
-            if (this.cycles == 257) {
-                this.spriteEval();
-                this.ppu.v = uint16((this.ppu.v & 0xfbe0) | (this.ppu.t & 0x041f));
-            }
+        var renderLine = preLine || visibleLine;
+        var fetchCycle = preFetchCycle || visibleCycle;
 
-            if (nextLine || visibleCycle) {
-                if (!nextLine) {
-                    this.renderPixel();
-                }
-                var v = this.ppu.v;
-                switch (this.cycles % 8) {
-                    case 0 -> this.tileMut();
-                    case 1 -> this.readTileIdx(v);
-                    case 3 -> this.readTileAttr(v);
-                    case 5 -> this.readTileByte(v, false);
-                    case 7 -> this.readTileByte(v, true);
-                }
-            }
 
-            //
-            // If rendering is enabled, fine Y is incremented at dot 256 of each scanline, overflowing to coarse Y,and
-            // finally adjusted to wrap among the nametables vertically.Bits 12-14 are fine Y. Bits 5-9 are coarse Y.
-            // Bit 11 selects the vertical nametable.
-            //
-            if (cycles == 256) {
-                this.incY();
+        if (visibleLine && visibleCycle) {
+            this.renderPixel();
+        }
+
+        if (renderLine && fetchCycle) {
+            var v = this.ppu.v;
+            switch (this.cycles % 8) {
+                case 0 -> this.tileMut();
+                case 1 -> this.readTileIdx(v);
+                case 3 -> this.readTileAttr(v);
+                case 5 -> this.readTileByte(v, false);
+                case 7 -> this.readTileByte(v, true);
             }
+        }
+
+        //
+        // If rendering is enabled, fine Y is incremented at dot 256 of each scanline, overflowing to coarse Y,and
+        // finally adjusted to wrap among the nametables vertically.Bits 12-14 are fine Y. Bits 5-9 are coarse Y.
+        // Bit 11 selects the vertical nametable.
+        //
+        if (cycles == 256) {
+            this.incY();
+        }
+
+        //
+        // At dot 257 of each scanline
+        // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
+        // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
+        //
+        if (this.cycles == 257) {
+            this.spriteEval();
+            this.ppu.v = uint16((this.ppu.v & 0xfbe0) | (this.ppu.t & 0x041f));
         }
 
         //
@@ -460,6 +466,10 @@ public class Render implements CycleDriver {
     private void renderPixel() {
         var x = this.cycles - 1;
         var y = this.scanline;
+
+        if (x == 0 && this.shift != 0) {
+            var str = "aaa";
+        }
 
         //Fetch background pixel
         var pixel = 0;
