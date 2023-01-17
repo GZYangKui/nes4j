@@ -72,4 +72,9 @@ public class JULoggerDelegate implements LoggerDelegate {
     public boolean isDebugEnabled() {
         return this.logger.getLevel() == Level.FINE;
     }
+
+    @Override
+    public boolean isTraceEnabled() {
+        return this.logger.getLevel() == Level.FINEST;
+    }
 }

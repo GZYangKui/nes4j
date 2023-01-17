@@ -61,4 +61,11 @@ public interface LoggerDelegate {
      * @return If debug is enable return {@code true} otherwise {@code false}
      */
     boolean isDebugEnabled();
+
+    /**
+     * Whether trace is enable
+     *
+     * @return If trace is enable return {@code true} otherwise {@code false}
+     */
+    boolean isTraceEnabled();
 }

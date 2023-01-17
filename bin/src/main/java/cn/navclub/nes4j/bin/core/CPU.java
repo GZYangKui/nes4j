@@ -377,12 +377,12 @@ public class CPU {
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 
-        if (logger.isDebugEnabled()) {
+        if (logger.isTraceEnabled()) {
             var operand = "";
             if (mode != AddressMode.Implied && mode != AddressMode.Accumulator && mode != AddressMode.Relative) {
                 operand = "0x" + Integer.toHexString(this.modeProvider.getAbsAddr(mode));
             }
-            logger.debug(
+            logger.trace(
                     "[0x{}] A:{} X:{} Y:{} S:{} {} {}",
                     Integer.toHexString(this.pc - 1),
                     Integer.toHexString(this.ra),

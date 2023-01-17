@@ -42,4 +42,6 @@ $(touch launch.sh)
 $(chmod 777 launch.sh)
 
 echo "#!/usr/bin/env bash
-nohup runtime/bin/java -Dnes4j.log.level=WARN -m cn.navclub.nes4j.app/cn.navclub.nes4j.app.Launcher $@ &" >"linux/launch.sh"
+nohup runtime/bin/java -Dnes4j.log.level=WARN -m cn.navclub.nes4j.app/cn.navclub.nes4j.app.Launcher \$@ &" >"linux/launch.sh"
+
+cp ../LICENSE linux

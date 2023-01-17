@@ -38,13 +38,9 @@ public class GameHall {
 
     private final Stage stage;
 
-    private final GameWorld gameWorld;
-
     private TaskService<List<File>> taskService;
 
     public GameHall(Stage stage) {
-        this.gameWorld = new GameWorld();
-
         Scene scene = new Scene(FXResource.loadFXML(this));
 
         this.stage = stage;
@@ -84,7 +80,7 @@ public class GameHall {
         var header = new DNesHeader(message.body(), this.stage);
         var execute = header.showAndWait().orElse(false);
         if (execute) {
-            this.gameWorld.execute(file);
+            GameWorld.run(file);
         }
         return execute;
     }
@@ -146,5 +142,9 @@ public class GameHall {
     @FXML
     public void iconified() {
         this.stage.setIconified(true);
+    }
+
+    @FXML
+    public void createResource() {
     }
 }

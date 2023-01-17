@@ -1,6 +1,8 @@
 package cn.navclub.nes4j.app.assets;
 
 import cn.navclub.nes4j.app.INes;
+import cn.navclub.nes4j.bin.logging.LoggerDelegate;
+import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.image.Image;
@@ -8,9 +10,13 @@ import javafx.scene.image.Image;
 import java.io.IOException;
 
 public class FXResource {
+
+    private static final LoggerDelegate log = LoggerFactory.logger(FXResource.class);
+
     public static String loadStyleSheet(String name) {
         var url = FXResource.class.getResource("css/" + name);
         if (url == null) {
+            log.warning("Target stylesheet {} not found.", name);
             return "";
         }
         return url.toExternalForm();
@@ -19,6 +25,7 @@ public class FXResource {
     public static Image loadImage(String name) {
         var url = FXResource.class.getResource("img/" + name);
         if (url == null) {
+            log.warning("Target image {} not found.", name);
             throw new RuntimeException("Target image:" + name + " not exist.");
         }
         try {

@@ -1,29 +1,46 @@
 package cn.navclub.nes4j.app.event;
 
-import javafx.animation.AnimationTimer;
+import cn.navclub.nes4j.bin.logging.LoggerDelegate;
+import cn.navclub.nes4j.bin.logging.LoggerFactory;
 
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-public class FPSTracer extends AnimationTimer {
-    private long now;
+/**
+ * Nes instance fps tracer
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
+ */
+public class FPSTracer {
+    private static final LoggerDelegate log = LoggerFactory.logger(FPSTracer.class);
 
-    private int frame;
+    private final Timer timer;
+    private final AtomicInteger frame;
     private final Consumer<Integer> consumer;
 
     public FPSTracer(Consumer<Integer> consumer) {
         this.consumer = consumer;
-    }
-
-    @Override
-    public void handle(long t) {
-        if (now == 0 || (t - now) >= 1000_000_000L) {
-            now = t;
-            this.consumer.accept(this.frame);
-            this.frame = 0;
-        }
+        this.timer = new Timer();
+        this.frame = new AtomicInteger(0);
+        this.timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                FPSTracer.this.consumer.accept(FPSTracer.this.frame.getAndSet(0));
+            }
+        }, 0, 1000);
     }
 
     public void increment() {
-        this.frame++;
+        this.frame.incrementAndGet();
+    }
+
+    public void stop() {
+        this.frame.set(0);
+        this.timer.cancel();
+        if (log.isDebugEnabled()) {
+            log.debug("FPS Tracer was closed.");
+        }
     }
 }

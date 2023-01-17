@@ -12,9 +12,12 @@ import cn.navclub.nes4j.app.util.StrUtil;
 import cn.navclub.nes4j.app.util.UIUtil;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.io.JoyPad;
+import cn.navclub.nes4j.bin.logging.LoggerDelegate;
+import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import cn.navclub.nes4j.bin.ppu.Frame;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -33,6 +36,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class GameWorld extends Stage {
+    private static final LoggerDelegate log = LoggerFactory.logger(GameWorld.class);
+
     @FXML
     private Canvas canvas;
     @FXML
@@ -48,8 +53,8 @@ public class GameWorld extends Stage {
     private final WritableImage image;
     private final BlockingQueue<GameEventWrap> eventQueue;
 
-    private int fps;
     private NES instance;
+    private volatile int fps;
     private Debugger debugger;
     private TaskService<Void> service;
 
@@ -106,7 +111,6 @@ public class GameWorld extends Stage {
     }
 
     public void execute(File file) {
-        this.dispose(null);
         this.service = TaskService.execute(new Task<>() {
             @Override
             protected Void call() {
@@ -124,7 +128,6 @@ public class GameWorld extends Stage {
         service.setOnFailed(event -> this.dispose(event.getSource().getException()));
 
         this.show();
-        this.tracer.start();
         this.setTitle(StrUtil.getFileName(file));
     }
 
@@ -172,7 +175,6 @@ public class GameWorld extends Stage {
         this.instance.reset();
     }
 
-
     private void gameLoopCallback(Frame frame, JoyPad joyPad, JoyPad joyPad1) {
         var w = Frame.width;
         var h = Frame.height;
@@ -194,8 +196,9 @@ public class GameWorld extends Stage {
             joyPad.updateBtnStatus(event.btn(), event.event() == KeyEvent.KEY_PRESSED);
         }
 
+        this.tracer.increment();
+
         Platform.runLater(() -> {
-            this.tracer.increment();
 
             this.setWidth(this.image.getWidth());
             this.setHeight(this.image.getHeight() + this.menuBar.getHeight());
@@ -210,5 +213,10 @@ public class GameWorld extends Stage {
             this.ctx.setFont(Font.font(25));
             this.ctx.strokeText(Integer.toString(this.fps), 10, 25);
         });
+    }
+
+
+    public static void run(File file) {
+        new GameWorld().execute(file);
     }
 }
