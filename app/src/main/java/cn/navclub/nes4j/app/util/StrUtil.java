@@ -26,6 +26,10 @@ public class StrUtil {
         return str == null || str.trim().equals("");
     }
 
+    public static boolean isNotBlank(String str) {
+        return !isBlank(str);
+    }
+
     public static Map<String, String> args2Map(String[] args) {
         var map = new HashMap<String, String>();
 
