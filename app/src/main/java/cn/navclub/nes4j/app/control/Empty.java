@@ -5,6 +5,8 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -14,24 +16,36 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 
+import java.util.Objects;
 
+/**
+ * Custom empty status control,current implement only support {@link Parent} and subclass.
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
+ */
 public class Empty extends VBox {
     private static final Image DEFAULT_IMAGE = FXResource.loadImage("empty.png");
 
     private final Label label;
     private final ImageView icon;
-
     private StringProperty text;
     private ObjectProperty<Parent> attach;
+    private final ObjectProperty<Image> image;
     private ListChangeListener<Node> listChangeListener;
 
     public Empty() {
         this.label = new Label();
         this.icon = new ImageView(DEFAULT_IMAGE);
+        this.image = new SimpleObjectProperty<>(this, "image", null);
 
         this.getStyleClass().add("empty");
         this.getChildren().addAll(this.icon, this.label);
+
+        //Listener image change
+        this.image.addListener((observable, oldValue, newValue) -> this.icon.setImage(Objects.requireNonNullElse(newValue, DEFAULT_IMAGE)));
     }
+
+
 
     private ListChangeListener<Node> listChangeListener() {
         return c -> {
@@ -78,5 +92,17 @@ public class Empty extends VBox {
     public void setText(String text) {
         this.label.setText(text);
         this.textProperty().set(text);
+    }
+
+    public Image getImage() {
+        return image.get();
+    }
+
+    public ObjectProperty<Image> imageProperty() {
+        return image;
+    }
+
+    public void setImage(Image image) {
+        this.image.set(image);
     }
 }
