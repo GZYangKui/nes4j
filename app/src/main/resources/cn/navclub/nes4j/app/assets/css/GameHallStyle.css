@@ -31,6 +31,9 @@
     -fx-hgap: .5em;
     -fx-spacing: .5em;
     -fx-padding: .5em;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: bottom right;
+    -fx-background-image: url(../img/poster.png);
     -fx-background-color: -nes4j-game-hall-content;
 }
 

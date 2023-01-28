@@ -143,7 +143,7 @@ public class LoadingPane<T> extends StackPane {
         });
         this.taskService.setOnSucceeded(event -> {
             this.transition.play();
-            @SuppressWarnings("all")
+            @SuppressWarnings("unchecked")
             var t = (T) (event.getSource().getValue());
             this.service.onSuccess(t);
         });
