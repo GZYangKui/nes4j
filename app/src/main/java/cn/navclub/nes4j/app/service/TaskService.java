@@ -1,4 +1,4 @@
-package cn.navclub.nes4j.app.concurrent;
+package cn.navclub.nes4j.app.service;
 
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;

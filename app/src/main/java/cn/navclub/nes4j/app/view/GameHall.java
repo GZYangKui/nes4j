@@ -2,7 +2,9 @@ package cn.navclub.nes4j.app.view;
 
 import cn.navclub.nes4j.app.INes;
 import cn.navclub.nes4j.app.assets.FXResource;
-import cn.navclub.nes4j.app.concurrent.TaskService;
+import cn.navclub.nes4j.app.control.LoadingPane;
+import cn.navclub.nes4j.app.service.LoadingService;
+import cn.navclub.nes4j.app.service.TaskService;
 import cn.navclub.nes4j.app.config.EventBusAddress;
 import cn.navclub.nes4j.app.control.GameTray;
 import cn.navclub.nes4j.app.dialog.DNesHeader;
@@ -13,7 +15,6 @@ import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -28,52 +29,51 @@ import java.util.TimeZone;
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
-public class GameHall {
+public class GameHall implements LoadingService<List<File>> {
     public static final String INES_OPEN_GAME = "ines-open-game";
+
+    private final Stage stage;
 
     @FXML
     private FlowPane flowPane;
     @FXML
     private ListView<String> listView;
-
-    private final Stage stage;
+    @FXML
+    private LoadingPane<List<File>> loadingPane;
 
     private TaskService<List<File>> taskService;
 
     public GameHall(Stage stage) {
-        Scene scene = new Scene(FXResource.loadFXML(this));
 
         this.stage = stage;
         this.stage.setWidth(1200);
         this.stage.setHeight(900);
         this.stage.setTitle("nes4j");
-        this.stage.setScene(scene);
+        this.stage.setScene(new Scene(FXResource.loadFXML(this)));
         this.stage.initStyle(StageStyle.UNDECORATED);
         this.stage.getIcons().add(FXResource.loadImage("nes4j.png"));
-        this.stage.show();
 
         this.loadAssort();
+
+        this.loadingPane.setService(this);
+
 
         this.listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (taskService != null)
                 taskService.cancel();
 
             this.flowPane.getChildren().clear();
-
-            taskService = TaskService.execute(this.loadGameList(newValue));
-            taskService.setOnSucceeded(event -> {
-                @SuppressWarnings("all")
-                var files = (List<File>) event.getSource().getValue();
-                var list = files.stream().map(GameTray::new).toList();
-                this.flowPane.getChildren().addAll(list);
-            });
+            this.loadingPane.load(newValue);
         });
 
         if (!this.listView.getItems().isEmpty())
             this.listView.getSelectionModel().select(0);
 
         INes.eventBus.listener(INES_OPEN_GAME, this::requestRun);
+
+        this.stage.show();
     }
+
 
     private boolean requestRun(Message<File> message) {
         var file = message.body();
@@ -98,24 +98,6 @@ public class GameHall {
         }
     }
 
-
-    @SuppressWarnings("all")
-    private Task<List<File>> loadGameList(String assort) {
-        return new Task<>() {
-            @Override
-            protected List<File> call() {
-                var path = Path.of("nes", assort);
-                var file = path.toFile();
-                if (!file.exists() || file.listFiles() == null) {
-                    return List.of();
-                }
-                return Arrays
-                        .stream(file.listFiles()).filter(File::isFile)
-                        .filter(it -> it.getName().endsWith(".nes"))
-                        .toList();
-            }
-        };
-    }
 
     /**
      * <p>
@@ -146,5 +128,24 @@ public class GameHall {
 
     @FXML
     public void createResource() {
+    }
+
+    @Override
+    public List<File> execute(Object... params) {
+        var path = Path.of("nes", params[0].toString());
+        var file = path.toFile();
+        if (!file.exists() || file.listFiles() == null) {
+            return List.of();
+        }
+        return Arrays
+                .stream(file.listFiles()).filter(File::isFile)
+                .filter(it -> it.getName().endsWith(".nes"))
+                .toList();
+    }
+
+    @Override
+    public void onSuccess(List<File> files) {
+        var list = files.stream().map(GameTray::new).toList();
+        this.flowPane.getChildren().addAll(list);
     }
 }

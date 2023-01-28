@@ -4,7 +4,6 @@
 
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ScrollPane?>
-<?import cn.navclub.nes4j.app.control.Empty?>
 <?import cn.navclub.nes4j.app.event.NodeDragEvent?>
 <?import cn.navclub.nes4j.app.control.SearchTextField?>
 <?import javafx.scene.shape.Circle?>
@@ -12,6 +11,8 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ContextMenu?>
 <?import javafx.scene.control.MenuItem?>
+
+<?import cn.navclub.nes4j.app.control.LoadingPane?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml" stylesheets="@../css/GameHallStyle.css">
     <fx:define>
@@ -65,12 +66,13 @@
                     </Button>
                 </HBox>
             </HBox>
-            <StackPane VBox.vgrow="ALWAYS">
-                <ScrollPane fitToHeight="true" fitToWidth="true">
-                    <fx:reference source="flowPane"/>
-                </ScrollPane>
-                <Empty attach="$flowPane" text="暂无数据" fx:id="empty"/>
-            </StackPane>
+            <LoadingPane VBox.vgrow="ALWAYS" fx:id="loadingPane" text="%nes4j.loading">
+                <node>
+                    <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
+                        <fx:reference source="flowPane"/>
+                    </ScrollPane>
+                </node>
+            </LoadingPane>
         </VBox>
     </center>
 
