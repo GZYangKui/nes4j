@@ -11,16 +11,14 @@ java="${JAVA_HOME}/bin/java"
 # Check java version
 version=$("$java" -version 2>&1 | awk -F '"' '/version/ {print $2}')
 
-# shellcheck disable=SC2071
 if [ "$version" -lt "17" ]; then
-  # shellcheck disable=SC1072
-  # shellcheck disable=SC2091
-  # shellcheck disable=SC2116
   echo "Java version must >=17"
   exit 1
 fi
 
-PROGRAM_NAME=nes4j
+PROGRAM_NAME="nes4j"
+PROGRAM_ICON="icon/nes4j.png"
+MAIN_CLASS="cn.navclub.nes4j.app/cn.navclub.nes4j.app.Launcher"
 
 # shellcheck disable=SC2091
-$(jpackage -n "$PROGRAM_NAME" -p "$1" -m cn.navclub.nes4j.app/cn.navclub.nes4j.app.Launcher --icon icon/nes4j.png --license-file ../LICENSE --linux-package-name "$PROGRAM_NAME")
+$(jpackage -n "$PROGRAM_NAME" -p "$1" -m "${MAIN_CLASS}" --icon "$PROGRAM_ICON" --license-file ../LICENSE --linux-package-name "$PROGRAM_NAME")
