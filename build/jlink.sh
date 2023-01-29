@@ -5,7 +5,7 @@ if [ "$1" = "" ] || [ "$2" = "" ]; then
 fi
 # Check JAVA_HOME
 if [ "${JAVA_HOME}" = "" ]; then
-  echo "Please ensure system variable contain JAVA_HOME."
+  echo "Please ensure environment variable contain JAVA_HOME."
   exit 1
 fi
 
