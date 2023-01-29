@@ -37,9 +37,9 @@ echo "$CMD"
 $($CMD)
 
 # shellcheck disable=SC2091
-$(touch launch.sh)
+$(touch linux/launch.sh)
 # shellcheck disable=SC2091
-$(chmod 777 launch.sh)
+$(chmod 777 linux/launch.sh)
 
 echo "#!/usr/bin/env bash
 nohup runtime/bin/java -Dnes4j.log.level=WARN -m cn.navclub.nes4j.app/cn.navclub.nes4j.app.Launcher \$@ > nes4j.log 2>&1 &" >"linux/launch.sh"
