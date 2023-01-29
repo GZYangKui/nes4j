@@ -94,15 +94,17 @@ public class LoadingPane<T> extends StackPane {
         this.text = new SimpleStringProperty(this, "text", null);
         this.node = new SimpleObjectProperty<>(this, "node", null);
 
+        this.label.textProperty().bind(this.text);
+
         this.node.addListener((observable, oldValue, newValue) -> {
-            //Remove all old listener
+            //Remove all old bind
             if (oldValue != null) {
                 this.container.prefWidthProperty().unbind();
                 this.container.prefWidthProperty().unbind();
                 this.container.getChildren().remove(oldValue);
             }
 
-            //Register new listener
+            //Register new bind
             if (newValue != null) {
 
                 this.container.prefWidthProperty().bind(newValue.widthProperty());
@@ -171,6 +173,5 @@ public class LoadingPane<T> extends StackPane {
 
     public void setText(String text) {
         this.text.set(text);
-        this.label.setText(text);
     }
 }
