@@ -2,6 +2,13 @@ package cn.navclub.nes4j.app.service;
 
 public interface LoadingService<T> {
     /**
+     * Prepare async execute
+     */
+    default void preExecute() {
+
+    }
+
+    /**
      * Execute async load data
      *
      * @param params Execute params

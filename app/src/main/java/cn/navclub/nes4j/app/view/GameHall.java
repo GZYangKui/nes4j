@@ -3,17 +3,23 @@ package cn.navclub.nes4j.app.view;
 import cn.navclub.nes4j.app.INes;
 import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.control.LoadingPane;
+import cn.navclub.nes4j.app.event.DragEventHandler;
+import cn.navclub.nes4j.app.model.GTreeItem;
 import cn.navclub.nes4j.app.service.LoadingService;
 import cn.navclub.nes4j.app.service.TaskService;
 import cn.navclub.nes4j.app.config.EventBusAddress;
 import cn.navclub.nes4j.app.control.GameTray;
 import cn.navclub.nes4j.app.dialog.DNesHeader;
+import cn.navclub.nes4j.app.util.OSUtil;
+import cn.navclub.nes4j.app.util.StrUtil;
+import cn.navclub.nes4j.app.util.UIUtil;
 import cn.navclub.nes4j.bin.eventbus.Message;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -29,7 +35,7 @@ import java.util.TimeZone;
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
-public class GameHall implements LoadingService<List<File>> {
+public class GameHall {
     public static final String INES_OPEN_GAME = "ines-open-game";
 
     private final Stage stage;
@@ -37,7 +43,9 @@ public class GameHall implements LoadingService<List<File>> {
     @FXML
     private FlowPane flowPane;
     @FXML
-    private ListView<String> listView;
+    private TreeItem<String> rootItem;
+    @FXML
+    private TreeView<String> treeView;
     @FXML
     private LoadingPane<List<File>> loadingPane;
 
@@ -53,25 +61,57 @@ public class GameHall implements LoadingService<List<File>> {
         this.stage.initStyle(StageStyle.UNDECORATED);
         this.stage.getIcons().add(FXResource.loadImage("nes4j.png"));
 
-        this.loadAssort();
 
-        this.loadingPane.setService(this);
+        this.loadingPane.setService(new LoadingService<>() {
+            @Override
+            public void preExecute() {
+                GameHall.this.flowPane.getChildren().clear();
+            }
 
+            @Override
+            @SuppressWarnings("all")
+            public List<File> execute(Object... params) {
+                var path = Path.of(OSUtil.workstation().toString(), params[0].toString());
+                var file = path.toFile();
+                if (!file.exists() || file.listFiles() == null) {
+                    return List.of();
+                }
+                return Arrays
+                        .stream(file.listFiles()).filter(File::isFile)
+                        .filter(it -> it.getName().endsWith(".nes"))
+                        .toList();
+            }
 
-        this.listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (taskService != null)
-                taskService.cancel();
-
-            this.flowPane.getChildren().clear();
-            this.loadingPane.load(newValue);
+            @Override
+            public void onSuccess(List<File> files) {
+                var list = files.stream().map(GameTray::new).toList();
+                GameHall.this.flowPane.getChildren().addAll(list);
+            }
         });
 
-        if (!this.listView.getItems().isEmpty())
-            this.listView.getSelectionModel().select(0);
+
+        this.treeView.getSelectionModel().selectedItemProperty()
+                .addListener((observable, oldValue, newValue) -> this.loadingPane.load(newValue.getValue()));
 
         INes.eventBus.listener(INES_OPEN_GAME, this::requestRun);
 
+        DragEventHandler.register(this.flowPane, new DragEventHandler.FileDragEventService(".nes", true) {
+            @Override
+            public void after(Dragboard board) {
+                var item = GameHall.this.treeView.getSelectionModel().getSelectedItem();
+                if (item == null) {
+                    return;
+                }
+                var list = OSUtil.move(((GTreeItem) item).getFile(), board.getFiles());
+                if (list.size() > 0) {
+                    GameHall.this.loadingPane.load(item.getValue());
+                }
+            }
+        }, TransferMode.COPY, TransferMode.MOVE);
+
         this.stage.show();
+
+        this.loadAssort();
     }
 
 
@@ -86,16 +126,15 @@ public class GameHall implements LoadingService<List<File>> {
     }
 
     private void loadAssort() {
-        var file = new File("nes");
+        var file = OSUtil.workstation().toFile();
         var list = file.listFiles();
         if (list == null) {
             return;
         }
-        for (File item : list) {
-            if (item.isFile())
-                continue;
-            this.listView.getItems().add(item.getName());
-        }
+        rootItem.getChildren().addAll(
+                Arrays.stream(list).filter(File::isDirectory).map(GTreeItem::new).toList()
+        );
+        this.treeView.getSelectionModel().select(0);
     }
 
 
@@ -127,25 +166,19 @@ public class GameHall implements LoadingService<List<File>> {
     }
 
     @FXML
-    public void createResource() {
-    }
-
-    @Override
-    public List<File> execute(Object... params) {
-        var path = Path.of("nes", params[0].toString());
-        var file = path.toFile();
-        if (!file.exists() || file.listFiles() == null) {
-            return List.of();
+    public void mkdirs() {
+        final String str;
+        {
+            var optional = UIUtil.textFieldDialog("nes4j.assort.name");
+            if (optional.isEmpty() || StrUtil.isBlank(optional.get())) {
+                return;
+            }
+            str = optional.get();
         }
-        return Arrays
-                .stream(file.listFiles()).filter(File::isFile)
-                .filter(it -> it.getName().endsWith(".nes"))
-                .toList();
-    }
-
-    @Override
-    public void onSuccess(List<File> files) {
-        var list = files.stream().map(GameTray::new).toList();
-        this.flowPane.getChildren().addAll(list);
+        var optional = OSUtil.mkdirAssort(str);
+        if (optional.isEmpty()) {
+            return;
+        }
+        this.rootItem.getChildren().add(new GTreeItem(optional.get()));
     }
 }

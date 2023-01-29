@@ -2,7 +2,6 @@
 
 <?import javafx.scene.layout.*?>
 
-<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ScrollPane?>
 <?import cn.navclub.nes4j.app.event.NodeDragEvent?>
 <?import cn.navclub.nes4j.app.control.SearchTextField?>
@@ -13,67 +12,71 @@
 <?import javafx.scene.control.MenuItem?>
 
 <?import cn.navclub.nes4j.app.control.LoadingPane?>
-<BorderPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml" stylesheets="@../css/GameHallStyle.css">
+<?import javafx.scene.control.TreeView?>
+<?import javafx.scene.control.TreeItem?>
+<?import javafx.scene.control.SplitPane?>
+<SplitPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml" stylesheets="@../css/GameHallStyle.css" dividerPositions=".1">
     <fx:define>
         <FlowPane styleClass="flow-pane" fx:id="flowPane"/>
     </fx:define>
-    <left>
-        <VBox styleClass="left-box">
-            <HBox styleClass="x-box" NodeDragEvent.bind="" prefHeight="${navbar.height}">
-                <Circle radius="8" fill="#c18b16" onMouseClicked="#iconified"/>
-                <Circle radius="8" fill="#59c837"/>
-                <Circle radius="8" fill="red" onMouseClicked="#exit"/>
-            </HBox>
-            <ListView styleClass="assort" fx:id="listView" VBox.vgrow="ALWAYS">
-                <contextMenu>
-                    <ContextMenu>
-                        <items>
-                            <MenuItem text="%nes4j.new" onAction="#createResource"/>
-                            <MenuItem text="%nes4j.delete"/>
-                        </items>
-                    </ContextMenu>
-                </contextMenu>
-            </ListView>
-        </VBox>
-    </left>
-    <center>
-        <VBox styleClass="content">
-            <HBox fx:id="navbar" styleClass="navbar" NodeDragEvent.bind="">
-                <HBox styleClass="left-box">
-                    <SearchTextField/>
-                </HBox>
-                <HBox HBox.hgrow="ALWAYS" styleClass="right-box">
-                    <Button text="%nes4j.donate">
-                        <graphic>
-                            <Label styleClass="prefix,donate"/>
-                        </graphic>
-                    </Button>
-                    <Button text="%nes4j.setting">
-                        <graphic>
-                            <Label styleClass="prefix,setting"/>
-                        </graphic>
-                    </Button>
-                    <Button text="%nes4j.help">
-                        <graphic>
-                            <Label styleClass="prefix,help"/>
-                        </graphic>
-                    </Button>
-                    <Button onAction="#github" text="%nes4j.repository">
-                        <graphic>
-                            <Label styleClass="prefix,github"/>
-                        </graphic>
-                    </Button>
-                </HBox>
-            </HBox>
-            <LoadingPane VBox.vgrow="ALWAYS" fx:id="loadingPane" text="%nes4j.loading">
-                <node>
-                    <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
-                        <fx:reference source="flowPane"/>
-                    </ScrollPane>
-                </node>
-            </LoadingPane>
-        </VBox>
-    </center>
+    <VBox styleClass="left-box">
+        <HBox styleClass="x-box" NodeDragEvent.bind="" prefHeight="${navbar.height}">
+            <Circle radius="8" fill="#c18b16" onMouseClicked="#iconified"/>
+            <Circle radius="8" fill="#59c837"/>
+            <Circle radius="8" fill="red" onMouseClicked="#exit"/>
+        </HBox>
+        <TreeView styleClass="assort" fx:id="treeView" VBox.vgrow="ALWAYS" showRoot="false">
+            <contextMenu>
+                <ContextMenu>
+                    <items>
+                        <MenuItem text="%nes4j.new" onAction="#mkdirs"/>
+                        <MenuItem text="%nes4j.delete"/>
+                    </items>
+                </ContextMenu>
+            </contextMenu>
+            <TreeItem value="nes4j" fx:id="rootItem">
+                <graphic>
+                    <Label styleClass="tree-view-root"/>
+                </graphic>
+            </TreeItem>
+        </TreeView>
+    </VBox>
 
-</BorderPane>
+    <VBox styleClass="content">
+        <HBox fx:id="navbar" styleClass="navbar" NodeDragEvent.bind="">
+            <HBox styleClass="left-box">
+                <SearchTextField/>
+            </HBox>
+            <HBox HBox.hgrow="ALWAYS" styleClass="right-box">
+                <Button text="%nes4j.donate">
+                    <graphic>
+                        <Label styleClass="prefix,donate"/>
+                    </graphic>
+                </Button>
+                <Button text="%nes4j.setting">
+                    <graphic>
+                        <Label styleClass="prefix,setting"/>
+                    </graphic>
+                </Button>
+                <Button text="%nes4j.help">
+                    <graphic>
+                        <Label styleClass="prefix,help"/>
+                    </graphic>
+                </Button>
+                <Button onAction="#github" text="%nes4j.repository">
+                    <graphic>
+                        <Label styleClass="prefix,github"/>
+                    </graphic>
+                </Button>
+            </HBox>
+        </HBox>
+        <LoadingPane VBox.vgrow="ALWAYS" fx:id="loadingPane" text="%nes4j.loading">
+            <node>
+                <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
+                    <fx:reference source="flowPane"/>
+                </ScrollPane>
+            </node>
+        </LoadingPane>
+    </VBox>
+</SplitPane>

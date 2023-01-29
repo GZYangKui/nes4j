@@ -58,7 +58,7 @@ import lombok.Setter;
  * @see LoadingService,GameHall
  */
 public class LoadingPane<T> extends StackPane {
-
+    @SuppressWarnings("all")
     private final Label label;
     private final VBox maskPane;
     private final VBox container;
@@ -84,6 +84,7 @@ public class LoadingPane<T> extends StackPane {
         transition.setDuration(Duration.millis(400));
         transition.setOnFinished(event -> this.maskPane.setVisible(false));
 
+        this.maskPane.setVisible(false);
         this.maskPane.getChildren().addAll(icon, this.label);
 
         this.getStyleClass().add("loading-pane");
@@ -136,7 +137,8 @@ public class LoadingPane<T> extends StackPane {
         }
 
         this.maskPane.setVisible(true);
-
+        //Execute prepare execute
+        this.service.preExecute();
         this.taskService = TaskService.execute(new Task<>() {
             @Override
             protected T call() {
