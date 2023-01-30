@@ -9,7 +9,7 @@
   <a href="https://gitee.com/navigatorCode/nes4j/blob/master/README.md">中文文档</a>
   </h3>
   <h3>
-  <a href="https://github.com/GZYangKui/nes4j">github repository</a>
+  <a href="https://gitee.com/navigatorcode/nes4j">gitee repository</a>
   </h3>
   <img src="https://github.com/GZYangKui/nes4j/actions/workflows/maven.yml/badge.svg" alt="Build status"/>
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="Apache 2.0"/>
