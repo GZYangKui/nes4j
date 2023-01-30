@@ -1,9 +1,3 @@
-# Nes4j
-
-![Build status](https://github.com/GZYangKui/nes4j/actions/workflows/maven.yml/badge.svg)
-![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)
-<br/>
-
 <div align="center">
   <img src="build/icon/nes4j.png" alt="Nes4j logo" width="200" height="auto" />
   <h1>Nes4j</h1>
@@ -18,6 +12,10 @@
   <a href="https://github.com/GZYangKui/nes4j">github仓库</a>
   </h3>
 </div>
+
+![Build status](https://github.com/GZYangKui/nes4j/actions/workflows/maven.yml/badge.svg)
+![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)
+<br/>
 
 ![nes4j](https://github.com/GZYangKui/nes4j-example/blob/master/video/32328_1673422550.gif?raw=true)
 
