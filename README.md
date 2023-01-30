@@ -6,7 +6,7 @@
 
 <div align="center">
   <h3>
-  <a href="https://gitee.com/navigatorCode/nes4j/blob/master/README.md">中文文档</a>
+  <a href="README_zh.md">中文文档</a>
   </h3>
   <h3>
   <a href="https://gitee.com/navigatorcode/nes4j">gitee repository</a>
