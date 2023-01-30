@@ -2,18 +2,20 @@ package cn.navclub.nes4j.app;
 
 import cn.navclub.nes4j.app.config.NESConfig;
 import cn.navclub.nes4j.app.util.JsonUtil;
+import cn.navclub.nes4j.app.util.OSUtil;
 import cn.navclub.nes4j.app.util.StrUtil;
 import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import javafx.application.Application;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Launcher {
     private static final LoggerDelegate log = LoggerFactory.logger(Launcher.class);
 
-    private static final String DEFAULT_CONFIG_PATH = "config/config.json";
+    private static final String DEFAULT_CONFIG_PATH = OSUtil.workstation() + "config.json";
 
     public static void main(String[] args) throws Exception {
         //Register global catch thread exception
@@ -27,9 +29,9 @@ public class Launcher {
 
 
     /**
-     * 加载本地配置文件
+     * Load test environment config
      *
-     * @param args 程序启动参数
+     * @param args Program args
      */
     protected static NESConfig loadLocalConfig(String[] args) throws Exception {
         var map = StrUtil.args2Map(args);

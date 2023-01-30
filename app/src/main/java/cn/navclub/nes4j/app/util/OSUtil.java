@@ -38,27 +38,37 @@ public class OSUtil {
         return String.format("%s%s", path, subdir);
     }
 
-    public static Path workstation() {
-        var file = new File(userHome("nes4j"));
+    public static String workstation() {
+        return workstation(null);
+    }
+
+    public static String workstation(String subdir) {
+        final File file;
+        if (StrUtil.isNotBlank(subdir)) {
+            file = new File(String.format("%s%s%s", userHome("nes4j"), File.separator, subdir));
+        } else {
+            file = new File(userHome("nes4j"));
+        }
         if (!file.exists()) {
-            var ok = file.mkdir();
+            var ok = file.mkdirs();
             if (!ok) {
                 log.warning("Create work path:{} fail.", file.getAbsolutePath());
             }
         }
-        return file.toPath();
+        return file.getAbsolutePath() + File.separator;
     }
 
     public static Optional<File> mkdirAssort(String assort) {
-        var path = workstation();
-        var str = String.format("%s%s%s", path, File.separator, assort);
+        var path = workstation("rom");
+        var str = String.format("%s%s", path, assort);
         var file = new File(str);
         var ok = file.mkdir();
         if (log.isDebugEnabled()) {
             if (!ok) {
                 file = null;
             }
-            log.debug("Create target assort:{} result:{}", assort, ok);
+            assert file != null;
+            log.debug("Create target assort:{} result:{}", file.getAbsolutePath(), ok);
         }
         return Optional.ofNullable(file);
     }

@@ -1,12 +1,27 @@
-# nes4j
+<div align="center">
+  <img src="build/icon/nes4j.png" alt="Nes4j logo" width="200" height="auto" />
+  <h1>Nes4j</h1>
+  <p>Nintendo red and white simulator</p>
+</div>
 
-![Build status](https://github.com/GZYangKui/nes4j/actions/workflows/maven.yml/badge.svg)
-![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)
+<div align="center">
+  <h3>
+  <a href="https://gitee.com/navigatorCode/nes4j/blob/master/README.md">English Document</a>
+  </h3>
+  <h3>
+  <a href="https://github.com/GZYangKui/nes4j">github repository</a>
+  </h3>
+  <img src="https://github.com/GZYangKui/nes4j/actions/workflows/maven.yml/badge.svg" alt="Build status"/>
+  <img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="Apache 2.0"/>
+  <img src="https://img.shields.io/badge/I18n-Support-orange.svg" alt="I18n support"/>
 <br/>
+</div>
 
-![nes4j](https://github.com/GZYangKui/nes4j-example/blob/master/video/32328_1673422550.gif?raw=true)
 
 
+![nes4j](SNAPSHOTS/Main.png)
+![DuckTables](SNAPSHOTS/DuckTables.png)
+![Super Mario](SNAPSHOTS/Super%20Mario.png)
 ## Project introduction
 
 **nes4j**The Nintendo Red and White Machine Simulator is implemented in Java language, mainly

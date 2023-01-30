@@ -64,7 +64,7 @@
                         <Label styleClass="prefix,help"/>
                     </graphic>
                 </Button>
-                <Button onAction="#github" text="%nes4j.repository">
+                <Button onAction="#repository" text="%nes4j.repository">
                     <graphic>
                         <Label styleClass="prefix,github"/>
                     </graphic>

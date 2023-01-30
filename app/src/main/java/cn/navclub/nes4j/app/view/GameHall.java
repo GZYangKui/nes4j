@@ -71,7 +71,7 @@ public class GameHall {
             @Override
             @SuppressWarnings("all")
             public List<File> execute(Object... params) {
-                var path = Path.of(OSUtil.workstation().toString(), params[0].toString());
+                var path = Path.of(OSUtil.workstation("rom"), params[0].toString());
                 var file = path.toFile();
                 if (!file.exists() || file.listFiles() == null) {
                     return List.of();
@@ -126,7 +126,7 @@ public class GameHall {
     }
 
     private void loadAssort() {
-        var file = OSUtil.workstation().toFile();
+        var file = new File(OSUtil.workstation("rom"));
         var list = file.listFiles();
         if (list == null) {
             return;
@@ -144,7 +144,7 @@ public class GameHall {
      * otherwise visit <a href="https://github.com">github</a>.</p>
      */
     @FXML
-    public void github() {
+    public void repository() {
         final String uri;
         var tid = TimeZone.getDefault().getID();
         if (tid.toLowerCase().contains("shanghai")) {
