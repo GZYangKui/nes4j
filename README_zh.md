@@ -10,7 +10,14 @@
   <p>任天堂红白机模拟器</p>
 </div>
 
-
+<div align="center">
+  <h3>
+  <a href="https://gitee.com/navigatorCode/nes4j/blob/master/README.md">English Document</a>
+  </h3>
+  <h3>
+  <a href="https://github.com/GZYangKui/nes4j">github仓库</a>
+  </h3>
+</div>
 
 ![nes4j](https://github.com/GZYangKui/nes4j-example/blob/master/video/32328_1673422550.gif?raw=true)
 
