@@ -1,0 +1,9 @@
+@import "Common.css";
+
+.text-popup {
+    -fx-padding: 2em 3em;
+    -fx-alignment: CENTER;
+    -fx-border-radius: .5em;
+    -fx-background-radius: .5em;
+    -fx-background-color: rgba(0, 0, 0, .8);
+}

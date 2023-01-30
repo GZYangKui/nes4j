@@ -16,7 +16,7 @@
     /**Game hall text color**/
     -nes4j-game-hall-text-fill: #000000;
     /**Game hall list-cell select background color**/
-    -nes4j-game-hall-list-cell-active: linear-gradient(to right, #D6E0F0, #DDE4EF, #E6EAEF, #EAEBED);
+    -nes4j-game-hall-list-cell-active: linear-gradient(to right, #b4cbf3, #c6d6ef, #cfddef, #e4e7ef);
     /**Game hall list-cell select text fill*/
     -nes4j-game-hall-list-cell-text: #5185fd;
     /**Default list view select row background color**/

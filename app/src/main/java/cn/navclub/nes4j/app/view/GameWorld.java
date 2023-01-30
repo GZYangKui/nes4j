@@ -3,6 +3,7 @@ package cn.navclub.nes4j.app.view;
 import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.INes;
 import cn.navclub.nes4j.app.audio.JavaXAudio;
+import cn.navclub.nes4j.app.control.IconPopup;
 import cn.navclub.nes4j.app.service.TaskService;
 import cn.navclub.nes4j.app.dialog.DHandle;
 import cn.navclub.nes4j.app.event.FPSTracer;
@@ -24,6 +25,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -56,16 +58,17 @@ public class GameWorld extends Stage {
     private volatile int fps;
     private Debugger debugger;
     private TaskService<Void> service;
+    private final IconPopup speedPopup;
 
     public GameWorld() {
         var scene = new Scene(FXResource.loadFXML(this));
 
         this.scale = 3;
-
         this.ctx = canvas.getGraphicsContext2D();
         this.eventQueue = new LinkedBlockingDeque<>();
 
         this.tracer = new FPSTracer(it -> this.fps = it);
+        this.speedPopup = new IconPopup(FXResource.loadImage("speed.png"));
 
         this.intBuffer = IntBuffer.allocate(this.scale * this.scale);
         this.image = new WritableImage(this.scale * Frame.width, this.scale * Frame.height);
@@ -74,7 +77,7 @@ public class GameWorld extends Stage {
         this.setHeight(600);
         this.setScene(scene);
         this.setResizable(false);
-        this.getScene().getStylesheets().add(FXResource.loadStyleSheet("common.css"));
+        this.getScene().getStylesheets().add(FXResource.loadStyleSheet("Common.css"));
 
 
         this.setOnCloseRequest(event -> this.dispose(null));
@@ -93,6 +96,15 @@ public class GameWorld extends Stage {
                         throw new RuntimeException(e);
                     }
                 }
+            }
+
+            //Change emulator speed
+            if (code == KeyCode.ADD || code == KeyCode.SUBTRACT) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Change ppu output frame action:{}", code);
+                }
+                this.instance.speed(code == KeyCode.ADD ? -1 : 1);
+                this.speedPopup.show(this);
             }
         });
     }

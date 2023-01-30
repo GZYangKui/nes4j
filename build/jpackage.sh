@@ -19,6 +19,7 @@ fi
 PROGRAM_NAME="nes4j"
 PROGRAM_ICON="icon/nes4j.png"
 MAIN_CLASS="cn.navclub.nes4j.app/cn.navclub.nes4j.app.Launcher"
-
+CMD="jpackage -n $PROGRAM_NAME -p $1 -m $MAIN_CLASS --icon $PROGRAM_ICON --license-file ../LICENSE --linux-package-name $PROGRAM_NAME --linux-app-category game"
+echo "Jpackage command:$CMD"
 # shellcheck disable=SC2091
-$(jpackage -n "$PROGRAM_NAME" -p "$1" -m "${MAIN_CLASS}" --icon "$PROGRAM_ICON" --license-file ../LICENSE --linux-package-name "$PROGRAM_NAME")
+$($CMD)

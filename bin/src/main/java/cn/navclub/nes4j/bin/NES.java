@@ -32,7 +32,6 @@ public class NES {
     private final TCallback<Frame, JoyPad, JoyPad> gameLoopCallback;
     //cpu stall cycle
     private int stall;
-    @Setter
     private int speed;
     //APU mute
     @Setter
@@ -157,13 +156,27 @@ public class NES {
     }
 
     /**
-     * 在debug模式下用于执行下一个断点所用
+     * Execute next break line
      */
     public synchronized void release() {
         if (this.thread == null) {
             return;
         }
         LockSupport.unpark(this.thread);
+    }
+
+    /**
+     * Manual change emulator speed
+     *
+     * @param span offset value
+     */
+    public int speed(int span) {
+        var temp = this.speed + span;
+        if (temp < 0) {
+            temp = 0;
+        }
+        this.speed = temp;
+        return this.speed;
     }
 
     public static class NESBuilder {
