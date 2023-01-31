@@ -111,7 +111,7 @@ public class Render implements CycleDriver {
         this.foreground = new int[256];
 
         this.spritePalette = new byte[4];
-        this.backgroundPalette = new byte[4];
+        this.backgroundPalette = new byte[3];
 
         this.sysPalette = new int[DEF_SYS_PALETTE.length][];
 
@@ -304,19 +304,18 @@ public class Render implements CycleDriver {
         var shift = x << 1 | y << 2;
         var idx = 1 + ((this.tileAttr >> shift) & 0x03) * 4;
 
-        this.backgroundPalette[0] = this.ppu.palette[0];
-        this.backgroundPalette[1] = this.ppu.palette[idx];
-        this.backgroundPalette[2] = this.ppu.palette[idx + 1];
-        this.backgroundPalette[3] = this.ppu.palette[idx + 2];
+        this.backgroundPalette[0] = this.ppu.palette[idx];
+        this.backgroundPalette[1] = this.ppu.palette[idx + 1];
+        this.backgroundPalette[2] = this.ppu.palette[idx + 2];
 
         for (int i = 0; i < 8; i++) {
             var lower = (this.leftByte >> (7 - i)) & 0x01;
             var upper = (this.rightByte >> (7 - i)) & 0x01;
             var k = (lower | upper << 1);
             var rgb = switch (k) {
-                case 1 -> sysPalette[this.backgroundPalette[1]];
-                case 2 -> sysPalette[this.backgroundPalette[2]];
-                case 3 -> sysPalette[this.backgroundPalette[3]];
+                case 1 -> sysPalette[this.backgroundPalette[0]];
+                case 2 -> sysPalette[this.backgroundPalette[1]];
+                case 3 -> sysPalette[this.backgroundPalette[2]];
                 default -> sysPalette[ppu.palette[0]];
             };
             //Negative transparent otherwise opaque
@@ -466,10 +465,6 @@ public class Render implements CycleDriver {
     private void renderPixel() {
         var x = this.cycles - 1;
         var y = this.scanline;
-
-        if (x == 0 && this.shift != 0) {
-            var str = "aaa";
-        }
 
         //Fetch background pixel
         var pixel = 0;

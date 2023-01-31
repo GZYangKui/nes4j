@@ -12,7 +12,7 @@
         <javafx.version>19</javafx.version>
     </properties>
 
-    <version>1.0.0.RELEASE</version>
+    <version>1.0.0</version>
     <artifactId>app</artifactId>
 
     <dependencies>

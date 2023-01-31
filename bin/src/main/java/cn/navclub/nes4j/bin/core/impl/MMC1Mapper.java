@@ -4,7 +4,6 @@ import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.config.NameMirror;
 import cn.navclub.nes4j.bin.core.Mapper;
 import cn.navclub.nes4j.bin.io.Cartridge;
-import cn.navclub.nes4j.bin.util.BinUtil;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 
@@ -99,12 +98,13 @@ public class MMC1Mapper extends Mapper {
                 this.calculate(internal);
             } else {
                 var value = this.control & 0x03;
-                if (value == 2) {
-                    this.context.getPpu().setMirrors(NameMirror.VERTICAL);
-                }
-                if (value == 3) {
-                    this.context.getPpu().setMirrors(NameMirror.HORIZONTAL);
-                }
+                var mirror = switch (value) {
+                    case 0 -> NameMirror.ONE_SCREEN_LOWER;
+                    case 1 -> NameMirror.ONE_SCREEN_UPPER;
+                    case 2 -> NameMirror.VERTICAL;
+                    default -> NameMirror.HORIZONTAL;
+                };
+                this.context.getPpu().setMirrors(mirror);
             }
         }
     }
@@ -135,6 +135,10 @@ public class MMC1Mapper extends Mapper {
                 System.arraycopy(this.cartridge.getRgbrom(), offset, this.rom, 0, RPG_BANK_SIZE);
             }
         } else {
+            //If cartridge no ch-rom skip calculate
+            if (this.cartridge.getChSize() == 0) {
+                return;
+            }
             var mode = (this.control >> 4) & 0x01;
             //
             // 4bit0

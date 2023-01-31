@@ -17,7 +17,71 @@ import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
 
 
 /**
- * <a href="https://www.nesdev.org/wiki/PPU_programmer_reference">PPU document</a>
+ * <h1>PPU memory map</h1>
+ * <p>
+ * The PPU addresses a 16kB space, $0000-3FFF, completely separate from the CPU's address bus. It is either directly accessed by the PPU itself, or via the CPU with memory mapped registers at $2006 and $2007.
+ * <p>
+ * The NES has 2kB of RAM dedicated to the PPU, normally mapped to the nametable address space from $2000-2FFF, but this can be rerouted through custom cartridge wiring.
+ * </p>
+ * <table border="1">
+ * <tr>
+ *     <th>Address range</th>
+ *     <th>Size</th>
+ *     <th>Description</th>
+ * </tr>
+ * <tr>
+ *     <td>$0000-$0FFF</td>
+ *     <td>$1000</td>
+ *     <td>Pattern table 0</td>
+ * </tr>
+ * <tr>
+ *     <td>$1000-$1FFF</td>
+ *     <td>$1000</td>
+ *     <td>Pattern table 1</td>
+ * </tr>
+ * <tr>
+ *     <td>$2000-$23FF</td>
+ *     <td>$0400</td>
+ *     <td>Name table 0</td>
+ * </tr>
+ * <tr>
+ *     <td>$2000-$23FF</td>
+ *     <td>$0400</td>
+ *     <td>Name table 0</td>
+ * </tr>
+ * <tr>
+ *     <td>$2400-$27FF</td>
+ *     <td>$0400</td>
+ *     <td>Name table 1</td>
+ * </tr>
+ * <tr>
+ *     <td>$2800-$2BFF</td>
+ *     <td>$0400</td>
+ *     <td>Name table 2</td>
+ * </tr>
+ * <tr>
+ *     <td>$2C00-$2FFF</td>
+ *     <td>$0400</td>
+ *     <td>Name table 3</td>
+ * </tr>
+ * <tr>
+ *     <td>$3000-$3EFF</td>
+ *     <td>$0F00</td>
+ *     <td>Mirrors of $2000-$2EFF</td>
+ * </tr>
+ * <tr>
+ *     <td>$3F00-$3F1F	</td>
+ *     <td>$0020</td>
+ *     <td>Palette RAM indexes</td>
+ * </tr>
+ * <tr>
+ *     <td>$3F20-$3FFF	</td>
+ *     <td>$00E0</td>
+ *     <td>Mirrors of $3F00-$3F1F</td>
+ * </tr>
+ * </table>
+ *
+ * <p>More PPU detail please visit:<a href="https://www.nesdev.org/wiki/PPU_programmer_reference">PPU document</a></p>
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
@@ -33,8 +97,27 @@ public class PPU implements Component {
     protected final PPUControl ctr;
     @Getter
     protected final byte[] oam;
+    /**
+     * <h1>Color Palette</h1>
+     * <p>
+     * The NES has a colour palette containing 52 colours although there is actually room for 64.
+     * However, not all of these can be displayed at a given time. The NES uses two palettes, each
+     * with 16 entries, the image palette ($3F00-$3F0F) and the sprite palette ($3F10-$3F1F). The
+     * image palette shows the colours currently available for background tiles. The sprite palette
+     * shows the colours currently available for sprites. These palettes do not store the actual
+     * colour values but rather the index of the colour in the system palette. Since only 64 unique
+     * values are needed, bits 6 and 7 can be ignored.
+     * </p>
+     * <p>
+     * The palette entry at $3F00 is the background colour and is used for transparency. Mirroring
+     * is used so that every four bytes in the palettes is a copy of $3F00. Therefore $3F04, $3F08,
+     * $3F0C, $3F10, $3F14, $3F18 and $3F1C are just copies of $3F00 and the total number of
+     * 19
+     * colours in each palette is 13, not 16 [5]. The total number of colours onscreen at any time is
+     * therefore 25 out of 52. Both palettes are also mirrored to $3F20-$3FFF.
+     * </p>
+     */
     @Getter
-    //https://www.nesdev.org/wiki/PPU_palettes
     protected final byte[] palette;
     @Getter
     private int oamAddr;
@@ -153,7 +236,7 @@ public class PPU implements Component {
         }
 
 
-        //读取调色板数据
+        //Read palette value
         if (addr >= 0x3f00 && addr <= 0x3fff) {
             if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
                 addr = addr - 0x10;
@@ -196,7 +279,7 @@ public class PPU implements Component {
             this.vram[this.ramMirror(addr)] = b;
         }
 
-        //更新调色板数据
+        //Update palette value
         if (addr >= 0x3f00 && addr <= 0x3fff) {
             if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
                 addr = addr - 0x10;
@@ -217,23 +300,65 @@ public class PPU implements Component {
     }
 
     /**
-     * The PPU uses the current VRAM address for both reading and writing PPU memory thru $2007, and for fetching nametable data to draw the background. As it's drawing the background, it updates the address to point to the nametable data currently being drawn. Bits 10-11 hold the base address of the nametable minus $2000. Bits 12-14 are the Y offset of a scanline within a tile.
+     * <p>
+     * The PPU uses the current VRAM address for both reading and writing PPU memory thru $2007,
+     * and for fetching nametable data to draw the background. As it's drawing the background,
+     * it updates the address to point to the nametable data currently being drawn.
+     * Bits 10-11 hold the base address of the nametable minus $2000.
+     * Bits 12-14 are the Y offset of a scanline within a tile.
+     * </p>
+     *
+     * <h1>Horizontal</h1>
+     * <pre>
+     *     +---------+---------+
+     *     +    A    +    A    +
+     *     +---------+---------+
+     *     +    B    +    B    +
+     *     +---------+---------+
+     * </pre>
+     *
+     * <h1>Vertical</h1>
+     * <pre>
+     *     +---------+---------+
+     *     +    A    +    B    +
+     *     +---------+---------+
+     *     +    A    +    B    +
+     *     +---------+---------+
+     * </pre>
+     * <h1>Single-Screen</h1>
+     * <pre>
+     *     +---------+---------+
+     *     +    A    +    A    +
+     *     +---------+---------+
+     *     +    A    +    A    +
+     *     +---------+---------+
+     * </pre>
+     * <h1>4-Screen</h1>
+     * <pre>
+     *     +---------+---------+
+     *     +    A    +    B    +
+     *     +---------+---------+
+     *     +    C    +    D    +
+     *     +---------+---------+
+     * </pre>
      *
      * @param addr PPU address
      * @return Current nametable data address
      */
     private int ramMirror(int addr) {
-        var mirrorRam = addr & 0x2fff;
-        var ramIndex = mirrorRam - 0x2000;
-        var nameTable = ramIndex / 0x400;
-
-        if ((mirrors == NameMirror.VERTICAL && (nameTable == 2 || nameTable == 3)))
-            ramIndex -= 0x800;
-        else if (mirrors == NameMirror.HORIZONTAL && (nameTable == 2 || nameTable == 1))
-            ramIndex -= 0x400;
+        var idx = addr - 0x2000;
+        var nameTable = idx / 0x400;
+        if (mirrors == NameMirror.ONE_SCREEN || mirrors == NameMirror.ONE_SCREEN_UPPER)
+            idx = addr % 0x27ff;
+        else if (mirrors == NameMirror.ONE_SCREEN_LOWER)
+            idx = addr % 0x23ff;
+        else if ((mirrors == NameMirror.VERTICAL && (nameTable == 2 || nameTable == 3)))
+            idx -= 0x800;
+        else if (mirrors == NameMirror.HORIZONTAL && (nameTable == 1 || nameTable == 2))
+            idx -= 0x400;
         else if (mirrors == NameMirror.HORIZONTAL && nameTable == 3)
-            ramIndex -= 0x800;
-        return ramIndex;
+            idx -= 0x800;
+        return idx;
     }
 
     /**
