@@ -64,11 +64,10 @@ public class OSUtil {
         var file = new File(str);
         var ok = file.mkdir();
         if (log.isDebugEnabled()) {
-            if (!ok) {
-                file = null;
-            }
-            assert file != null;
             log.debug("Create target assort:{} result:{}", file.getAbsolutePath(), ok);
+        }
+        if (!ok) {
+            file = null;
         }
         return Optional.ofNullable(file);
     }
@@ -80,17 +79,17 @@ public class OSUtil {
      * @param list Wait move file list
      * @return Success move to dest file list
      */
-    public static List<File> move(File dst, List<File> list) {
+    public static List<File> copy(File dst, List<File> list) {
         var l0 = new ArrayList<File>();
         for (File file : list) {
             try {
-                var path = Files.move(file.toPath(), Path.of(dst.toString(), file.getName()), StandardCopyOption.ATOMIC_MOVE);
+                var path = Files.copy(file.toPath(), Path.of(dst.toString(), file.getName()), StandardCopyOption.COPY_ATTRIBUTES);
                 if (log.isDebugEnabled()) {
-                    log.debug("Success create target file:{}", path);
+                    log.debug("Success copy target file [{}] to [{}]", file.getAbsolutePath(), path);
                 }
                 l0.add(file);
             } catch (Exception e) {
-                log.fatal("Move file from [{}] to [{}] happen error.", e, file.toString(), dst.toString());
+                log.fatal("Copy file from [{}] to [{}] happen error.", e, file.toString(), dst.toString());
             }
         }
         return l0;

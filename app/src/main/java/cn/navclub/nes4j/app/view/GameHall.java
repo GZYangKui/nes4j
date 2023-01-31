@@ -102,7 +102,7 @@ public class GameHall {
                 if (item == null) {
                     return;
                 }
-                var list = OSUtil.move(((GTreeItem) item).getFile(), board.getFiles());
+                var list = OSUtil.copy(((GTreeItem) item).getFile(), board.getFiles());
                 if (list.size() > 0) {
                     GameHall.this.loadingPane.load(item.getValue());
                 }
