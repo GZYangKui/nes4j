@@ -29,6 +29,12 @@ public class INes extends Application {
         new GameHall(stage);
     }
 
+    @Override
+    public void stop() throws Exception {
+        //Close file context and release file lock
+        Launcher.getLockFile().close();
+    }
+
     /**
      * Register app internal event-bus
      */

@@ -4,6 +4,8 @@ module cn.navclub.nes4j.app {
     requires static lombok;
 
     requires java.desktop;
+    requires java.management;
+
     requires javafx.fxml;
     requires javafx.base;
     requires javafx.graphics;

@@ -6,8 +6,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.CopyOption;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -15,9 +15,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * System relative function utils
+ *
+ * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
+ */
 public class OSUtil {
     private static final LoggerDelegate log = LoggerFactory.logger(OSUtil.class);
+    private static final RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
 
+    /**
+     * Open file system choose file.
+     *
+     * @param owner     Owner window
+     * @param describe  file choose describe
+     * @param extension file extension
+     * @return If success choose file return {@link  Optional#of(Object)} otherwise return {@link Optional#empty()}
+     */
     public static Optional<File> chooseFile(Window owner, String describe, String... extension) {
         var chooser = new FileChooser();
         chooser.setInitialDirectory(new File(System.getProperty("user.home")));
@@ -25,11 +39,18 @@ public class OSUtil {
         return Optional.ofNullable(chooser.showOpenDialog(owner));
     }
 
-
+    /**
+     * Query current user home directory
+     *
+     * @return User home directory
+     */
     public static String userHome() {
         return System.getProperty("user.home");
     }
 
+    /**
+     * Query user home and subdir
+     */
     public static String userHome(String subdir) {
         var path = userHome();
         if (!path.endsWith(File.separator) && !(subdir.startsWith(File.separator) || subdir.startsWith("/"))) {
@@ -42,6 +63,12 @@ public class OSUtil {
         return workstation(null);
     }
 
+    /**
+     * Query current program work directory and append subdir.
+     *
+     * @return Directory absolute path
+     * @apiNote Current progress work directory is <b>User home</b> and subdir <b>nes4j</b>
+     */
     public static String workstation(String subdir) {
         final File file;
         if (StrUtil.isNotBlank(subdir)) {
@@ -58,6 +85,12 @@ public class OSUtil {
         return file.getAbsolutePath() + File.separator;
     }
 
+    /**
+     * Create game assort folder
+     *
+     * @param assort folder name
+     * @return Assort folder file context
+     */
     public static Optional<File> mkdirAssort(String assort) {
         var path = workstation("rom");
         var str = String.format("%s%s", path, assort);
@@ -73,7 +106,7 @@ public class OSUtil {
     }
 
     /**
-     * Batch move file to dst
+     * Batch copy file to dst
      *
      * @param dst  Move dest
      * @param list Wait move file list
@@ -93,5 +126,14 @@ public class OSUtil {
             }
         }
         return l0;
+    }
+
+    /**
+     * Get current program process id
+     *
+     * @return Process id
+     */
+    public static long pid() {
+        return runtimeMXBean.getPid();
     }
 }

@@ -7,17 +7,25 @@ import cn.navclub.nes4j.app.util.StrUtil;
 import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import javafx.application.Application;
+import lombok.Getter;
 
-import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Launcher {
     private static final LoggerDelegate log = LoggerFactory.logger(Launcher.class);
-
     private static final String DEFAULT_CONFIG_PATH = OSUtil.workstation() + "config.json";
 
+    @Getter
+    private static RandomAccessFile lockFile;
+
     public static void main(String[] args) throws Exception {
+        if (!checkAccess()) {
+            log.warning("Detected already exist application instance.");
+            return;
+        }
         //Register global catch thread exception
         Thread.setDefaultUncaughtExceptionHandler(
                 (t, e) -> log.fatal("Catch target thread {} un-catch exception.", e, t.getName()));
@@ -25,6 +33,23 @@ public class Launcher {
         INes.config = loadLocalConfig(args);
         //Launch application
         Application.launch(INes.class, args);
+    }
+
+    /**
+     * Usage to system file lock ensure application single instance
+     *
+     * @return If current is single instance return {@code true} otherwise {@code false}
+     * @throws IOException {@inheritDoc}
+     */
+    private static boolean checkAccess() throws IOException {
+        lockFile = new RandomAccessFile(OSUtil.workstation() + "mutex", "rw");
+        var fc = lockFile.getChannel();
+        var lock = fc.tryLock();
+        if (lock == null) {
+            return false;
+        }
+        lockFile.writeBytes(Long.toString(OSUtil.pid()));
+        return true;
     }
 
 

@@ -14,6 +14,8 @@
   <img src="https://github.com/GZYangKui/nes4j/actions/workflows/maven.yml/badge.svg" alt="Build status"/>
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="Apache 2.0"/>
   <img src="https://img.shields.io/badge/I18n-Support-orange.svg" alt="I18n support"/>
+  <img src="https://badgen.net/github/stars/GZYangKui/nes4j?icon=github&color=4ab8a1" alt="stars">
+  <img src="https://badgen.net/github/forks/GZYangKui/nes4j?icon=github&color=4ab8a1" alt="forks">
 <br/>
 </div>
 
