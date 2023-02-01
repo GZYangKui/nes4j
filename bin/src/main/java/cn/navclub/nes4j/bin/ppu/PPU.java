@@ -232,7 +232,7 @@ public class PPU implements Component {
         }
 
         if (addr >= 0x2000 && addr <= 0x2fff) {
-            this.byteBuf = this.vram[ramMirror(addr)];
+            this.byteBuf = this.vram[addrMirror(addr)];
         }
 
 
@@ -276,7 +276,7 @@ public class PPU implements Component {
         }
 
         if (addr >= 0x2000 && addr <= 0x2fff) {
-            this.vram[this.ramMirror(addr)] = b;
+            this.vram[this.addrMirror(addr)] = b;
         }
 
         //Update palette value
@@ -345,7 +345,7 @@ public class PPU implements Component {
      * @param addr PPU address
      * @return Current nametable data address
      */
-    private int ramMirror(int addr) {
+    private int addrMirror(int addr) {
         var idx = addr - 0x2000;
         var nameTable = idx / 0x400;
         if (mirrors == NameMirror.ONE_SCREEN || mirrors == NameMirror.ONE_SCREEN_UPPER)

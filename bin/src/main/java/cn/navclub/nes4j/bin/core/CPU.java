@@ -273,6 +273,10 @@ public class CPU {
         var addr = this.modeProvider.getAbsAddr(mode);
         var b = this.bus.read(addr);
         if (sbc) {
+            /* The absolute value of a negative number may be larger than the size
+             * of the corresponding positive number, so here needs `-b -1` after
+             * taking the opposite number.
+             * */
             b = int8(-b - 1);
         }
         var value = uint8(b);

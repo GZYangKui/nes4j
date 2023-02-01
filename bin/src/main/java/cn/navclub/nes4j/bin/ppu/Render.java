@@ -110,7 +110,7 @@ public class Render implements CycleDriver {
         this.background = new int[16];
         this.foreground = new int[256];
 
-        this.spritePalette = new byte[4];
+        this.spritePalette = new byte[3];
         this.backgroundPalette = new byte[3];
 
         this.sysPalette = new int[DEF_SYS_PALETTE.length][];
@@ -243,7 +243,6 @@ public class Render implements CycleDriver {
 
         var renderLine = preLine || visibleLine;
         var fetchCycle = preFetchCycle || visibleCycle;
-
 
         if (visibleLine && visibleCycle) {
             this.renderPixel();
@@ -486,7 +485,7 @@ public class Render implements CycleDriver {
                 pixel = color;
             }
         }
-
+        
         pixel |= (0xff << 24);
 
         this.frame.update(x, y, pixel);
@@ -538,13 +537,13 @@ public class Render implements CycleDriver {
                     }
                 }
 
-                this.spritePalette(attr & 0x03);
-
                 address = bank + idx * 16 + df;
 
                 var l = uint8(this.ppu.iRead(address));
                 var r = uint8(this.ppu.iRead(address + 8));
 
+                //Faster copy palette data
+                System.arraycopy(ppu.palette, 0x11 + (attr & 0x03) * 4, this.spritePalette, 0, 3);
 
                 for (int j = 0; j < 8; j++) {
                     var lower = (l >> (7 - j)) & 0x01;
@@ -557,13 +556,7 @@ public class Render implements CycleDriver {
                         continue;
                     }
 
-                    var arr = switch (lower | upper << 1) {
-                        case 1 -> this.sysPalette[this.spritePalette[1]];
-                        case 2 -> this.sysPalette[this.spritePalette[2]];
-                        case 3 -> this.sysPalette[this.spritePalette[3]];
-                        default -> throw new RuntimeException("Translate pixel should ignore.");
-                    };
-
+                    var arr = this.sysPalette[this.spritePalette[k - 1]];
 
                     var b = 0;
 
@@ -589,14 +582,5 @@ public class Render implements CycleDriver {
         if (count > 8) {
             this.ppu.status.set(PStatus.SPRITE_OVERFLOW);
         }
-    }
-
-    private void spritePalette(int idx) {
-        var offset = 0x11 + idx * 4;
-
-        this.spritePalette[0] = 0;
-        this.spritePalette[1] = ppu.palette[offset];
-        this.spritePalette[2] = ppu.palette[offset + 1];
-        this.spritePalette[3] = ppu.palette[offset + 2];
     }
 }
