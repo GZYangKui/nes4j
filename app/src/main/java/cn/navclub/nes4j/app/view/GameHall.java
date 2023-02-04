@@ -94,7 +94,7 @@ public class GameHall {
         this.treeView.getSelectionModel().selectedItemProperty()
                 .addListener((observable, oldValue, newValue) -> this.loadingPane.load(newValue.getValue()));
 
-        INes.eventBus.listener(INES_OPEN_GAME, this::requestRun);
+        INes.eventBus.listener(INES_OPEN_GAME, this::execute);
 
         DragEventHandler.register(this.flowPane, new DragEventHandler.FileDragEventService(".nes", true) {
             @Override
@@ -115,8 +115,13 @@ public class GameHall {
         this.loadAssort();
     }
 
-
-    private boolean requestRun(Message<File> message) {
+    /**
+     * Execute nes game
+     *
+     * @param message Bus message payload
+     * @return Execute result if success execute return {@code true} otherwise {@code false}
+     */
+    private boolean execute(Message<File> message) {
         var file = message.body();
         var header = new DNesHeader(message.body(), this.stage);
         var execute = header.showAndWait().orElse(false);
