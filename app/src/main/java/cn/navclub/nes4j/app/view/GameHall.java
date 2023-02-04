@@ -73,7 +73,8 @@ public class GameHall {
             public List<File> execute(Object... params) {
                 var path = Path.of(OSUtil.workstation("rom"), params[0].toString());
                 var file = path.toFile();
-                if (!file.exists() || file.listFiles() == null) {
+                //fix:When root node children wsa empty load mistake issue.
+                if (!file.exists() || file.listFiles() == null || GameHall.this.rootItem.getChildren().isEmpty()) {
                     return List.of();
                 }
                 return Arrays
@@ -155,6 +156,9 @@ public class GameHall {
         INes.eventBus.publish(EventBusAddress.OPEN_URI, uri);
     }
 
+    /**
+     * Exit javafx application instance implement by {@link Platform#exit()}.
+     */
     @FXML
     public void exit() {
         Platform.exit();
@@ -165,11 +169,14 @@ public class GameHall {
         this.stage.setIconified(true);
     }
 
+    /**
+     * Create game assort
+     */
     @FXML
     public void mkdirs() {
         final String str;
         {
-            var optional = UIUtil.textFieldDialog("nes4j.assort.name");
+            var optional = UIUtil.prompt("nes4j.assort.name");
             if (optional.isEmpty() || StrUtil.isBlank(optional.get())) {
                 return;
             }
@@ -180,5 +187,24 @@ public class GameHall {
             return;
         }
         this.rootItem.getChildren().add(new GTreeItem(optional.get()));
+    }
+
+    /**
+     * Delete game assort
+     */
+    @FXML
+    private void delete() {
+        var item = this.treeView.getSelectionModel().getSelectedItem();
+        if (item == null) {
+            return;
+        }
+        if (UIUtil.confirm(INes.localeValue("nes4j.assort.delete"))) {
+            var item0 = (GTreeItem) (item);
+            var f = item0.getFile();
+            //If delete success and remove assort
+            if (f.delete()) {
+                this.rootItem.getChildren().remove(item0);
+            }
+        }
     }
 }

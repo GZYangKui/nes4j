@@ -31,7 +31,7 @@
                 <ContextMenu>
                     <items>
                         <MenuItem text="%nes4j.new" onAction="#mkdirs"/>
-                        <MenuItem text="%nes4j.delete"/>
+                        <MenuItem text="%nes4j.delete" onAction="#delete"/>
                     </items>
                 </ContextMenu>
             </contextMenu>
