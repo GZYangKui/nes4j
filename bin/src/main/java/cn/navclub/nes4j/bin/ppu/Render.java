@@ -311,15 +311,14 @@ public class Render implements CycleDriver {
             var lower = (this.leftByte >> (7 - i)) & 0x01;
             var upper = (this.rightByte >> (7 - i)) & 0x01;
             var k = (lower | upper << 1);
-            var rgb = switch (k) {
-                case 1 -> sysPalette[this.backgroundPalette[0]];
-                case 2 -> sysPalette[this.backgroundPalette[1]];
-                case 3 -> sysPalette[this.backgroundPalette[2]];
-                default -> sysPalette[ppu.palette[0]];
+            var color = switch (k) {
+                case 1 -> this.rgbValue(this.backgroundPalette[0]);
+                case 2 -> this.rgbValue(this.backgroundPalette[1]);
+                case 3 -> this.rgbValue(this.backgroundPalette[2]);
+                default -> this.rgbValue(ppu.palette[0]);
             };
             //Negative transparent otherwise opaque
-            var value = (k == 0 ? 0x80000000 : 0);
-            value |= (rgb[0] << 16 | rgb[1] << 8 | rgb[2]);
+            var value = (k == 0 ? 0x80000000 : 0) | color;
             this.background[i + 8] = value;
         }
         this.shift = 0;
@@ -465,8 +464,8 @@ public class Render implements CycleDriver {
         var x = this.cycles - 1;
         var y = this.scanline;
 
-        //Fetch background pixel
-        var pixel = 0;
+        //Fetch background pixel,default is transparent color
+        var pixel = rgbValue(this.ppu.palette[0]);
         if (this.mask.showBackground() && this.mask.showLeftMostBackground(x)) {
             pixel = this.background[this.ppu.x + this.shift];
             this.shift = this.shift + 1;
@@ -484,11 +483,6 @@ public class Render implements CycleDriver {
             if ((value >> 30 & 0x01) == 0 || pixel < 0) {
                 pixel = color;
             }
-        }
-
-        //Disabling Background rendering by toggling $2000.3 should display the background color (in this case, dark gray) rather than black.
-        if (pixel == 0) {
-            pixel = 0x80 |  0x80 << 8 |  0x80 << 16;
         }
 
         pixel |= (0xff << 24);
@@ -561,16 +555,8 @@ public class Render implements CycleDriver {
                         continue;
                     }
 
-                    var arr = this.sysPalette[this.spritePalette[k - 1]];
+                    var b = rgbValue(this.spritePalette[k - 1]);
 
-                    var b = 0;
-
-                    //Red
-                    b |= (arr[0] << 16);
-                    //Green
-                    b |= (arr[1] << 8);
-                    //Blue
-                    b |= (arr[2]);
                     //Sprite index
                     b |= ((i & 0x3f) << 24);
                     //Prior
@@ -587,5 +573,10 @@ public class Render implements CycleDriver {
         if (count > 8) {
             this.ppu.status.set(PStatus.SPRITE_OVERFLOW);
         }
+    }
+
+    private int rgbValue(int idx) {
+        var arr = sysPalette[idx];
+        return arr[0] << 16 | arr[1] << 8 | arr[2];
     }
 }
