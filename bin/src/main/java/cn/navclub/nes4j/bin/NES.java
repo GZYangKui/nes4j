@@ -133,7 +133,7 @@ public class NES {
      * @param interrupt interrupt type
      */
     public void interrupt(CPUInterrupt interrupt) {
-        this.cpu.interrupt(interrupt);
+        this.stall += this.cpu.interrupt(interrupt);
     }
 
     public void videoOutput(Frame frame) {

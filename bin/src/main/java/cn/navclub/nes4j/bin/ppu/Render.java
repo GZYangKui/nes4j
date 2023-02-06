@@ -488,7 +488,7 @@ public class Render implements CycleDriver {
 
         //Disabling Background rendering by toggling $2000.3 should display the background color (in this case, dark gray) rather than black.
         if (pixel == 0) {
-            pixel = 96 | 96 << 8 | 96 << 16;
+            pixel = 0x80 |  0x80 << 8 |  0x80 << 16;
         }
 
         pixel |= (0xff << 24);
