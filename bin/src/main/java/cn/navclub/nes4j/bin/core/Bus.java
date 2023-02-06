@@ -161,6 +161,11 @@ public class Bus implements Component {
             for (int i = 0; i < 0x100; i++) {
                 buffer[i] = this.read(msb + i);
             }
+            //
+            // Once the STA instruction finishes, it needs to consume an additional 512 cycles (since it's performing
+            // 256 reads and 256 writes) plus another 1-2 cycles of "synchronization" within the Sprite DMA logic.
+            //
+            this.context.setStall(512+2);
             this.ppu.DMAWrite(buffer);
         }
         //Write to standard controller
