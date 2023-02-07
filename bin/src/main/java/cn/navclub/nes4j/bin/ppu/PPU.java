@@ -257,7 +257,7 @@ public class PPU implements Component {
         }
         //Read name table data
         else if (address < 0x3000) {
-            b = this.vram[(address & 0x27ff) - 0x2000];
+            b = this.vram[this.addrMirror(address)];
         }
         //unknown ppu read memory
         else {
