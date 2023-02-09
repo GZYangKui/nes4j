@@ -217,8 +217,7 @@ public class PPU implements Component {
 
     @Override
     public byte read(int address) {
-        var addr = this.v;
-
+        var addr = this.v % 0x4000;
 
         //
         // After each write to $2007, the address is incremented by either 1 or 32 as dictated by
@@ -227,24 +226,20 @@ public class PPU implements Component {
         //
         var temp = this.byteBuf;
 
-        if (addr >= 0 && addr <= 0x1fff) {
+        //Read pattern table
+        if (addr < 0x2000) {
             this.byteBuf = this.context.getMapper().readCom(addr);
         }
-
-        if (addr >= 0x2000 && addr <= 0x2fff) {
-            this.byteBuf = this.vram[addrMirror(addr)];
+        //Read name table
+        else if (addr < 0x3f00) {
+            this.byteBuf = this.vram[VRAMirror(addr)];
+        }
+        //Read palette table
+        else {
+            temp = this.palette[this.paletteMirror(addr)];
         }
 
-
-        //Read palette value
-        if (addr >= 0x3f00 && addr <= 0x3fff) {
-            if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
-                addr = addr - 0x10;
-            }
-            temp = this.palette[addr % 32];
-        }
-
-        this.v += this.ctr.VRamIncrement();
+        this.v += this.ctr.inc();
 
         return temp;
     }
@@ -256,8 +251,8 @@ public class PPU implements Component {
             b = this.context.getMapper().readCom(address);
         }
         //Read name table data
-        else if (address < 0x3000) {
-            b = this.vram[this.addrMirror(address)];
+        else if (address < 0x3f00) {
+            b = this.vram[this.VRAMirror(address)];
         }
         //unknown ppu read memory
         else {
@@ -269,25 +264,22 @@ public class PPU implements Component {
 
     @Override
     public void write(int address, byte b) {
-        var addr = this.v;
+        var addr = this.v % 0x4000;
 
-        if (addr >= 0x00 && addr <= 0x1fff) {
+        //Update pattern table
+        if (addr < 0x2000) {
             this.context.getMapper().writeCom(addr, b);
         }
-
-        if (addr >= 0x2000 && addr <= 0x2fff) {
-            this.vram[this.addrMirror(addr)] = b;
+        //Update name table
+        else if (addr < 0x3f00) {
+            this.vram[this.VRAMirror(addr)] = b;
         }
-
         //Update palette value
-        if (addr >= 0x3f00 && addr <= 0x3fff) {
-            if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
-                addr = addr - 0x10;
-            }
-            this.palette[addr % 32] = b;
+        else {
+            this.palette[this.paletteMirror(addr)] = b;
         }
 
-        this.v += this.ctr.VRamIncrement();
+        this.v += this.ctr.inc();
     }
 
     public byte readStatus() {
@@ -345,7 +337,8 @@ public class PPU implements Component {
      * @param addr PPU address
      * @return Current nametable data address
      */
-    private int addrMirror(int addr) {
+    private int VRAMirror(int addr) {
+        addr = addr & 0x2fff;
         var idx = addr - 0x2000;
         var nameTable = idx / 0x400;
         if (mirrors == NameMirror.ONE_SCREEN || mirrors == NameMirror.ONE_SCREEN_UPPER)
@@ -359,6 +352,26 @@ public class PPU implements Component {
         else if (mirrors == NameMirror.HORIZONTAL && nameTable == 3)
             idx -= 0x800;
         return idx;
+    }
+
+    /**
+     * <b>Palette memory view:</b>
+     * <pre>
+     * +****************+*******************+**********************+
+     * +  Image palette +   Sprite palette  +       Mirrors        +
+     * +****************+*******************+**********************+
+     * + 0x3F00-0x3F10  +  0x3F10-0x3F20    +      $3F00-$3F1F     +
+     * +****************+***************+***+**********************+
+     * </pre>
+     *
+     * @param addr Palette address
+     * @return Mirror after address
+     */
+    private int paletteMirror(int addr) {
+        if (addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f1c) {
+            addr = addr - 0x10;
+        }
+        return addr % 32;
     }
 
     /**

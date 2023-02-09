@@ -144,8 +144,8 @@ public class NES {
         }
     }
 
-    public void setStall(int stall) {
-        this.stall += stall;
+    public void setStall(int span) {
+        this.stall += span;
     }
 
 

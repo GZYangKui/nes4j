@@ -12,7 +12,7 @@ public enum CPUInterrupt {
     //APU
     IRQ(7, 0xfffe),
     //CPU
-    BRK(7, 0xfffe);
+    BRK(2, 0xfffe);
 
     private final int cycle;
     private final int vector;

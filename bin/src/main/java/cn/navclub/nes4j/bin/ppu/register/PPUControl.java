@@ -43,7 +43,7 @@ public class PPUControl extends Register<PControl> {
         return NameTMirror.values()[this.bits & 0x03];
     }
 
-    public int VRamIncrement() {
+    public int inc() {
         return this.contain(PControl.VRAM_INCREMENT) ? 32 : 1;
     }
 
