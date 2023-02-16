@@ -135,6 +135,7 @@ public class Render implements CycleDriver {
     public void tick() {
         this.cycles++;
 
+        //If [PPUMASK]] ($2001) with both BG and sprites disabled, rendering will be halted immediately.
         if (this.mask.enableRender()) {
             this.render();
         }
@@ -274,7 +275,14 @@ public class Render implements CycleDriver {
         // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
         //
         if (this.cycles == 257) {
-            this.spriteEval();
+            // Sprite evaluation does not happen on the pre-render scanline. Because evaluation applies to the next
+            // line's sprite rendering, no sprites will be rendered on the first scanline, and this is why there is
+            // a 1 line offset on a sprite's Y coordinate.
+            if (!preLine) {
+                this.spriteEval();
+            }else {
+                Arrays.fill(this.foreground, 0, this.foreground.length, -1);
+            }
             this.ppu.v = uint16((this.ppu.v & 0xfbe0) | (this.ppu.t & 0x041f));
         }
 
