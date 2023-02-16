@@ -2,6 +2,8 @@ package cn.navclub.nes4j.bin.ppu;
 
 import cn.navclub.nes4j.bin.core.Component;
 import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.logging.LoggerDelegate;
+import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import cn.navclub.nes4j.bin.ppu.register.PPUControl;
 import cn.navclub.nes4j.bin.ppu.register.PPUMask;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
@@ -86,6 +88,8 @@ import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class PPU implements Component {
+    private static final LoggerDelegate log = LoggerFactory.logger(PPU.class);
+
     //The data necessary for render the screen
     @Getter
     protected final byte[] vram;
@@ -235,8 +239,10 @@ public class PPU implements Component {
             this.byteBuf = this.vram[VRAMirror(addr)];
         }
         //Read palette table
-        else {
+        else if (addr < 0x3f20) {
             temp = this.palette[this.paletteMirror(addr)];
+        } else {
+            log.warning("Write:unknown ppu register address:[{}].", Integer.toHexString(address));
         }
 
         this.v += this.ctr.inc();
@@ -257,6 +263,7 @@ public class PPU implements Component {
         //unknown ppu read memory
         else {
             b = 0;
+            log.warning("Read:unknown ppu internal address:[{}]", Integer.toHexString(address));
         }
 
         return uint8(b);
@@ -275,8 +282,10 @@ public class PPU implements Component {
             this.vram[this.VRAMirror(addr)] = b;
         }
         //Update palette value
-        else {
+        else if (addr < 0x3f20) {
             this.palette[this.paletteMirror(addr)] = b;
+        } else {
+            log.warning("Write:unknown ppu register address:[{}].", Integer.toHexString(address));
         }
 
         this.v += this.ctr.inc();
@@ -405,6 +414,29 @@ public class PPU implements Component {
         this.t = uint16(this.t & 0xf3ff | (uint8(b) & 0x03) << 10);
     }
 
+    /**
+     * <p>
+     * This register is used to change the scroll position, that is, to tell the PPU which pixel of the nametable
+     * selected through PPUCTRL should be at the top left corner of the rendered screen. Typically, this register
+     * is written to during vertical blanking, so that the next frame starts rendering from the desired location,
+     * but it can also be modified during rendering in order to split the screen. Changes made to the vertical scroll
+     * during rendering will only take effect on the next frame.
+     * </p>
+     * <p>
+     * After reading PPUSTATUS to reset the address latch, write the horizontal and vertical scroll offsets here just before turning on the screen:
+     * </p>
+     * <pre>
+     * {@code
+     *  bit PPUSTATUS
+     *  ; possibly other code goes here
+     *  lda cam_position_x
+     *  sta PPUSCROLL
+     *  lda cam_position_y
+     *  sta PPUSCROLL}
+     *  </pre>
+     *
+     * @param b Scroll value
+     */
     public void ScrollWrite(byte b) {
         if (this.w == 0) {
             this.w = 1;

@@ -460,27 +460,34 @@ public class Render implements CycleDriver {
         this.ppu.v = uint16(v);
     }
 
+    @SuppressWarnings("all")
     private void renderPixel() {
         var x = this.cycles - 1;
         var y = this.scanline;
 
+        //Sprite color
+        var forground = this.foreground[x];
         //Fetch background pixel,default is transparent color
         var pixel = rgbValue(this.ppu.palette[0]);
-        if (this.mask.showBackground() && this.mask.showLeftMostBackground(x)) {
-            pixel = this.background[this.ppu.x + this.shift];
-            this.shift = this.shift + 1;
+        var background = this.background[this.ppu.x + this.shift++];
+        //Whether show sprite in position(x,y)
+        var showSprite = (forground != -1 && this.mask.showSprite() && this.mask.showLeftMostSprite(x));
+        //Whether show backage in position(x,y)
+        var showBackground = (this.mask.showBackground() && this.mask.showLeftMostBackground(x));
+
+        if (showBackground) {
+            pixel = background;
         }
 
-        var value = this.foreground[x];
         //Check sprite pixel if cover background pixel
-        if (value != -1 && this.mask.showSprite() && this.mask.showLeftMostSprite(x)) {
-            var color = value & 0xffffff;
-            var index = (value >> 24) & 0x3f;
-            if (pixel > 0 && index == 0 && x < 255) {
+        if (showSprite) {
+            var color = forground & 0xffffff;
+            var index = (forground >> 24) & 0x3f;
+            if (showBackground && pixel > 0 && index == 0 && x < 255) {
                 this.ppu.status.set(PStatus.SPRITE_ZERO_HIT);
             }
             //If sprite priority or background is transparent
-            if ((value >> 30 & 0x01) == 0 || pixel < 0) {
+            if ((forground >> 30 & 0x01) == 0 || pixel < 0) {
                 pixel = color;
             }
         }
