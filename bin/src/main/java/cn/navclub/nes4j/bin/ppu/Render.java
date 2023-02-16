@@ -101,6 +101,8 @@ public class Render implements CycleDriver {
     private int shift;
     //Record product frame counter
     private long frames;
+    //Whether odd frame
+    private boolean odd;
 
     public Render(PPU ppu) {
         this.ppu = ppu;
@@ -141,6 +143,7 @@ public class Render implements CycleDriver {
         }
 
         if (this.scanline == 241 && this.cycles == 1) {
+            this.odd = ((frames & 0x01) == 0x01);
             this.frames++;
             //Move to next scanline must reset shift
             this.shift = 0;
@@ -167,6 +170,19 @@ public class Render implements CycleDriver {
         //
         if (this.scanline == 261 && this.cycles == 1) {
             this.ppu.status.clear(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT, PStatus.SPRITE_OVERFLOW);
+            //
+            // This scanline varies in length, depending on whether an even or an odd frame is being rendered. For odd frames,
+            // the cycle at the end of the scanline is skipped (this is done internally by jumping directly from (339,261) to (0,0),
+            // replacing the idle tick at the beginning of the first visible scanline with the last tick of the last dummy nametable
+            // fetch). For even frames, the last cycle occurs normally. This is done to compensate for some shortcomings with the way
+            // the PPU physically outputs its video signal, the end result being a crisper image when the screen isn't scrolling.
+            // However, this behavior can be bypassed by keeping rendering disabled until after this scanline has passed,
+            // which results in an image that looks more like a traditionally interlaced picture.
+            //
+            if (this.odd && this.cycles == 339) {
+                this.cycles = 0;
+                this.scanline = 0;
+            }
         }
 
         if (this.cycles > 340) {
@@ -280,7 +296,7 @@ public class Render implements CycleDriver {
             // a 1 line offset on a sprite's Y coordinate.
             if (!preLine) {
                 this.spriteEval();
-            }else {
+            } else {
                 Arrays.fill(this.foreground, 0, this.foreground.length, -1);
             }
             this.ppu.v = uint16((this.ppu.v & 0xfbe0) | (this.ppu.t & 0x041f));
