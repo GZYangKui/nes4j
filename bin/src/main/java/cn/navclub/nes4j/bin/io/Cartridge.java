@@ -209,7 +209,7 @@ public class Cartridge {
 
         //UNROM 512 uses %....1..0 to indicate a 1-screen board, and %....1..1 to indicate a 4-screen board.
         if (this.mapper == NMapper.UX_ROM && mirrors == NameMirror.FOUR_SCREEN && (flag6 & 0x01) == 0) {
-            mirrors = NameMirror.ONE_SCREEN;
+            mirrors = NameMirror.ONE_SCREEN_LOWER;
         }
 
         this.mirrors = mirrors;

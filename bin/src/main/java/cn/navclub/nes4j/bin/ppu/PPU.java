@@ -90,6 +90,19 @@ import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
 public class PPU implements Component {
     private static final LoggerDelegate log = LoggerFactory.logger(PPU.class);
 
+    private static final byte[][] MIRROR_LOOK_UP = {
+            //HORIZONTAL
+            {0, 0, 1, 1},
+            //VERTICAL
+            {0, 1, 0, 1},
+            //SINGLE0
+            {0, 0, 0, 0},
+            //SINGLE1
+            {1, 1, 1, 1},
+            //FOUR SCREEN
+            {0, 1, 2, 3},
+    };
+
     //The data necessary for render the screen
     @Getter
     protected final byte[] vram;
@@ -140,6 +153,7 @@ public class PPU implements Component {
     protected byte w;
     //Fine X scroll (3 bits)
     protected byte x;
+
 
     public PPU(final NES context, byte[] ch, NameMirror mirrors) {
         this.oamAddr = 0;
@@ -347,20 +361,10 @@ public class PPU implements Component {
      * @return Current nametable data address
      */
     private int VRAMirror(int addr) {
-        addr = addr & 0x2fff;
-        var idx = addr - 0x2000;
-        var nameTable = idx / 0x400;
-        if (mirrors == NameMirror.ONE_SCREEN || mirrors == NameMirror.ONE_SCREEN_UPPER)
-            idx = addr % 0x27ff;
-        else if (mirrors == NameMirror.ONE_SCREEN_LOWER)
-            idx = addr % 0x23ff;
-        else if ((mirrors == NameMirror.VERTICAL && (nameTable == 2 || nameTable == 3)))
-            idx -= 0x800;
-        else if (mirrors == NameMirror.HORIZONTAL && (nameTable == 1 || nameTable == 2))
-            idx -= 0x400;
-        else if (mirrors == NameMirror.HORIZONTAL && nameTable == 3)
-            idx -= 0x800;
-        return idx;
+        addr = (addr - 0x2000) % 0x1000;
+        var table = addr / 0x0400;
+        var offset = addr % 0x0400;
+        return MIRROR_LOOK_UP[this.mirrors.ordinal()][table] * 0x400 + offset;
     }
 
     /**
