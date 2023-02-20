@@ -37,11 +37,12 @@ public class CNMapper extends Mapper {
     public CNMapper(Cartridge cartridge, NES context) {
         super(cartridge, context);
         this.shifter = (cartridge.getChSize() - CHR_BANK_SIZE) / CHR_BANK_SIZE;
-        System.arraycopy(cartridge.getRgbrom(), 0, this.rom, 0, cartridge.getRgbSize());
     }
 
     @Override
-    public void writeRom(int address, byte b) {
-        System.arraycopy(cartridge.getChrom(), (b & this.shifter) * CHR_BANK_SIZE, this.com, 0, CHR_BANK_SIZE);
+    public void PRGWrite(int address, byte b) {
+        var offset = (b & shifter) * CHR_BANK_SIZE;
+        System.arraycopy(this.getChrom(), offset, 0, 0, CHR_BANK_SIZE);
     }
+
 }

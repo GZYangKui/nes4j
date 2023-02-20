@@ -161,7 +161,8 @@ public class PPU implements Component {
         this.context = context;
         this.mirrors = mirrors;
         this.oam = new byte[256];
-        this.vram = new byte[2048];
+        //From 2048 expand to 4096 prepare to support four screen
+        this.vram = new byte[4096];
         this.mask = new PPUMask();
         this.ctr = new PPUControl();
         this.status = new PPUStatus();
@@ -246,7 +247,7 @@ public class PPU implements Component {
 
         //Read pattern table
         if (addr < 0x2000) {
-            this.byteBuf = this.context.getMapper().readCom(addr);
+            this.byteBuf = this.context.getMapper().CHRead(addr);
         }
         //Read name table
         else if (addr < 0x3f00) {
@@ -268,7 +269,7 @@ public class PPU implements Component {
         final byte b;
         //Read chr-rom data
         if (address < 0x2000) {
-            b = this.context.getMapper().readCom(address);
+            b = this.context.getMapper().CHRead(address);
         }
         //Read name table data
         else if (address < 0x3f00) {
@@ -289,7 +290,7 @@ public class PPU implements Component {
 
         //Update pattern table
         if (addr < 0x2000) {
-            this.context.getMapper().writeCom(addr, b);
+            this.context.getMapper().CHWrite(addr, b);
         }
         //Update name table
         else if (addr < 0x3f00) {

@@ -93,7 +93,7 @@ public class Bus implements Component {
         }
         //Read rpg-rom data
         else if (address >= RPG_ROM && address <= RPG_ROM_END) {
-            b = this.context.getMapper().readRom(address - 0x8000);
+            b = this.context.getMapper().PRGRead(address - 0x8000);
         }
         //Default return 0
         else {
@@ -183,7 +183,7 @@ public class Bus implements Component {
 
         //Write to cpu memory
         else if (address >= RPG_ROM && address <= RPG_ROM_END) {
-            this.context.getMapper().writeRom(address, b);
+            this.context.getMapper().PRGWrite(address, b);
         }
 
     }

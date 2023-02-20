@@ -152,8 +152,12 @@ public class GameWorld extends Stage {
         if (this.instance != null)
             this.instance.stop();
 
-        if (t != null)
-            UIUtil.showError(t, INes.localeValue("nes4j.game.error"), null);
+        if (t != null) {
+            if (log.isDebugEnabled()) {
+                log.fatal(INes.localeValue("nes4j.game.error"), t);
+            }
+            UIUtil.showError(t, INes.localeValue("nes4j.game.error"), v -> this.close());
+        }
 
         this.tracer.stop();
 
@@ -222,7 +226,7 @@ public class GameWorld extends Stage {
             //Draw fps
             this.ctx.setStroke(Color.RED);
             this.ctx.setFont(Font.font(25));
-            this.ctx.strokeText(Integer.toString(this.fps), 10, 25);
+            this.ctx.strokeText("fps:" + Integer.toString(this.fps), 10, 25);
         });
     }
 

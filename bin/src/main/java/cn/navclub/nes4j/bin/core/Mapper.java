@@ -11,17 +11,15 @@ public abstract class Mapper {
     protected static final int CHR_BANK_SIZE = 8 * 1024;
     protected static final int RPG_BANK_SIZE = 16 * 1024;
 
-    protected final byte[] rom;
-    protected final byte[] com;
+    protected final byte[] chr;
     protected final NES context;
     protected final Cartridge cartridge;
-
 
     public Mapper(Cartridge cartridge, NES context) {
         this.context = context;
         this.cartridge = cartridge;
-        this.com = new byte[8 * 1024];
-        this.rom = new byte[RPG_BANK_SIZE * 2];
+        this.chr = new byte[CHR_BANK_SIZE];
+        System.arraycopy(cartridge.getChrom(), 0, this.chr, 0, Math.min(chrSize(), CHR_BANK_SIZE));
     }
 
     /**
@@ -30,8 +28,8 @@ public abstract class Mapper {
      * @param address Target address
      * @return rpg-rom data
      */
-    public byte readRom(int address) {
-        return this.rom[address];
+    public byte PRGRead(int address) {
+        return this.cartridge.getRgbrom()[address];
     }
 
     /**
@@ -40,7 +38,7 @@ public abstract class Mapper {
      * @param b       Write target address value
      * @param address Target address
      */
-    public void writeRom(int address, byte b) {
+    public void PRGWrite(int address, byte b) {
 
     }
 
@@ -50,8 +48,8 @@ public abstract class Mapper {
      * @param address Target memory address
      * @return Target memory address value
      */
-    public byte readCom(int address) {
-        return this.com[address];
+    public final byte CHRead(int address) {
+        return this.chr[address];
     }
 
     /**
@@ -60,8 +58,8 @@ public abstract class Mapper {
      * @param address Target address
      * @param b       Write target address value
      */
-    public void writeCom(int address, byte b) {
-        this.com[address] = b;
+    public final void CHWrite(int address, byte b) {
+        this.chr[address] = b;
     }
 
     /**
@@ -82,5 +80,21 @@ public abstract class Mapper {
      */
     public void reset() {
 
+    }
+
+    public final int prgSize() {
+        return this.cartridge.getRgbSize();
+    }
+
+    public final int chrSize() {
+        return this.cartridge.getChSize();
+    }
+
+    public final byte[] getRgbrom() {
+        return this.cartridge.getRgbrom();
+    }
+
+    public final byte[] getChrom() {
+        return this.cartridge.getChrom();
     }
 }
