@@ -42,7 +42,7 @@ public class CNMapper extends Mapper {
     @Override
     public void PRGWrite(int address, byte b) {
         var offset = (b & shifter) * CHR_BANK_SIZE;
-        System.arraycopy(this.getChrom(), offset, 0, 0, CHR_BANK_SIZE);
+        System.arraycopy(this.getChrom(), offset, this.chr, 0, CHR_BANK_SIZE);
     }
 
 }
