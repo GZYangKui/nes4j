@@ -165,6 +165,9 @@ public class MMC1Mapper extends Mapper {
      * @param idx
      */
     private void checkUpdateChr(RInternal internal, int idx) {
+        if (this.chrSize() == 0) {
+            return;
+        }
         var chrSize = CHR_BANK_SIZE / (this.chrMode + 1);
         if (internal == RInternal.CHR_BANK0) {
             if (chrSize == CHR_BANK_SIZE) {
