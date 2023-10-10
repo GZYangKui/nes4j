@@ -5,7 +5,6 @@ import cn.navclub.nes4j.bin.apu.Player;
 import cn.navclub.nes4j.bin.core.*;
 import cn.navclub.nes4j.bin.debug.Debugger;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
-import cn.navclub.nes4j.bin.eventbus.EventBus;
 import cn.navclub.nes4j.bin.function.TCallback;
 import cn.navclub.nes4j.bin.io.Cartridge;
 import cn.navclub.nes4j.bin.io.JoyPad;
@@ -40,10 +39,13 @@ public class NES {
     private long cycles;
     @Getter
     private long instructions;
+    private long lastFrameTime;
     private Debugger debugger;
     private volatile boolean stop;
     @Getter
     private final Class<? extends Player> player;
+    //Nano-time divider 60 frame
+    private final static long FRAME_TIME = 1000000000 / 60;
 
     private NES(NESBuilder builder) {
         if (builder.buffer != null) {
@@ -51,12 +53,13 @@ public class NES {
         } else {
             this.cartridge = new Cartridge(builder.file);
         }
-        this.speed = 6;
+        this.speed = 0;
         this.mute = false;
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
         this.thread = Thread.currentThread();
+        this.lastFrameTime = System.nanoTime();
         this.gameLoopCallback = builder.gameLoopCallback;
         this.mapper = this.cartridge.getMapper().newProvider(this.cartridge, this);
 
@@ -136,12 +139,19 @@ public class NES {
         this.stall += this.cpu.interrupt(interrupt);
     }
 
+
     public void videoOutput(Frame frame) {
-        LockSupport.parkNanos(this.speed * 1000000L);
-        if (this.gameLoopCallback != null) {
-            this.gameLoopCallback.accept(frame, this.joyPad, this.joyPad1);
-            frame.clear();
+        if (gameLoopCallback == null) {
+            return;
         }
+        var tmp = System.nanoTime();
+        var span = FRAME_TIME - (tmp - this.lastFrameTime);
+        if (span > 0) {
+            LockSupport.parkNanos(span);
+        }
+        this.lastFrameTime = System.nanoTime();
+        this.gameLoopCallback.accept(frame, this.joyPad, this.joyPad1);
+        frame.clear();
     }
 
     public void setStall(int span) {
