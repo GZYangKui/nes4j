@@ -218,7 +218,8 @@ public class APU implements Component {
         this.triangle.tick();
         this.frameCounter.tick();
         // 1.79 MHz / 44100 = 40
-        if ((this.cycle / 2) % 40 == 0) {
+        // this.cycle/2?
+        if (this.cycle % 40 == 0) {
             var output = this.lookupSample();
             if (this.player != null && !this.context.isMute()) {
                 this.player.output(output);
