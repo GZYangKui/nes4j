@@ -44,8 +44,6 @@ public class NES {
     private volatile boolean stop;
     @Getter
     private final Class<? extends Player> player;
-    //Nano-time divider 60 frame
-    private final static long FRAME_TIME = 1000000000 / 60;
 
     private NES(NESBuilder builder) {
         if (builder.buffer != null) {
@@ -53,7 +51,7 @@ public class NES {
         } else {
             this.cartridge = new Cartridge(builder.file);
         }
-        this.speed = 0;
+        this.speed = 60;
         this.mute = false;
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
@@ -145,11 +143,14 @@ public class NES {
             return;
         }
         var tmp = System.nanoTime();
-        var span = FRAME_TIME - (tmp - this.lastFrameTime);
+        var unit = 1000000000 / this.speed;
+        var span = unit - (tmp - this.lastFrameTime);
         if (span > 0) {
             LockSupport.parkNanos(span);
+            this.lastFrameTime = System.nanoTime();
+        } else {
+            this.lastFrameTime = tmp + span;
         }
-        this.lastFrameTime = System.nanoTime();
         this.gameLoopCallback.accept(frame, this.joyPad, this.joyPad1);
         frame.clear();
     }
