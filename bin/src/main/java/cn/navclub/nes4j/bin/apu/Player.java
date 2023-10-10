@@ -10,7 +10,7 @@ public interface Player {
      *
      * @param sample Audio sample
      */
-    void output(float sample);
+    void output(byte sample);
 
     /**
      *

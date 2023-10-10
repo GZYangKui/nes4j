@@ -156,6 +156,7 @@ public class GameWorld extends Stage {
             if (log.isDebugEnabled()) {
                 log.fatal(INes.localeValue("nes4j.game.error"), t);
             }
+            t.printStackTrace();
             UIUtil.showError(t, INes.localeValue("nes4j.game.error"), v -> this.close());
         }
 

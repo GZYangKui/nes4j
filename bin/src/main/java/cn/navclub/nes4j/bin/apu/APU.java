@@ -217,7 +217,7 @@ public class APU implements Component {
 
         this.triangle.tick();
         this.frameCounter.tick();
-
+        // 1.79 MHz / 44100 = 40
         if ((this.cycle / 2) % 40 == 0) {
             var output = this.lookupSample();
             if (this.player != null && !this.context.isMute()) {
@@ -256,7 +256,7 @@ public class APU implements Component {
      *     tnd_out = tnd_table [3 * triangle + 2 * noise + dmc]
      * </pre>
      */
-    private float lookupSample() {
+    private byte lookupSample() {
         var d0 = this.dmc.output();
         var n0 = this.noise.output();
         var p1 = this.pulse1.output();
@@ -265,7 +265,8 @@ public class APU implements Component {
 
         var seqOut = PULSE_TABLE[p2 + p1];
         var tndOut = TND_TABLE[3 * t0 + 2 * n0 + d0];
-        return tndOut + seqOut;
+        var sample = tndOut + seqOut;
+        return int8(Math.round(sample * 0xff));
     }
 
 

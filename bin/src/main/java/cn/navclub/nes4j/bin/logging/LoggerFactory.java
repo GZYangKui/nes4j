@@ -7,7 +7,7 @@ public class LoggerFactory {
 
     static {
         var str = System.getProperty("nes4j.log.level");
-        if (str == null || str.trim().equals("")) {
+        if (str == null || str.trim().isEmpty()) {
             level = Level.WARN;
         } else {
             level = Level.valueOf(str.toUpperCase());

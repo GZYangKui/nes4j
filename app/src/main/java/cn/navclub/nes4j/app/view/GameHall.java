@@ -104,7 +104,7 @@ public class GameHall {
                     return;
                 }
                 var list = OSUtil.copy(((GTreeItem) item).getFile(), board.getFiles());
-                if (list.size() > 0) {
+                if (!list.isEmpty()) {
                     GameHall.this.loadingPane.load(item.getValue());
                 }
             }
