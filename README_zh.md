@@ -78,7 +78,7 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 <dependency>
     <groupId>cn.navclub</groupId>
     <artifactId>nes4j-bin</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 </dependency>
 ```
 
