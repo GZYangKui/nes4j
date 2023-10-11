@@ -237,7 +237,11 @@ public class JavaXAudio implements Player {
 * [NES Reference Guide (Wiki)](http://wiki.nesdev.com/w/index.php/NES_reference_guide)
 * [6502 CPU Reference](http://www.obelisk.me.uk/6502/reference.html)
 
-## 特便感谢
+## 技术交流学习
+
+![qq](document/im_qq.jpg)
+
+## 特别感谢
 
 | 名称                                      | 描述           |
 |-----------------------------------------|--------------|
