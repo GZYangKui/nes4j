@@ -85,19 +85,19 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 + Gradle(groovy)
 
 ```groovy
-implementation group: 'cn.navclub', name: 'nes4j-bin', version: '1.0.1'
+implementation group: 'cn.navclub', name: 'nes4j-bin', version: '1.0.2'
 ```
 
 or
 
 ```groovy
-implementation 'cn.navclub:nes4j-bin:1.0.1'
+implementation 'cn.navclub:nes4j-bin:1.0.2'
 ```
 
 + Gradle(Kotlin)
 
 ```kotlin
-implementation("cn.navclub:nes4j-bin:1.0.1")
+implementation("cn.navclub:nes4j-bin:1.0.2")
 ```
 
 ### 创建NES实例并初始化
@@ -140,13 +140,6 @@ public class GameWorld {
 + JavaXAudio.java
 
 ```java
-package cn.navclub.nes4j.app.audio;
-
-import cn.navclub.nes4j.bin.apu.Player;
-
-import javax.sound.sampled.*;
-
-import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 
 @SuppressWarnings("all")
 public class JavaXAudio implements Player {
@@ -154,34 +147,74 @@ public class JavaXAudio implements Player {
     private final Line.Info info;
     private final AudioFormat format;
     private final SourceDataLine line;
-
+    private int ldx;
+    //当前填充下标
     private int index;
+    private Thread thread;
+    private volatile boolean stop;
+    private final static int SAMPLE_SIZE = 735 * 2;
+    //音频默认缓存区大小为32kb
+    private final static int DEF_BUF_SIZE = 32 * 1024;
+
+    private static final LoggerDelegate log = LoggerFactory.logger(JavaXAudio.class);
 
 
     public JavaXAudio() throws LineUnavailableException {
-        this.sample = new byte[735 * 2];
+        this.sample = new byte[DEF_BUF_SIZE];
         this.format = new AudioFormat(44100, 8, 1, false, false);
         this.info = new DataLine.Info(SourceDataLine.class, format);
         this.line = (SourceDataLine) AudioSystem.getLine(info);
 
         line.open(format);
         line.start();
+
+        CompletableFuture.runAsync((this::exec));
     }
 
-    //当APU生成一个音频样本时回调该函数
     @Override
-    public void output(float sample) {
-        var value = int8(Math.round(sample * 0xff));
-        this.sample[this.index++] = value;
-        if (this.index == this.sample.length) {
-            this.index = 0;
-            this.line.write(this.sample, 0, this.sample.length);
+    public synchronized void output(byte sample) {
+        this.sample[this.index++] = sample;
+        if (this.lcalculate() > SAMPLE_SIZE && thread != null) {
+            LockSupport.unpark(this.thread);
+        }
+        index = index % DEF_BUF_SIZE;
+    }
+
+
+    private void exec() {
+        var arr = new byte[DEF_BUF_SIZE];
+        this.thread = Thread.currentThread();
+        while (!this.stop) {
+            LockSupport.park();
+            final int length;
+            synchronized (this) {
+                length = lcalculate();
+                if ((length + ldx > DEF_BUF_SIZE)) {
+                    var tmp = DEF_BUF_SIZE - this.ldx;
+                    System.arraycopy(this.sample, this.ldx, arr, 0, tmp);
+                    System.arraycopy(this.sample, 0, arr, tmp, this.index);
+                } else {
+                    System.arraycopy(this.sample, this.ldx, arr, 0, length);
+                }
+                this.ldx = this.index;
+            }
+            this.line.write(arr, 0, length);
         }
     }
 
-    //When Nes instance stop or error occurred call this function
+    private int lcalculate() {
+        var len = this.index - this.ldx;
+        if (len > 0) {
+            return len;
+        }
+        return DEF_BUF_SIZE - ldx + index;
+    }
+
+
     @Override
     public void stop() {
+        this.stop = true;
+        LockSupport.unpark(this.thread);
         this.line.close();
     }
 }

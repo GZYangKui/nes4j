@@ -20,7 +20,7 @@ public class JavaXAudio implements Player {
     private final AudioFormat format;
     private final SourceDataLine line;
     private int ldx;
-    //数据当前位置
+    //Current fill index
     private int index;
     private Thread thread;
     private volatile boolean stop;
