@@ -5,25 +5,28 @@
 <?import javafx.scene.canvas.Canvas?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            prefHeight="600" prefWidth="900.0">
+            stylesheets="@../css/GameWorldStyle.css">
     <top>
-        <MenuBar fx:id="menuBar">
-            <Menu text="%nes4j.view">
-                <MenuItem text="%nes4j.pplay"/>
-                <MenuItem text="%nes4j.reset" onAction="#reset"/>
-                <MenuItem text="%nes4j.palette"/>
-            </Menu>
-            <Menu text="%nes4j.options">
-                <MenuItem text="%nes4j.handle" onAction="#handle"/>
-            </Menu>
-            <Menu text="%nes4j.tool">
-                <MenuItem text="%nes4j.debug" onAction="#debugger"/>
-            </Menu>
-        </MenuBar>
+        <StackPane fx:id="stackPane">
+            <MenuBar StackPane.alignment="CENTER">
+                <Menu text="%nes4j.view">
+                    <MenuItem text="%nes4j.pplay"/>
+                    <MenuItem text="%nes4j.reset" onAction="#reset"/>
+                    <MenuItem text="%nes4j.palette"/>
+                </Menu>
+                <Menu text="%nes4j.options">
+                    <MenuItem text="%nes4j.handle" onAction="#handle"/>
+                </Menu>
+                <Menu text="%nes4j.tool">
+                    <MenuItem text="%nes4j.debug" onAction="#debugger"/>
+                </Menu>
+            </MenuBar>
+            <Label fx:id="fbl" styleClass="fbl" StackPane.alignment="CENTER_RIGHT"/>
+        </StackPane>
     </top>
     <center>
-        <StackPane fx:id="stackPane">
-            <Canvas fx:id="canvas" width="${stackPane.width}" height="${stackPane.height}"/>
+        <StackPane>
+            <Canvas fx:id="canvas"/>
         </StackPane>
     </center>
 </BorderPane>

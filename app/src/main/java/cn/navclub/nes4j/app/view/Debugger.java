@@ -135,7 +135,7 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
 
     @Override
     public void buffer(byte[] buffer) {
-        if (this.map.size() != 0)
+        if (!this.map.isEmpty())
             this.map.clear();
 
         var index = 0;

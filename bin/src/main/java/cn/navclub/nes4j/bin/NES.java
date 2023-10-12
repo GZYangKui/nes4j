@@ -5,7 +5,7 @@ import cn.navclub.nes4j.bin.apu.Player;
 import cn.navclub.nes4j.bin.core.*;
 import cn.navclub.nes4j.bin.debug.Debugger;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
-import cn.navclub.nes4j.bin.function.TCallback;
+import cn.navclub.nes4j.bin.function.FCallback;
 import cn.navclub.nes4j.bin.io.Cartridge;
 import cn.navclub.nes4j.bin.io.JoyPad;
 import cn.navclub.nes4j.bin.ppu.Frame;
@@ -28,7 +28,7 @@ public class NES {
     private final JoyPad joyPad;
     private final JoyPad joyPad1;
     private final Cartridge cartridge;
-    private final TCallback<Frame, JoyPad, JoyPad> gameLoopCallback;
+    private final FCallback<Frame, JoyPad, JoyPad, Long> gameLoopCallback;
     //cpu stall cycle
     private int stall;
     private int speed;
@@ -151,7 +151,7 @@ public class NES {
         } else {
             this.lastFrameTime = tmp + span;
         }
-        this.gameLoopCallback.accept(frame, this.joyPad, this.joyPad1);
+        this.gameLoopCallback.accept(frame, this.joyPad, this.joyPad1, tmp);
         frame.clear();
     }
 
@@ -194,7 +194,7 @@ public class NES {
         private File file;
         private byte[] buffer;
         private Class<? extends Player> player;
-        private TCallback<Frame, JoyPad, JoyPad> gameLoopCallback;
+        private FCallback<Frame, JoyPad, JoyPad, Long> gameLoopCallback;
 
         public NESBuilder buffer(byte[] buffer) {
             this.buffer = buffer;
@@ -216,7 +216,7 @@ public class NES {
             return this;
         }
 
-        public NESBuilder gameLoopCallback(TCallback<Frame, JoyPad, JoyPad> gameLoopCallback) {
+        public NESBuilder gameLoopCallback(FCallback<Frame, JoyPad, JoyPad, Long> gameLoopCallback) {
             this.gameLoopCallback = gameLoopCallback;
             return this;
         }

@@ -27,8 +27,7 @@ import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 import java.io.File;
@@ -38,11 +37,12 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 public class GameWorld extends Stage {
     private static final LoggerDelegate log = LoggerFactory.logger(GameWorld.class);
-
+    @FXML
+    private Label fbl;
     @FXML
     private Canvas canvas;
     @FXML
-    private MenuBar menuBar;
+    private StackPane stackPane;
 
     //Pixel scale level
     @SuppressWarnings("all")
@@ -73,15 +73,20 @@ public class GameWorld extends Stage {
         this.intBuffer = IntBuffer.allocate(this.scale * this.scale);
         this.image = new WritableImage(this.scale * Frame.width, this.scale * Frame.height);
 
-        this.setWidth(900);
-        this.setHeight(600);
+        this.canvas.setWidth(this.image.getWidth());
+        this.canvas.setHeight(this.image.getHeight());
+
+
         this.setScene(scene);
         this.setResizable(false);
-        this.getScene().getStylesheets().add(FXResource.loadStyleSheet("Common.css"));
+        this.fbl.prefHeightProperty().bind(this.fbl.heightProperty());
+        this.stackPane.heightProperty().addListener(
+                (observable, oldValue, newValue) ->
+                        this.setHeight(newValue.intValue() + this.image.getHeight())
+        );
 
 
         this.setOnCloseRequest(event -> this.dispose(null));
-
         this.getScene().addEventHandler(KeyEvent.ANY, event -> {
             var code = event.getCode();
             var eventType = event.getEventType();
@@ -153,10 +158,7 @@ public class GameWorld extends Stage {
             this.instance.stop();
 
         if (t != null) {
-            if (log.isDebugEnabled()) {
-                log.fatal(INes.localeValue("nes4j.game.error"), t);
-            }
-            t.printStackTrace();
+            log.fatal(INes.localeValue("nes4j.game.error"), t);
             UIUtil.showError(t, INes.localeValue("nes4j.game.error"), v -> this.close());
         }
 
@@ -191,7 +193,8 @@ public class GameWorld extends Stage {
         this.instance.reset();
     }
 
-    private void gameLoopCallback(Frame frame, JoyPad joyPad, JoyPad joyPad1) {
+
+    private void gameLoopCallback(Frame frame, JoyPad joyPad, JoyPad joyPad1, Long nano) {
         var w = Frame.width;
         var h = Frame.height;
 
@@ -214,20 +217,14 @@ public class GameWorld extends Stage {
 
         this.tracer.increment();
 
+
         Platform.runLater(() -> {
-
-            this.setWidth(this.image.getWidth());
-            this.setHeight(this.image.getHeight() + this.menuBar.getHeight());
-
             //Clear whole canvas
             this.ctx.clearRect(0, 0, this.canvas.getWidth(), this.canvas.getHeight());
             //Draw image
             this.ctx.drawImage(image, 0, 0);
-
             //Draw fps
-            this.ctx.setStroke(Color.RED);
-            this.ctx.setFont(Font.font(25));
-            this.ctx.strokeText("fps:" + Integer.toString(this.fps), 10, 25);
+            this.fbl.setText(String.format("fps:%d", this.fps));
         });
     }
 
