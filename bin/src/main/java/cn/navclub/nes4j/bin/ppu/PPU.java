@@ -257,7 +257,7 @@ public class PPU implements Component {
         else if (addr < 0x3f20) {
             temp = this.palette[this.paletteMirror(addr)];
         } else {
-            log.warning("Write:unknown ppu register address:[{}].", Integer.toHexString(address));
+            log.warning("Write:unknown ppu register address:[0x{}].", Integer.toHexString(address));
         }
 
         this.v += this.ctr.inc();
@@ -300,7 +300,7 @@ public class PPU implements Component {
         else if (addr < 0x3f20) {
             this.palette[this.paletteMirror(addr)] = b;
         } else {
-            log.warning("Write:unknown ppu register address:[{}].", Integer.toHexString(address));
+            log.warning("Write:unknown ppu register address:[0x{}].", Integer.toHexString(address));
         }
 
         this.v += this.ctr.inc();

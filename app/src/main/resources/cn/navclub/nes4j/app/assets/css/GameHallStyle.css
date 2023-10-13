@@ -44,13 +44,18 @@
     -fx-padding: .5em;
 }
 
-.flow-pane .game-tray:hover {
+.game-tray:hover {
     -fx-background-color: -nes4j-game-tray-hover-color;
 }
 
-.flow-pane .game-tray:hover .label {
+.game-tray:hover .label {
     -fx-text-fill: -nes4j-game-tray-hover-text-color;
 }
+
+.game-tray:hover .menu-item .label {
+    -fx-text-fill: -nes4j-game-hall-text-fill;
+}
+
 
 .assort {
     -fx-padding: 0;

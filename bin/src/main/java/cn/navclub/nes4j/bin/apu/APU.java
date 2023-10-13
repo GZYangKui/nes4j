@@ -66,7 +66,7 @@ public class APU implements Component {
         PULSE_TABLE = new float[31];
 
         for (int i = 0; i < 203; i++) {
-            if (i < 31) {
+            if (i < PULSE_TABLE.length) {
                 PULSE_TABLE[i] = (float) (95.52 / (8128.0 / i + 100));
             }
             TND_TABLE[i] = (float) (163.67 / (24329.0 / i + 100));
@@ -218,8 +218,7 @@ public class APU implements Component {
         this.triangle.tick();
         this.frameCounter.tick();
         // 1.79 MHz / 44100 = 40
-        // this.cycle/2?
-        if (this.cycle % 40 == 0) {
+        if ((this.cycle / 2) % 40 == 0) {
             var output = this.lookupSample();
             if (this.player != null && !this.context.isMute()) {
                 this.player.output(output);

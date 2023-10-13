@@ -1,11 +1,15 @@
 package cn.navclub.nes4j.bin.util;
 
+import cn.navclub.nes4j.bin.logging.LoggerDelegate;
+import cn.navclub.nes4j.bin.logging.LoggerFactory;
+
 import java.io.*;
 
 /**
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class BinUtil {
+    private static final LoggerDelegate log = LoggerFactory.logger(BinUtil.class);
 
     public static byte int8(int value) {
         return (byte) value;
@@ -82,7 +86,7 @@ public class BinUtil {
             }
             buffer.flush();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.fatal("Snapshot memory view fail.", e);
         }
     }
 }
