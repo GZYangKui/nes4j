@@ -16,7 +16,7 @@
         <junit.version>5.9.0</junit.version>
         <lombok.version>1.18.30</lombok.version>
         <logback.version>1.4.4</logback.version>
-        <jackson.version>2.14.0-rc3</jackson.version>
+        <jackson.version>2.15.2</jackson.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
     </properties>
