@@ -88,8 +88,8 @@ public class BreakLine extends HBox {
             var hexStr = "$%s%s".formatted(toHexStr(msb), toHexStr(lsb));
             text = switch (mode) {
                 case Accumulator -> "A";
-                case Absolute, ZeroPage -> hexStr;
-                case Immediate -> "$%s".formatted(toHexStr(lsb));
+                case Absolute -> hexStr;
+                case Immediate, ZeroPage -> "#$%s".formatted(toHexStr(lsb));
                 case Indirect -> "(%s)".formatted(hexStr);
                 case ZeroPage_Y -> "$%s,Y".formatted(toHexStr(lsb));
                 case Indirect_Y -> "($%s),y".formatted(toHexStr(lsb));

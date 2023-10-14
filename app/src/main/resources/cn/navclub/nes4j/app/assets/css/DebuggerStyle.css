@@ -37,6 +37,8 @@ GridPane {
 .break-line .break-label {
     -fx-pref-width: 1.5em;
     -fx-pref-height: 1.5em;
+    -fx-text-fill: #000000;
+    -fx-font-weight: bolder;
     -fx-background-color: #b8b8b8;
 }
 

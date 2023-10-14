@@ -56,7 +56,7 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
         this.setScene(scene);
         this.initOwner(owner);
         this.setResizable(false);
-        this.setTitle("Debugger View");
+        this.setTitle(INes.localeValue("nes4j.assembler.debugger"));
         this.showingProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue || this.instance == null) {
                 return;

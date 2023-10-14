@@ -236,21 +236,17 @@ public class CPU {
     }
 
     private void cmp(InstructionWrap instruction6502) {
-        final int a;
-        final Instruction instruction = instruction6502.getInstruction();
-        if (instruction == Instruction.CMP) {
-            a = this.ra;
-        } else if (instruction == Instruction.CPX) {
-            a = this.rx;
-        } else {
-            a = this.ry;
-        }
+        var val = switch (instruction6502.getInstruction()) {
+            case CMP -> this.ra;
+            case CPX -> this.rx;
+            default -> this.ry;
+        };
         var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
         var m = this.bus.ReadU8(address);
         //Set carry Flag
-        this.status.update(ICPUStatus.CARRY, a >= m);
+        this.status.update(ICPUStatus.CARRY, val >= m);
         //Update cpu status
-        this.NZUpdate(u8sbc(a, m));
+        this.NZUpdate(u8sbc(val, m));
     }
 
     private void inc(Instruction instruction, AddressMode mode) {
