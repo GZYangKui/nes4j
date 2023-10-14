@@ -1,12 +1,11 @@
 package cn.navclub.nes4j.bin.config;
 
 import cn.navclub.nes4j.bin.util.BinUtil;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
+@Data
 public class Register<T extends Enum<?>> {
-    @Getter
-    @Setter
+
     protected byte bits;
 
     public Register(byte bits) {
@@ -17,7 +16,7 @@ public class Register<T extends Enum<?>> {
     }
 
     public final void set(T instance) {
-        this.bits |= (1 << instance.ordinal());
+        this.bits |= (byte) (1 << instance.ordinal());
     }
 
     @SafeVarargs
@@ -31,7 +30,7 @@ public class Register<T extends Enum<?>> {
      * 清除某个标识位
      */
     public final void clear(T instance) {
-        this.bits &= (0xff - (int) (Math.pow(2, instance.ordinal())));
+        this.bits &= (byte) (0xff - (int) (Math.pow(2, instance.ordinal())));
     }
 
     /**
