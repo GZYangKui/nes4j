@@ -78,22 +78,23 @@ public class NES {
     }
 
     private void execute0() {
-        var tmp = this.stall;
-        if (tmp == 0) {
-            //Test line number has break point and block game loop
-            if (this.debugger != null && this.debugger.hack(this)) {
-                LockSupport.park();
-                this.lastFrameTime = System.nanoTime();
-            }
-            this.instructions++;
-            this.cycles += (tmp = this.cpu.next());
+        var cycles = 0;
+        if (this.stall > 0) {
+            this.stall--;
+            cycles = 1;
         } else {
-            this.stall -= tmp;
+            if (this.debugger != null && this.debugger.hack(this)) {
+                //lock current program process
+                LockSupport.park();
+            }
+            cycles += this.cpu.next();
+            this.instructions++;
         }
-        while ((--tmp) >= 0) {
+        for (int i = 0; i < cycles; i++) {
             this.apu.tick();
             this.ppu.tick();
         }
+        this.cycles += cycles;
     }
 
     public void setDebugger(Debugger debugger) {
@@ -180,12 +181,13 @@ public class NES {
      *
      * @param span offset value
      */
-    public void speed(int span) {
+    public int speed(int span) {
         var temp = this.speed + span;
         if (temp < 0) {
             temp = 0;
         }
         this.speed = temp;
+        return this.speed;
     }
 
     public static class NESBuilder {
