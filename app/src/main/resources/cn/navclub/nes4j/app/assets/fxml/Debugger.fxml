@@ -11,45 +11,52 @@
             xmlns:fx="http://javafx.com/fxml"
             stylesheets="@../css/DebuggerStyle.css">
     <top>
-        <HBox styleClass="top-box">
-            <Button onAction="#execute">
-                <graphic>
-                    <ImageView>
-                        <Image url="@../img/run.png"/>
-                    </ImageView>
-                </graphic>
-            </Button>
-            <Button onAction="#stepInto">
-                <graphic>
-                    <ImageView>
-                        <Image url="@../img/stepinto.png"/>
-                    </ImageView>
-                </graphic>
-            </Button>
-            <Button onAction="#stepOut">
-                <graphic>
-                    <ImageView>
-                        <Image url="@../img/stepout.png"/>
-                    </ImageView>
-                </graphic>
-            </Button>
-            <Button>
-                <graphic>
-                    <ImageView>
-                        <Image url="@../img/rrun.png"/>
-                    </ImageView>
-                </graphic>
-            </Button>
-        </HBox>
+        <MenuBar>
+            <Menu text="%nes4j.memory">
+                <MenuItem text="%nes4j.snap.vram" onAction="#handleVSnapshot"/>
+            </Menu>
+        </MenuBar>
     </top>
     <left>
         <ListView fx:id="listView"/>
     </left>
     <center>
-        <TabPane>
-            <CPUControlPane fx:id="controlPane"/>
-            <PPUControlPane fx:id="ppuControlPane"/>
-        </TabPane>
+        <VBox>
+            <HBox styleClass="top-box">
+                <Button onAction="#execute">
+                    <graphic>
+                        <ImageView>
+                            <Image url="@../img/run.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button onAction="#stepInto">
+                    <graphic>
+                        <ImageView>
+                            <Image url="@../img/stepinto.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button onAction="#stepOut">
+                    <graphic>
+                        <ImageView>
+                            <Image url="@../img/stepout.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button>
+                    <graphic>
+                        <ImageView>
+                            <Image url="@../img/rrun.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </HBox>
+            <TabPane>
+                <CPUControlPane fx:id="controlPane"/>
+                <PPUControlPane fx:id="ppuControlPane"/>
+            </TabPane>
+        </VBox>
     </center>
 
 </BorderPane>

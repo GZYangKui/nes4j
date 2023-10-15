@@ -2,24 +2,21 @@ package cn.navclub.nes4j.app.view;
 
 import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.INes;
+import cn.navclub.nes4j.app.config.EventBusAddress;
 import cn.navclub.nes4j.app.control.BreakLine;
 import cn.navclub.nes4j.app.control.CPUControlPane;
 import cn.navclub.nes4j.app.control.PPUControlPane;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.debug.OpenCode;
 import cn.navclub.nes4j.bin.debug.OpenCodeFormat;
+import cn.navclub.nes4j.bin.util.BinUtil;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
-import javafx.stage.Window;
-import javafx.util.Callback;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -159,6 +156,13 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
         } else {
             this.debuggers.put(index, null);
         }
+    }
+
+    @FXML
+    private void handleVSnapshot() {
+        var file = new File("vram.txt");
+        BinUtil.snapshot(file, 16, this.instance.getPpu().getVram(), 0);
+        INes.eventBus.publish(EventBusAddress.OPEN_URI, file.toURI().toString());
     }
 
     @Override

@@ -236,7 +236,9 @@ Do not distribute the game without permission from Nintendo If any infringement 
 to do with the software. If any infringing material is designed in the software, please send an email to
 GZYangKui@126.com Notify me to delete the corresponding infringing materials.
 
-## Development Documentation
+## Development
+
+### document
 
 If you want to write your own simulator or understand the internal structure of the simulator, the following resources
 can provide you with some basic knowledge of the simulator:
@@ -244,6 +246,16 @@ can provide you with some basic knowledge of the simulator:
 * [NES Documentation (PDF)](http://nesdev.com/NESDoc.pdf)
 * [NES Reference Guide (Wiki)](http://wiki.nesdev.com/w/index.php/NES_reference_guide)
 * [6502 CPU Reference](http://www.obelisk.me.uk/6502/reference.html)
+
+### Assembly debugging(Experimental)
+
+> Main interface -> Tool -> Debug
+
+![Assembler](SNAPSHOTS/assemblera.png)
+
+> Snapshot memory view (Memory)
+>
+![Assembler](SNAPSHOTS/MemoryView.png)
 
 ## Special thanks
 

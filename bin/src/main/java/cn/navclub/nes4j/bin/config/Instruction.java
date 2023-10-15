@@ -490,13 +490,13 @@ public enum Instruction {
      * +	+	+	-	-	+
      */
     RRA(new InstructionWrap[]{
-            InstructionWrap.create(int8(0x67), 2, 5, ZeroPage),
-            InstructionWrap.create(int8(0x77), 2, 6, ZeroPage_X),
-            InstructionWrap.create(int8(0x6f), 3, 6, Absolute),
+//            InstructionWrap.create(int8(0x67), 2, 5, ZeroPage),
+//            InstructionWrap.create(int8(0x77), 2, 6, ZeroPage_X),
+//            InstructionWrap.create(int8(0x6f), 3, 6, Absolute),
             InstructionWrap.create(int8(0x7f), 3, 7, Absolute_X),
             InstructionWrap.create(int8(0x7b), 3, 7, Absolute_Y),
             InstructionWrap.create(int8(0x63), 2, 8, Indirect_X),
-            InstructionWrap.create(int8(0x73), 2, 8, Indirect_Y),
+//            InstructionWrap.create(int8(0x73), 2, 8, Indirect_Y),
     }),
     /**
      * M AND SP -> A, X, SP
@@ -554,7 +554,7 @@ public enum Instruction {
             InstructionWrap.create(int8(0xe7), 2, 5, ZeroPage),
             InstructionWrap.create(int8(0xf7), 2, 6, ZeroPage_X),
             InstructionWrap.create(int8(0xef), 3, 6, Absolute),
-            InstructionWrap.create(int8(0xff), 3, 7, Absolute_X),
+//            InstructionWrap.create(int8(0xff), 3, 7, Absolute_X),
             InstructionWrap.create(int8(0xfb), 3, 7, Absolute_Y),
             InstructionWrap.create(int8(0xe3), 2, 8, Indirect_X),
             InstructionWrap.create(int8(0xf3), 2, 8, Indirect_Y)
@@ -602,12 +602,12 @@ public enum Instruction {
             InstructionWrap.create(int8(0xc2), 2, 2, Immediate),
             InstructionWrap.create(int8(0xe2), 2, 2, Immediate),
             InstructionWrap.create(int8(0x04), 2, 3, ZeroPage),
-            InstructionWrap.create(int8(0x44), 2, 3, ZeroPage),
-            InstructionWrap.create(int8(0x64), 2, 3, ZeroPage),
+//            InstructionWrap.create(int8(0x44), 2, 3, ZeroPage),
+//            InstructionWrap.create(int8(0x64), 2, 3, ZeroPage),
             InstructionWrap.create(int8(0x14), 2, 4, ZeroPage_X),
             InstructionWrap.create(int8(0x34), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0x54), 2, 4, ZeroPage_X),
-            InstructionWrap.create(int8(0x74), 2, 4, ZeroPage_X),
+//            InstructionWrap.create(int8(0x54), 2, 4, ZeroPage_X),
+//            InstructionWrap.create(int8(0x74), 2, 4, ZeroPage_X),
             InstructionWrap.create(int8(0xd4), 2, 4, ZeroPage_X),
             InstructionWrap.create(int8(0xf4), 2, 4, ZeroPage_X),
             InstructionWrap.create(int8(0x0c), 3, 4, Absolute),

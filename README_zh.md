@@ -229,13 +229,23 @@ public class JavaXAudio implements Player {
 目前市场上绝大部分游戏版权为[任天堂](https://www.nintendo.com/)所有,请勿在未取得任天堂授权的情况下私自分发游戏.
 如果因此引发的任何侵权行为均与本软件无关.如果本软件中设计任何侵权素材请发送邮件到GZYangKui@126.com通知我删除对应侵权素材.
 
-## 开发文档
+## 文档
 
 如果你也想编写自己的模拟器或想了解模拟器内部结构,以下资源可以给你提供一些模拟器基础知识:
 
 * [NES Documentation (PDF)](http://nesdev.com/NESDoc.pdf)
 * [NES Reference Guide (Wiki)](http://wiki.nesdev.com/w/index.php/NES_reference_guide)
 * [6502 CPU Reference](http://www.obelisk.me.uk/6502/reference.html)
+
+### 汇编调试(实验功能)
+
+> 主界面 -> 工具 -> 调试
+
+![Assembler](SNAPSHOTS/assemblera.png)
+
+> 程序内存快照 (内存)
+>
+![Assembler](SNAPSHOTS/MemoryView.png)
 
 ## 技术交流学习
 

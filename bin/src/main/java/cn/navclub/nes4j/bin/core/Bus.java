@@ -166,7 +166,7 @@ public class Bus implements Component {
             // 256 reads and 256 writes) plus another 1-2 cycles of "synchronization" within the Sprite DMA logic.
             //
             this.ppu.DMAWrite(buffer);
-            this.context.setStall(512 + (int) (this.context.getCycles() & 1 + 1));
+            this.context.setStall(512);
         }
         //Write to standard controller
         else if (address == 0x4016) {

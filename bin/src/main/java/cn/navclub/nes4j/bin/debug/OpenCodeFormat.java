@@ -45,6 +45,7 @@ public class OpenCodeFormat {
                 list.add(new OpenCode(index, instance.getInstruction(), operator));
                 i += (instance.getSize() - 1);
             } catch (Exception ignore) {
+                list.add(new OpenCode(0x8000 + i - 1, null, null));
             }
         }
         return list;

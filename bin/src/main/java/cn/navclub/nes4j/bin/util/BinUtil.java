@@ -44,6 +44,14 @@ public class BinUtil {
         return hex;
     }
 
+    public static String toHexStr(int b) {
+        var sb = new StringBuilder();
+        for (int i = 0; i < 4; i++) {
+            sb.append(toHexStr((byte) (b >> (24 - i * 8))));
+        }
+        return sb.toString();
+    }
+
     public static int uint8(int b) {
         return (b & 0xff);
     }
@@ -54,39 +62,41 @@ public class BinUtil {
     }
 
     /**
-     * {@link BinUtil#snapshot(File, int, byte[], int, int)} util method
+     * Snapshot target memory view
      */
-    public static void snapshot(String file, int row, byte[] src, int offset, int length) {
-        snapshot(new File(file), row, src, offset, length);
-    }
-
-    /**
-     * Output target byte array to target file
-     *
-     * @param file   Target output file
-     * @param row    Each row show how many hex
-     * @param src    Target byte array
-     * @param offset Target byte array offset
-     * @param length Target byte array output length
-     */
-    public static void snapshot(File file, int row, byte[] src, int offset, int length) {
+    public static void snapshot(File file, int row, byte[] src, int offset) {
+        var l = src.length;
+        if (offset >= l) {
+            throw new ArrayIndexOutOfBoundsException("Out of array length.");
+        }
         try (var buffer = new BufferedWriter(new FileWriter(file))) {
-            var sb = new StringBuilder();
-            length = Math.min(offset + length, src.length);
-            for (int i = offset; i < length; i++) {
-                sb.append("0x").append(toHexStr(src[i]));
-                var j = (i - offset) + 1;
-                if ((j % row == 0) || j == length) {
-                    sb.append("\r\n");
-                    buffer.write(sb.toString());
-                    sb.delete(0, sb.length());
-                } else {
-                    sb.append(",");
+            var h = ((l - offset) / 16) + ((l - offset) % 16 != 0 ? 1 : 0);
+            var sb = new StringBuilder("|");
+            for (int i = 0; i < h; i++) {
+                var oft = (i * row + offset);
+                var tmp = l - oft;
+                var k = Math.min(tmp, row);
+                sb.delete(1, sb.length());
+                buffer.append(BinUtil.toHexStr(i * row)).append(" ");
+                for (int j = 0; j < k; j++) {
+                    var b = src[oft + j];
+                    buffer.append(BinUtil.toHexStr(src[oft + j])).append(" ");
+                    sb.append(toVisualChar(b));
                 }
+                sb.append("|");
+                buffer.append(sb);
+                buffer.append("\r\n");
             }
             buffer.flush();
         } catch (Exception e) {
             log.fatal("Snapshot memory view fail.", e);
         }
+    }
+
+    public static char toVisualChar(byte b) {
+        if (b >= 0 && b < 32 || b == 127) {
+            return '.';
+        }
+        return (char) b;
     }
 }

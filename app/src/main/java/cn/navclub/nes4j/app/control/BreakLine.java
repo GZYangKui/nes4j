@@ -59,6 +59,10 @@ public class BreakLine extends HBox {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
         this.label.setOnMouseClicked(event -> {
+            //If `UNDEFINED` instruction disable break point
+            if (this.instruct.getText().equals("UNDEFINED")) {
+                return;
+            }
             event.consume();
             view.point(this);
             this.label.setGraphic(null);
@@ -76,36 +80,41 @@ public class BreakLine extends HBox {
 
     public BreakLine(Debugger view, OpenCode openCode) {
         this(view, openCode.index());
-        var operand = openCode.operand();
-        var mode = operand.mode();
-        var lsb = operand.lsb();
-        var msb = operand.msb();
-        var value = (lsb & 0xff | (msb & 0xff) << 8);
+        if (openCode.operand() != null) {
+            var operand = openCode.operand();
+            var mode = operand.mode();
+            var lsb = operand.lsb();
+            var msb = operand.msb();
+            var value = (lsb & 0xff | (msb & 0xff) << 8);
 
-        String text = ALIAS.get(value);
+            String text = ALIAS.get(value);
 
-        if (StrUtil.isBlank(text)) {
-            var hexStr = "$%s%s".formatted(toHexStr(msb), toHexStr(lsb));
-            text = switch (mode) {
-                case Accumulator -> "A";
-                case Absolute -> hexStr;
-                case Immediate, ZeroPage -> "#$%s".formatted(toHexStr(lsb));
-                case Indirect -> "(%s)".formatted(hexStr);
-                case ZeroPage_Y -> "$%s,Y".formatted(toHexStr(lsb));
-                case Indirect_Y -> "($%s),y".formatted(toHexStr(lsb));
-                case Relative -> {
-                    var address = openCode.index() + lsb;
-                    var a = toHexStr(int8(address));
-                    var b = toHexStr(int8(address >> 8));
-                    yield "$%s%s".formatted(b, a);
-                }
-                case ZeroPage_X, Indirect_X -> "($%s,x)".formatted(toHexStr(lsb));
-                case Absolute_X, Absolute_Y -> "%s,%s".formatted(hexStr, mode == AddressMode.Absolute_X ? "x" : "y");
-                default -> "";
-            };
+            if (StrUtil.isBlank(text)) {
+                var hexStr = "$%s%s".formatted(toHexStr(msb), toHexStr(lsb));
+                text = switch (mode) {
+                    case Accumulator -> "A";
+                    case Absolute -> hexStr;
+                    case Immediate, ZeroPage -> "#$%s".formatted(toHexStr(lsb));
+                    case Indirect -> "(%s)".formatted(hexStr);
+                    case ZeroPage_Y -> "$%s,Y".formatted(toHexStr(lsb));
+                    case Indirect_Y -> "($%s),y".formatted(toHexStr(lsb));
+                    case Relative -> {
+                        var address = openCode.index() + lsb;
+                        var a = toHexStr(int8(address));
+                        var b = toHexStr(int8(address >> 8));
+                        yield "$%s%s".formatted(b, a);
+                    }
+                    case ZeroPage_X, Indirect_X -> "($%s,x)".formatted(toHexStr(lsb));
+                    case Absolute_X, Absolute_Y ->
+                            "%s,%s".formatted(hexStr, mode == AddressMode.Absolute_X ? "x" : "y");
+                    default -> "";
+                };
+            }
+            this.operator.setText(text);
+            this.instruct.setText(openCode.instruction().name());
+        } else {
+            this.instruct.setText("UNDEFINED");
         }
-        this.operator.setText(text);
-        this.instruct.setText(openCode.instruction().name());
         this.address.setText(String.format(":%s:", Integer.toHexString(openCode.index())));
     }
 
