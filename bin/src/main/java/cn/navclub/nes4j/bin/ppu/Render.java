@@ -74,7 +74,7 @@ public class Render implements CycleDriver {
     //Pattern table tile high (+8 bytes from pattern table tile low)
     private int rightByte;
 
-    private int cycles;
+    protected int cycles;
     //Record current scan line index
     protected int scanline;
 
@@ -143,8 +143,8 @@ public class Render implements CycleDriver {
         }
 
         if (this.scanline == 241 && this.cycles == 1) {
-            this.odd = ((frames & 0x01) == 0x01);
             this.frames++;
+            this.odd = ((frames & 0x01) == 0x01);
             //Move to next scanline must reset shift
             this.shift = 0;
             this.ppu.fireNMI();
@@ -168,8 +168,11 @@ public class Render implements CycleDriver {
         // which results in an image that looks more like a traditionally interlaced picture.
         // During pixels 280 through 304 of this scanline, the vertical scroll bits are reloaded if rendering is enabled.
         //
-        if (this.scanline == 261 && this.cycles == 1) {
-            this.ppu.status.clear(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT, PStatus.SPRITE_OVERFLOW);
+        var th = false;
+        if (this.scanline == 261) {
+            if (this.cycles == 1) {
+                this.ppu.status.clear(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT, PStatus.SPRITE_OVERFLOW);
+            }
             //
             // This scanline varies in length, depending on whether an even or an odd frame is being rendered. For odd frames,
             // the cycle at the end of the scanline is skipped (this is done internally by jumping directly from (339,261) to (0,0),
@@ -179,18 +182,12 @@ public class Render implements CycleDriver {
             // However, this behavior can be bypassed by keeping rendering disabled until after this scanline has passed,
             // which results in an image that looks more like a traditionally interlaced picture.
             //
-            if (this.odd && this.cycles == 339) {
-                this.cycles = 0;
-                this.scanline = 0;
-            }
+            th = this.odd && this.cycles == 339;
         }
 
-        if (this.cycles > 340) {
+        if (this.cycles > 340 || th) {
             this.cycles = 0;
-            this.scanline++;
-            if (this.scanline > 261) {
-                this.scanline = 0;
-            }
+            this.scanline = (++this.scanline) % 262;
         }
     }
 
