@@ -13,6 +13,7 @@ public class PPUControlPane extends Tab {
     private final TextField y = new TextField();
     private final TextField ctrl = new TextField();
     private final TextField mask = new TextField();
+    private final TextField cycle = new TextField();
     private final TextField status = new TextField();
     private final TextField oaddr = new TextField();
     private final TextField paddr = new TextField();
@@ -28,6 +29,7 @@ public class PPUControlPane extends Tab {
         var l5 = new Label("Scanline");
         var l6 = new Label("X Scroll");
         var l7 = new Label("Y Scroll");
+        var l8 = new Label("PPU Cycle");
 
         var gridPane = new GridPane();
 
@@ -51,6 +53,8 @@ public class PPUControlPane extends Tab {
         gridPane.add(x, 1, 3);
         gridPane.add(l7, 2, 3);
         gridPane.add(y, 3, 3);
+        gridPane.add(l8, 0, 4);
+        gridPane.add(cycle, 1, 4);
 
 
         GridPane.setHgrow(ctrl, Priority.ALWAYS);
@@ -68,6 +72,7 @@ public class PPUControlPane extends Tab {
 
         this.x.setText(Integer.toString(ppu.x()));
         this.y.setText(Integer.toString(ppu.y()));
+        this.cycle.setText(Long.toString(ppu.getCycle()));
         this.scanline.setText(Long.toString(ppu.getScanline()));
         this.paddr.setText(String.format("$%s", Integer.toHexString(ppu.getV())));
         this.oaddr.setText(String.format("$%s", BinUtil.toHexStr((byte) ppu.getOamAddr())));

@@ -102,8 +102,9 @@ public class CPUControlPane extends Tab {
         this.x.setText(Integer.toHexString(cpu.getRx()));
         this.y.setText(Integer.toHexString(cpu.getRy()));
         this.a.setText(Integer.toHexString(cpu.getRa()));
-        this.cycles.setText(Long.toString(context.getCycles()));
         this.instructions.setText(Long.toString(context.getInstructions()));
+        this.cycles.setText(String.format("%d(+%d)", context.getCycles(), context.getDcycle()));
+
         // Init cpu status flag value
         var arr = new CheckBox[]{
                 this.C,

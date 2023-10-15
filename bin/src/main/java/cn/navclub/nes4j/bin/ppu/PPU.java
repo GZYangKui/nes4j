@@ -487,4 +487,8 @@ public class PPU implements Component {
             this.context.interrupt(CPUInterrupt.NMI);
         }
     }
+
+    public long getCycle() {
+        return this.render.cycles;
+    }
 }

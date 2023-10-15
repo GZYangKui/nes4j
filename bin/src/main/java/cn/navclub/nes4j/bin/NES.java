@@ -37,6 +37,7 @@ public class NES {
     @Getter
     private boolean mute;
     private long cycles;
+    private long dcycle;
     @Getter
     private long instructions;
     private long lastFrameTime;
@@ -83,10 +84,13 @@ public class NES {
             //Test line number has break point and block game loop
             if (this.debugger != null && this.debugger.hack(this)) {
                 LockSupport.park();
+                this.dcycle = 0;
                 this.lastFrameTime = System.nanoTime();
             }
             this.instructions++;
-            this.cycles += (tmp = this.cpu.next());
+            tmp = this.cpu.next();
+            this.cycles += tmp;
+            this.dcycle += tmp;
         } else {
             this.stall -= tmp;
         }
@@ -156,6 +160,7 @@ public class NES {
 
     public void setStall(int span) {
         this.stall += span;
+        this.dcycle += span;
     }
 
 

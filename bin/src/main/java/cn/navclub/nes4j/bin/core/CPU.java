@@ -383,13 +383,14 @@ public class CPU {
                 operand = "0x" + Integer.toHexString(this.modeProvider.getAbsAddr(mode));
             }
             logger.trace(
-                    "[0x{}] A:{} X:{} Y:{} S:{} {} {}",
+                    "[0x{}] A:{} X:{} Y:{} S:{} {}({}) {}",
                     Integer.toHexString(this.pc - 1),
                     Integer.toHexString(this.ra),
                     Integer.toHexString(this.rx),
                     Integer.toHexString(this.ry),
                     this.status,
                     instruction,
+                    instruction6502.getCycle(),
                     operand
             );
         }
