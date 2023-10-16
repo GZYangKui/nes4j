@@ -123,25 +123,27 @@ public class Render implements CycleDriver {
             System.arraycopy(src, 0, dst, 0, dst.length);
             this.sysPalette[i] = dst;
         }
-
-        this.reset();
     }
 
     public void reset() {
         this.cycles = 0;
+        this.frames = 0L;
         this.scanline = 240;
         this.frame.clear();
     }
 
     @Override
     public void tick() {
-        this.cycles++;
 
         //If [PPUMASK]] ($2001) with both BG and sprites disabled, rendering will be halted immediately.
         if (this.mask.enableRender()) {
             this.render();
         }
-
+        //
+        // The VBlank flag of the PPU is set at tick 1 (the second tick) of scanline 241,
+        // where the VBlank NMI also occurs. The PPU makes no memory accesses during these scanlines,
+        // so PPU memory can be freely accessed by the program.
+        //
         if (this.scanline == 241 && this.cycles == 1) {
             this.frames++;
             this.odd = ((frames & 0x01) == 0x01);
@@ -168,9 +170,11 @@ public class Render implements CycleDriver {
         // which results in an image that looks more like a traditionally interlaced picture.
         // During pixels 280 through 304 of this scanline, the vertical scroll bits are reloaded if rendering is enabled.
         //
+
+
         var th = false;
         if (this.scanline == 261) {
-            if (this.cycles == 1) {
+            if (this.cycles == 2) {
                 this.ppu.status.clear(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT, PStatus.SPRITE_OVERFLOW);
             }
             //
@@ -182,10 +186,13 @@ public class Render implements CycleDriver {
             // However, this behavior can be bypassed by keeping rendering disabled until after this scanline has passed,
             // which results in an image that looks more like a traditionally interlaced picture.
             //
-            th = this.odd && this.cycles == 339;
+            // With rendering disabled (background and sprites disabled in PPUMASK ($2001)),
+            // each PPU frame is 341*262=89342 PPU clocks long. There is no skipped clock every other frame.
+            //
+            th = this.mask.enableRender() && (this.odd && this.cycles == 339);
         }
 
-        if (this.cycles > 340 || th) {
+        if ((++this.cycles) > 340 || th) {
             this.cycles = 0;
             this.scanline = (++this.scanline) % 262;
         }

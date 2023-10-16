@@ -153,6 +153,8 @@ public class PPU implements Component {
     protected byte w;
     //Fine X scroll (3 bits)
     protected byte x;
+    //Suppress val or nmi flag
+    private boolean suppress;
 
 
     public PPU(final NES context, byte[] ch, NameMirror mirrors) {
@@ -182,6 +184,7 @@ public class PPU implements Component {
         this.w = 0;
         this.x = 0;
         this.render.reset();
+        this.suppress = false;
         this.ctr.setBits(int8(0));
         this.mask.setBits(int8(0));
         this.status.setBits(int8(0));
@@ -312,6 +315,16 @@ public class PPU implements Component {
         this.w = 0;
         //Due to every read ppu status clear VBL so can't judge VBL whether end need use sprite zero
         this.status.clear(PStatus.V_BLANK_OCCUR);
+        //
+        // Reading $2002 within a few PPU clocks of when VBL is set results in special-case behavior.
+        // Reading one PPU clock before reads it as clear and never sets the flag or generates NMI for that frame.
+        // Reading on the same PPU clock or one later reads it as set, clears it, and suppresses the NMI for that frame.
+        // Reading two or more PPU clocks before/after it's set behaves normally (reads flag's value, clears it,
+        // and doesn't affect NMI operation). This suppression behavior is due to the $2002 read pulling the NMI
+        // line back up too quickly after it drops (NMI is active low) for the CPU to see it. (CPU inputs like NMI are sampled each clock.)
+        // On an NTSC machine, the VBL flag is cleared 6820 PPU clocks, or exactly 20 scanlines, after it is set. In other words, it's cleared at the start of the pre-render scanline. (TO DO: confirmation on PAL NES and common PAL famiclone)
+        //
+        this.suppress = this.render.scanline == 241 && this.render.cycles <= 2;
         return b;
     }
 
@@ -365,7 +378,8 @@ public class PPU implements Component {
         addr = (addr - 0x2000) % 0x1000;
         var table = addr / 0x0400;
         var offset = addr % 0x0400;
-        return MIRROR_LOOK_UP[this.mirrors.ordinal()][table] * 0x400 + offset;
+        addr = MIRROR_LOOK_UP[this.mirrors.ordinal()][table] * 0x400 + offset;
+        return addr;
     }
 
     /**
@@ -482,10 +496,13 @@ public class PPU implements Component {
      * Output one frame video sign.
      */
     protected void fireNMI() {
-        this.status.set(PStatus.V_BLANK_OCCUR);
-        if (this.ctr.generateVBlankNMI()) {
-            this.context.interrupt(CPUInterrupt.NMI);
+        if (!this.suppress) {
+            this.status.set(PStatus.V_BLANK_OCCUR);
+            if (this.ctr.generateVBlankNMI()) {
+                this.context.interrupt(CPUInterrupt.NMI);
+            }
         }
+        this.suppress = false;
     }
 
     public long getCycle() {

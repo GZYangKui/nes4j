@@ -190,9 +190,8 @@ public class GameWorld extends Stage {
         if (this.instance == null) {
             return;
         }
-        this.instance.reset();
+        this.instance.SWReset();
     }
-
 
     private void gameLoopCallback(Frame frame, JoyPad joyPad, JoyPad joyPad1, Long nano) {
         var w = Frame.width;

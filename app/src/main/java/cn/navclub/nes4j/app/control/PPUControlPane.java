@@ -29,7 +29,7 @@ public class PPUControlPane extends Tab {
         var l5 = new Label("Scanline");
         var l6 = new Label("X Scroll");
         var l7 = new Label("Y Scroll");
-        var l8 = new Label("PPU Cycle");
+        var l8 = new Label("Pixel");
 
         var gridPane = new GridPane();
 

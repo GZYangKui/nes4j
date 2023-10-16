@@ -29,6 +29,8 @@ public class NES {
     private final JoyPad joyPad1;
     private final Cartridge cartridge;
     private final FCallback<Frame, JoyPad, JoyPad, Long> gameLoopCallback;
+    @Getter
+    private long ins;
     //cpu stall cycle
     private int stall;
     private int speed;
@@ -38,11 +40,11 @@ public class NES {
     private boolean mute;
     private long cycles;
     private long dcycle;
-    @Getter
-    private long instructions;
+
     private long lastFrameTime;
     private Debugger debugger;
     private volatile boolean stop;
+    private volatile boolean reset;
     @Getter
     private final Class<? extends Player> player;
 
@@ -54,6 +56,7 @@ public class NES {
         }
         this.speed = 60;
         this.mute = false;
+        this.reset = true;
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
@@ -72,8 +75,11 @@ public class NES {
     }
 
     public void execute() {
-        this.reset();
         while (!stop) {
+            //Check if reset flag was set and execute reset logic
+            if (this.reset) {
+                this.reset();
+            }
             this.execute0();
         }
     }
@@ -87,7 +93,7 @@ public class NES {
                 this.dcycle = 0;
                 this.lastFrameTime = System.nanoTime();
             }
-            this.instructions++;
+            this.ins++;
             tmp = this.cpu.next();
             this.cycles += tmp;
             this.dcycle += tmp;
@@ -120,15 +126,21 @@ public class NES {
 
 
     /**
-     * Reset NES all core component
+     * Software reset NES all core component
      */
-    public void reset() {
-        //Reset release debug lock
-        this.release();
+    public void SWReset() {
+        this.reset = true;
+    }
+
+    private void reset() {
+        this.ins = 0;
+        this.stall = 0;
+        this.dcycle = 0;
         this.cycles = 0;
         this.apu.reset();
         this.ppu.reset();
         this.cpu.reset();
+        this.reset = false;
     }
 
     /**
