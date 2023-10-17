@@ -165,6 +165,13 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
         INes.eventBus.publish(EventBusAddress.OPEN_URI, file.toURI().toString());
     }
 
+    @FXML
+    private void handleRSnapshot() {
+        var file = new File("ram.txt");
+        //Snapshot cpu ram to 'ram.txt'
+        BinUtil.snapshot(file, 16, this.instance.getBus().getRam(), 0);
+    }
+
     @Override
     public void inject(NES instance) {
         this.instance = instance;

@@ -17,6 +17,7 @@ public class Bus implements Component {
     private static final int RPG_ROM_END = 0xFFFF;
     private static final int RAM_MIRROR_END = 0x1fff;
     private final NES context;
+    @Getter
     private final byte[] ram;
     //Player1
     private final JoyPad joyPad;

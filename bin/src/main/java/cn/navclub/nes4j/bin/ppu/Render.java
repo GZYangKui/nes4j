@@ -134,7 +134,6 @@ public class Render implements CycleDriver {
 
     @Override
     public void tick() {
-
         //If [PPUMASK]] ($2001) with both BG and sprites disabled, rendering will be halted immediately.
         if (this.mask.enableRender()) {
             this.render();
@@ -174,7 +173,7 @@ public class Render implements CycleDriver {
 
         var th = false;
         if (this.scanline == 261) {
-            if (this.cycles == 2) {
+            if (this.cycles == 1) {
                 this.ppu.status.clear(PStatus.V_BLANK_OCCUR, PStatus.SPRITE_ZERO_HIT, PStatus.SPRITE_OVERFLOW);
             }
             //
@@ -307,8 +306,7 @@ public class Render implements CycleDriver {
         }
 
         //
-        // If rendering is enabled, at the end of vblank, shortly after the horizontal bits are copied from
-        // t to v at dot 257, the PPU will repeatedly copy the vertical bits from t to v from dots 280 to 304,
+        // the PPU will repeatedly copy the vertical bits from t to v from dots 280 to 304,
         // completing the full initialization of v from t:
         //
         // v: GHIA.BC DEF..... <- t: GHIA.BC DEF.....

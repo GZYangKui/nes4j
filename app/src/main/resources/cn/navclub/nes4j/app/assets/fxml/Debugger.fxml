@@ -14,6 +14,7 @@
         <MenuBar>
             <Menu text="%nes4j.memory">
                 <MenuItem text="%nes4j.snap.vram" onAction="#handleVSnapshot"/>
+                <MenuItem text="%nes4j.snap.ram" onAction="#handleRSnapshot"/>
             </Menu>
         </MenuBar>
     </top>

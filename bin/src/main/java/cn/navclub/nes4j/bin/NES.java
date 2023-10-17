@@ -41,6 +41,7 @@ public class NES {
     private long cycles;
     private long dcycle;
 
+    private boolean loop;
     private long lastFrameTime;
     private Debugger debugger;
     private volatile boolean stop;
@@ -86,7 +87,7 @@ public class NES {
 
     private void execute0() {
         var tmp = this.stall;
-        if (tmp == 0) {
+        if (tmp == 0 || this.loop) {
             //Test line number has break point and block game loop
             if (this.debugger != null && this.debugger.hack(this)) {
                 LockSupport.park();
@@ -100,7 +101,8 @@ public class NES {
         } else {
             this.stall -= tmp;
         }
-        while ((--tmp) >= 0) {
+        this.loop = true;
+        while ((--tmp) >= 0 && loop) {
             this.apu.tick();
             this.ppu.tick();
         }
@@ -150,6 +152,7 @@ public class NES {
      */
     public void interrupt(CPUInterrupt interrupt) {
         this.stall += this.cpu.interrupt(interrupt);
+        this.loop = (interrupt != CPUInterrupt.NMI);
     }
 
 

@@ -143,8 +143,12 @@ public class PPU implements Component {
     @Setter
     private NameMirror mirrors;
     protected final NES context;
+    // The PPU uses the current VRAM address for both reading and writing PPU memory thru $2007,
+    // and for fetching nametable data to draw the background. As it's drawing the background,
+    // it updates the address to point to the nametable data currently being drawn.
+    // Bits 10-11 hold the base address of the nametable minus $2000.
+    // Bits 12-14 are the Y offset of a scanline within a tile.
     @Getter
-    //Current VRAM address (15 bits)
     protected int v;
     @Getter
     //Temporary VRAM address (15 bits); can also be thought of as the address of the top left onscreen tile.
@@ -192,7 +196,7 @@ public class PPU implements Component {
 
     @Override
     public void tick() {
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3 && context.isLoop(); i++) {
             this.render.tick();
         }
     }
@@ -324,7 +328,7 @@ public class PPU implements Component {
         // line back up too quickly after it drops (NMI is active low) for the CPU to see it. (CPU inputs like NMI are sampled each clock.)
         // On an NTSC machine, the VBL flag is cleared 6820 PPU clocks, or exactly 20 scanlines, after it is set. In other words, it's cleared at the start of the pre-render scanline. (TO DO: confirmation on PAL NES and common PAL famiclone)
         //
-        this.suppress = this.render.scanline == 241 && this.render.cycles <= 2;
+        this.suppress = this.render.scanline == 241 && this.render.cycles == 1;
         return b;
     }
 
