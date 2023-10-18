@@ -288,11 +288,7 @@ public class Render implements CycleDriver {
             this.incY();
         }
 
-        //
-        // At dot 257 of each scanline
-        // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
-        // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
-        //
+
         if (this.cycles == 257) {
             // Sprite evaluation does not happen on the pre-render scanline. Because evaluation applies to the next
             // line's sprite rendering, no sprites will be rendered on the first scanline, and this is why there is
@@ -302,6 +298,11 @@ public class Render implements CycleDriver {
             } else {
                 Arrays.fill(this.foreground, 0, this.foreground.length, -1);
             }
+            //
+            // At dot 257 of each scanline
+            // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
+            // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
+            //
             this.ppu.v = uint16((this.ppu.v & 0xfbe0) | (this.ppu.t & 0x041f));
         }
 
@@ -467,12 +468,22 @@ public class Render implements CycleDriver {
             v &= ~0x7000;
             // let y = coarse Y
             var y = (v & 0x03e0) >> 5;
+            // Row 29 is the last row of tiles in a nametable.
+            // To wrap to the next nametable when incrementing coarse Y from 29,
+            // the vertical nametable is switched by toggling bit 11, and coarse Y wraps to row 0.
             if (y == 29) {
                 // coarse Y = 0
                 y = 0;
                 // switch vertical nametable
                 v ^= 0x0800;
-            } else if (y == 31) {
+            }
+            // Coarse Y can be set out of bounds (> 29), which will cause the PPU to read the attribute
+            // data stored there as tile data. If coarse Y is incremented from 31, it will wrap to 0,
+            // but the nametable will not switch. For this reason, a write >= 240 to $2005 may appear
+            // as a "negative" scroll value, where 1 or 2 rows of attribute data will appear before the
+            // nametable's tile data is reached. (Some games use this to move the top of the nametable
+            // out of the Overscan area.)
+            else if (y == 31) {
                 // coarse Y = 0, nametable not switched
                 y = 0;
             } else {

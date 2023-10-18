@@ -196,7 +196,7 @@ public class PPU implements Component {
 
     @Override
     public void tick() {
-        for (int i = 0; i < 3 && context.isLoop(); i++) {
+        for (int i = 0; i < 3; i++) {
             this.render.tick();
         }
     }
@@ -222,6 +222,7 @@ public class PPU implements Component {
     }
 
     public void AddrWrite(byte b) {
+        //Note that while the v register has 15 bits, the PPU memory space is only 14 bits wide. The highest bit is unused for access through $2007.
         if (this.w == 0) {
             this.w = 1;
             // t: .CDEFGH ........ <- d: ..CDEFGH
@@ -463,13 +464,13 @@ public class PPU implements Component {
     public void ScrollWrite(byte b) {
         if (this.w == 0) {
             this.w = 1;
-            //t: ........ ..ABCDE <- d: ABCDE...
+            //t: ........ ..ABCDE <- d: ABCDE...(Update coarse X scroll)
             this.t = uint16(this.t & 0xffe0 | uint8(b) >> 3);
-            //x:              FGH <- d: .....FGH
+            //x:              FGH <- d: .....FGH(Update fine x scroll)
             this.x = int8(b & 0x07);
         } else {
             this.w = 0;
-            //t: FGH..AB CDE..... <- d: ABCDEFGH
+            //t: FGH..AB CDE..... <- d: ABCDEFGH(Update coarse Y scroll and fine y scroll)
             this.t = uint16(this.t & 0x8fff | (((b & 0xff) & 0x07) << 12));
             this.t = uint16(this.t & 0xfc1f | (((b & 0xff) & 0xf8) << 2));
         }

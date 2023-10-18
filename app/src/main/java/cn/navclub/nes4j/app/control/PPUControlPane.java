@@ -72,7 +72,7 @@ public class PPUControlPane extends Tab {
 
         this.x.setText(Integer.toString(ppu.x()));
         this.y.setText(Integer.toString(ppu.y()));
-        this.cycle.setText(Long.toString(ppu.getCycle()));
+        this.cycle.setText(Long.toString(ppu.getCycle() - 1));
         this.scanline.setText(Long.toString(ppu.getScanline()));
         this.paddr.setText(String.format("$%s", Integer.toHexString(ppu.getV())));
         this.oaddr.setText(String.format("$%s", BinUtil.toHexStr((byte) ppu.getOamAddr())));
