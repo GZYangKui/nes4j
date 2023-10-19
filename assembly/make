@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+function CompilerAndLink {
+    IDX=$(echo "$1" | awk -F"." '{print length($1)}')
+    FILE_NAME=$(echo "$1" | cut -c 1-$IDX)
+    OBJ_FILE="$FILE_NAME.o"
+    ca65 -o "$OBJ_FILE" "$1"
+    NES_FILE="$FILE_NAME.nes"
+    if [ -e "$NES_FILE" ]; then
+      rm -rf "$NES_FILE"
+    fi
+    ld65 -C nes.conf --obj "$OBJ_FILE" -o "$NES_FILE"
+    if [ -e "$OBJ_FILE" ]; then
+      rm -rf "$OBJ_FILE"
+    fi
+    printf "\nBuild success.\n"
+}
+
+function PrintHelper {
+    printf "\nmake [options] <asm>
+options:
+-b Release nes program
+--help Print command guide\n"
+    exit
+}
+
+OPTIONS="$1"
+if [ "$OPTIONS" = "-b" ]; then
+  SOURCE_FILE="$2"
+  if [ "$SOURCE_FILE" = "" ]; then
+      printf "\n6502 assembly source file not found.\n" >&2
+      exit
+  fi
+  CompilerAndLink "$SOURCE_FILE"
+
+elif [ "$1" = "--help" ]; then
+  PrintHelper
+else
+  printf "\nNot support Option:'%s'" "$OPTIONS"
+  PrintHelper
+fi
+
+
