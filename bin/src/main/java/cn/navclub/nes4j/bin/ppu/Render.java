@@ -212,7 +212,7 @@ public class Render implements CycleDriver {
         // During pixels 280 through 304 of this scanline, the vertical scroll bits are reloaded if rendering is enabled.
         //
         //
-        var preLine = (this.scanline == 261);
+        var preLine = this.scanline == 261;
 
         //
         // Visible scanlines (0-239)
@@ -324,10 +324,24 @@ public class Render implements CycleDriver {
         var coarseX = (this.ppu.v & 0x1f);
         var coarseY = ((this.ppu.v >> 5) & 0x1f);
 
+
         var x = (coarseX % 4) / 2;
         var y = (coarseY % 4) / 2;
 
+        /*
+         *   ,---- Top left
+         *   3 1 - Top right
+         *   2 2 - Bottom right
+         *   `---- Bottom left
+         *   The byte has color set 2 at bottom right, 2 at bottom left, 1 at top right, and 3 at top left.
+         *   Thus its attribute is calculated as follows:
+         *   value = (bottomright << 6) | (bottomleft << 4) | (topright << 2) | (topleft << 0)
+         *         = (2           << 6) | (2          << 4) | (1        << 2) | (3       << 0)
+         *         = $80                | $20               | $04             | $03
+         *         = $A7
+         */
         var shift = x << 1 | y << 2;
+        //Because first color was transparent so add 1
         var idx = 1 + ((this.tileAttr >> shift) & 0x03) * 4;
 
         this.backgroundPalette[0] = this.ppu.palette[idx];
@@ -440,6 +454,10 @@ public class Render implements CycleDriver {
             //coarse x=0
             v &= ~0x001f;
             //Switch horizontal name table
+            // 00 ^ 01 = 01   (name table 0 -> 1)
+            // 01 ^ 01 = 00   (name table 1 -> 0)
+            // 10 ^ 01 = 11   (name table 2 -> 3)
+            // 11 ^ 01 = 10   (name table 3 -> 2)
             v ^= 0x0400;
         } else {
             //Increase coarse x
@@ -475,6 +493,10 @@ public class Render implements CycleDriver {
                 // coarse Y = 0
                 y = 0;
                 // switch vertical nametable
+                // 10 ^ 10 = 00     (name table 2 -> 0)
+                // 00 ^ 10 = 10     (name table 0 -> 2)
+                // 01 ^ 10 = 11     (name table 1 -> 3)
+                // 11 ^ 10 = 01     (name table 3 -> 1)
                 v ^= 0x0800;
             }
             // Coarse Y can be set out of bounds (> 29), which will cause the PPU to read the attribute

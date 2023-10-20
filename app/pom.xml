@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
-        <javafx.version>21</javafx.version>
+        <javafx.version>21.0.1</javafx.version>
     </properties>
 
     <version>1.0.0</version>

@@ -5,8 +5,10 @@ import cn.navclub.nes4j.app.util.IOUtil;
 import cn.navclub.nes4j.app.util.JsonUtil;
 import cn.navclub.nes4j.bin.io.JoyPad;
 import javafx.scene.input.KeyCode;
+import lombok.Getter;
 import lombok.Setter;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -28,7 +30,12 @@ public class NESConfig {
      */
     @Setter
     private Path path;
-
+    /**
+     * Extra Nes file
+     */
+    @Setter
+    @Getter
+    private File extraNes;
     /**
      * Handle mapper
      */
@@ -42,5 +49,9 @@ public class NESConfig {
     public void save() {
         var text = JsonUtil.toJsonStr(this);
         IOUtil.writeStr(this.path, text);
+    }
+
+    public boolean isExtraNes() {
+        return this.extraNes != null && this.extraNes.exists();
     }
 }
