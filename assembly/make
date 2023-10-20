@@ -13,6 +13,13 @@ function CompilerAndLink {
       rm -rf "$OBJ_FILE"
     fi
     printf "\nBuild success.\n"
+    NES4J_HOME=${NES4J_HOME}
+    echo "${NES4J_HOME}"
+    if [ -e "${NES4J_HOME}" ]; then
+        printf "Starting game.......\n"
+        NES4J_BIN="${NES4J_HOME}"/bin/nes4j
+        ${NES4J_BIN} --extra-nes "$NES_FILE"
+    fi
 }
 
 function PrintHelper {
