@@ -3,6 +3,7 @@ package cn.navclub.nes4j.app;
 import cn.navclub.nes4j.app.config.EventBusAddress;
 import cn.navclub.nes4j.app.config.NESConfig;
 import cn.navclub.nes4j.app.view.GameHall;
+import cn.navclub.nes4j.app.view.GameWorld;
 import cn.navclub.nes4j.bin.eventbus.EventBus;
 import javafx.application.Application;
 
@@ -26,7 +27,12 @@ public class INes extends Application {
     @Override
     public void start(Stage stage) {
         this.localEventBus();
-        new GameHall(stage);
+        //If set extra nes show game hall otherwise load extra nes game rom
+        if (!config.isExtraNes()) {
+            new GameHall(stage);
+        } else {
+            GameWorld.run(config.getExtraNes());
+        }
     }
 
     @Override

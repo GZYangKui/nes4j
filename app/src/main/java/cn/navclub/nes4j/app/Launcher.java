@@ -9,6 +9,7 @@ import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import javafx.application.Application;
 import lombok.Getter;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
@@ -60,7 +61,7 @@ public class Launcher {
      */
     protected static NESConfig loadLocalConfig(String[] args) throws Exception {
         var map = StrUtil.args2Map(args);
-        var pathStr = map.get("--config");
+        var pathStr  = map.get("--config");
         if (!StrUtil.isBlank(pathStr)) {
             var exist = Files.exists(Path.of(pathStr));
             if (!exist) {
@@ -76,6 +77,11 @@ public class Launcher {
             config = JsonUtil.parse(jsonStr, NESConfig.class);
         } else {
             config = new NESConfig();
+        }
+        
+        var extraNes = map.get("--extra-nes");
+        if (StrUtil.isNotBlank(extraNes)){
+            config.setExtraNes(new File(extraNes));
         }
         config.setPath(path);
         return config;
