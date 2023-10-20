@@ -28,6 +28,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.io.File;
@@ -64,7 +65,6 @@ public class GameWorld extends Stage {
         var scene = new Scene(FXResource.loadFXML(this));
 
         this.scale = 3;
-        this.ctx = canvas.getGraphicsContext2D();
         this.eventQueue = new LinkedBlockingDeque<>();
 
         this.tracer = new FPSTracer(it -> this.fps = it);
@@ -75,11 +75,14 @@ public class GameWorld extends Stage {
 
         this.canvas.setWidth(this.image.getWidth());
         this.canvas.setHeight(this.image.getHeight());
+        this.ctx = canvas.getGraphicsContext2D();
+        //Use black color fill whole canvas
+        this.ctx.setStroke(Color.BLACK);
+        this.ctx.fillRect(0, 0, image.getWidth(), image.getHeight());
 
 
         this.setScene(scene);
         this.setResizable(false);
-        this.fbl.prefHeightProperty().bind(this.fbl.heightProperty());
         this.stackPane.heightProperty().addListener(
                 (observable, oldValue, newValue) ->
                         this.setHeight(newValue.intValue() + this.image.getHeight())
@@ -191,6 +194,14 @@ public class GameWorld extends Stage {
             return;
         }
         this.instance.SWReset();
+    }
+
+    @FXML
+    public void ppuViewer() {
+        if (this.instance == null) {
+            return;
+        }
+        new PPUViewer(this.instance);
     }
 
     private void gameLoopCallback(Frame frame, JoyPad joyPad, JoyPad joyPad1, Long nano) {

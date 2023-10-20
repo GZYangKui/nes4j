@@ -19,9 +19,10 @@
                 </Menu>
                 <Menu text="%nes4j.tool">
                     <MenuItem text="%nes4j.debug" onAction="#debugger"/>
+                    <MenuItem text="%nes4j.pattern.table" onAction="#ppuViewer"/>
                 </Menu>
             </MenuBar>
-            <Label fx:id="fbl" styleClass="fbl" StackPane.alignment="CENTER_RIGHT"/>
+            <Label fx:id="fbl" styleClass="fbl" StackPane.alignment="CENTER_RIGHT" text="fps:00"/>
         </StackPane>
     </top>
     <center>
