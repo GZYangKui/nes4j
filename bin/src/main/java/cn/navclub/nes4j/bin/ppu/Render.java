@@ -223,6 +223,29 @@ public class Render implements CycleDriver {
         // unless rendering is turned off.
         //
         var visibleLine = this.scanline < 240;
+
+        //
+        // There are two behaviors:
+        //
+        // 1. When rendering is enabled and the current scanline is 261 or 0-239
+        // 2. Any other time (vblank and anytime background and sprite rendering are both disabled)
+        //
+        // During 2, the address on the PPU bus is the low 14 bits of current value of v. If v changes,
+        // the address on the bus changes. You do not do any automatic changes to v; the only time v changes
+        // during 2 is on the 2nd write of $2006 (when the contents of t are copied to v) or when $2007 is
+        // accessed (incrementing v by either 1 or 32 depending on the state of $2000).
+        // You do not change v on dot 257. Leave v alone.
+        //
+        // During 1, the address on the bus is no longer v; instead, v is used to figure out what nametable,
+        // CHR, and attributes addresses to fetch. v is changed automatically, including the vertical
+        // increment on dot 256 and the hori(v) <- hori(t) change on dot 257.
+        //
+        // <a href="https://forums.nesdev.org/memberlist.php?mode=viewprofile&u=8835">Special thank nesdev user 'Fiskbit' helpe </a>
+        //
+        if (!(preLine || visibleLine)) {
+            return;
+        }
+
         //
         // Cycles 1-256
         //
@@ -261,14 +284,13 @@ public class Render implements CycleDriver {
         //
         var preFetchCycle = this.cycles >= 321 && this.cycles <= 336;
 
-        var renderLine = preLine || visibleLine;
         var fetchCycle = preFetchCycle || visibleCycle;
 
         if (visibleLine && visibleCycle) {
             this.renderPixel();
         }
 
-        if (renderLine && fetchCycle) {
+        if (fetchCycle) {
             var v = this.ppu.v;
             switch (this.cycles % 8) {
                 case 0 -> this.tileMut();
