@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="build/icon/nes4j.png" alt="Nes4j logo" width="200" height="auto" />
+  <img src="document/nes4j.png" alt="Nes4j logo" width="200" height="auto" />
   <h1>Nes4j</h1>
   <p>任天堂红白机模拟器</p>
 </div>
@@ -57,6 +57,7 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 ## 已实现卡带Mapper
 
 + [NROM](https://www.nesdev.org/wiki/NROM)
++ [MMC1](https://www.nesdev.org/wiki/MMC1)
 + [UxROM](https://www.nesdev.org/wiki/UxROM)
 + [CNROM](https://www.nesdev.org/wiki/INES_Mapper_003)
 
@@ -78,7 +79,7 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 <dependency>
     <groupId>cn.navclub</groupId>
     <artifactId>nes4j-bin</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 </dependency>
 ```
 
@@ -227,7 +228,7 @@ public class JavaXAudio implements Player {
 ## 版权说明
 
 目前市场上绝大部分游戏版权为[任天堂](https://www.nintendo.com/)所有,请勿在未取得任天堂授权的情况下私自分发游戏.
-如果因此引发的任何侵权行为均与本软件无关.如果本软件中设计任何侵权素材请发送邮件到GZYangKui@126.com通知我删除对应侵权素材.
+如果因此引发的任何侵权行为均与本软件无关.如果本软件中设计任何侵权素材请发送邮件到cnnes4j@126.com通知我删除对应侵权素材.
 
 ## 文档
 

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="build/icon/nes4j.png" alt="Nes4j logo" width="200" height="auto" />
+  <img src="document/nes4j.png" alt="Nes4j logo" width="200" height="auto" />
   <h1>Nes4j</h1>
   <p>Nintendo red and white simulator</p>
 </div>
@@ -59,6 +59,7 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 ## Support cartridge mapper
 
 + [NROM](https://www.nesdev.org/wiki/NROM)
++ [MMC1](https://www.nesdev.org/wiki/MMC1)
 + [UxROM](https://www.nesdev.org/wiki/UxROM)
 + [CNROM](https://www.nesdev.org/wiki/INES_Mapper_003)
 
@@ -80,7 +81,7 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 <dependency>
     <groupId>cn.navclub</groupId>
     <artifactId>nes4j-bin</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 </dependency>
 ```
 
@@ -234,7 +235,7 @@ welcome PR 👏。
 At present, most of the game copyrights in the market are owned by [Nintendo]((https://www.nintendo.com/)).
 Do not distribute the game without permission from Nintendo If any infringement is caused thereby, it has nothing
 to do with the software. If any infringing material is designed in the software, please send an email to
-GZYangKui@126.com Notify me to delete the corresponding infringing materials.
+cnnes4j@126.com Notify me to delete the corresponding infringing materials.
 
 ## Development
 
