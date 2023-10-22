@@ -26,7 +26,11 @@ public class UXMapper extends Mapper {
      */
     @Override
     public void PRGWrite(int address, byte b) {
-        this.offset = (b & 0x0f) * RPG_BANK_SIZE;
+        var tmp = (b & 0x0f) * RPG_BANK_SIZE;
+        if (this.cartridge.getRgbSize() - tmp < RPG_BANK_SIZE) {
+            tmp = (b & 0x07) * RPG_BANK_SIZE;
+        }
+        this.offset = tmp;
     }
 
     @Override
