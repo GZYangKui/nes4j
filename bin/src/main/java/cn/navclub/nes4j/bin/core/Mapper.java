@@ -72,7 +72,11 @@ public abstract class Mapper {
     }
 
     protected int getLastBank() {
-        return ((this.cartridge.getRgbSize() / RPG_BANK_SIZE) - 1) * RPG_BANK_SIZE;
+        return this.getLastBank(Mapper.RPG_BANK_SIZE);
+    }
+
+    protected int getLastBank(int prgSize) {
+        return ((this.cartridge.getRgbSize() / prgSize) - 1) * prgSize;
     }
 
     /**

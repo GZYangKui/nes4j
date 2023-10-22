@@ -2,10 +2,7 @@ package cn.navclub.nes4j.bin.config;
 
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.core.Mapper;
-import cn.navclub.nes4j.bin.core.impl.CNMapper;
-import cn.navclub.nes4j.bin.core.impl.MMC1Mapper;
-import cn.navclub.nes4j.bin.core.impl.NRMapper;
-import cn.navclub.nes4j.bin.core.impl.UXMapper;
+import cn.navclub.nes4j.bin.core.impl.*;
 import cn.navclub.nes4j.bin.io.Cartridge;
 
 
@@ -17,7 +14,7 @@ public enum NMapper {
     MMC1(MMC1Mapper.class),
     UX_ROM(UXMapper.class),
     CN_ROM(CNMapper.class),
-    MMC3,
+    MMC3(MMC3Mapper.class),
     UNKNOWN;
 
     private final Class<? extends Mapper> provider;
