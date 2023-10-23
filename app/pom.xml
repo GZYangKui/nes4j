@@ -71,10 +71,9 @@
                     <launcher>nes4j</launcher>
                     <noHeaderFiles>true</noHeaderFiles>
                     <jlinkImageName>nes4j</jlinkImageName>
-                    <commandlineArgs>
-                        +XX:UseZGC
-                        -Dnes4j.log.level=WARN
-                    </commandlineArgs>
+                    <options>
+                        -XX:+UseZGC -Dnes4j.log.level=WARN
+                    </options>
                     <mainClass>cn.navclub.nes4j.app/cn.navclub.nes4j.app.Launcher</mainClass>
                 </configuration>
             </plugin>
