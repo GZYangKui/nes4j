@@ -663,8 +663,8 @@ public class Render implements CycleDriver {
         }
     }
 
-    private int rgbValue(int idx) {
-        var arr = sysPalette[idx];
+    private int rgbValue(byte idx) {
+        var arr = sysPalette[idx & 0x3f];
         return arr[0] << 16 | arr[1] << 8 | arr[2];
     }
 }
