@@ -190,11 +190,8 @@ public class MMC3Mapper extends Mapper {
         // $C000-$DFFF	  (-2)	        R6
         // $E000-$FFFF	  (-1)	        (-1)
         //
-        var offset = (b & 0x3f);
         var mbn = this.PRGBank[3];
-        if (offset > mbn) {
-            return;
-        }
+        var offset = (b & 0x3f) & mbn;
         if (this.r == 7) {
             this.PRGBank[1] = offset;
         } else {
