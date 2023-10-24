@@ -13,7 +13,7 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class Bus implements Component {
-    private static final int RPG_ROM = 0x8000;
+    private static final int RPG_ROM = 0x6000;
     private static final int RPG_ROM_END = 0xFFFF;
     private static final int RAM_MIRROR_END = 0x1fff;
     private final NES context;

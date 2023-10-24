@@ -72,11 +72,7 @@ public abstract class Mapper {
     }
 
     protected int getLastBank() {
-        return this.getLastBank(Mapper.RPG_BANK_SIZE);
-    }
-
-    protected int getLastBank(int prgSize) {
-        return ((this.cartridge.getRgbSize() / prgSize) - 1) * prgSize;
+        return ((this.cartridge.getRgbSize() / RPG_BANK_SIZE) - 1) * RPG_BANK_SIZE;
     }
 
     /**
@@ -100,5 +96,12 @@ public abstract class Mapper {
 
     public final byte[] getChrom() {
         return this.cartridge.getChrom();
+    }
+
+    /**
+     * Some mapper implement need use extern {@link  Component} cycle driver
+     */
+    public void tick() {
+
     }
 }

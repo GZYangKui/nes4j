@@ -1,5 +1,6 @@
 package cn.navclub.nes4j.bin.ppu;
 
+import cn.navclub.nes4j.bin.config.NMapper;
 import cn.navclub.nes4j.bin.config.PStatus;
 import cn.navclub.nes4j.bin.function.CycleDriver;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
@@ -336,6 +337,38 @@ public class Render implements CycleDriver {
         //
         if (preLine && this.cycles >= 280 && this.cycles <= 304) {
             this.ppu.v = uint16((this.ppu.v & 0x841f) | (this.ppu.t & 0x7be0));
+        }
+
+        var mapper = this.ppu.context.getMapper();
+        if (mapper.type() == NMapper.MMC3) {
+            var ctr = this.ppu.getCtr();
+            //
+            // When using 8x8 sprites, if the BG uses $0000, and the sprites use $1000, the IRQ counter should
+            // decrement on PPU cycle 260, right after the visible part of the target scanline has ended.
+            //
+
+            if (ctr.spriteSize() == 8 && ctr.backgroundNameTable() == 0 && ctr.spritePattern8() == 0x1000 && this.cycles == 260) {
+                mapper.tick();
+            }
+            // When using 8x8 sprites, if the BG uses $1000, and the sprites use $0000, the IRQ counter should decrement
+            // on PPU cycle 324 of the previous scanline (as in, right before the target scanline is about to be drawn).
+            // However, the 2C02's pre-render scanline will decrement the counter twice every other vertical redraw,
+            // so the IRQ will shake one scanline. This is visible in Wario's Woods: with some PPU-CPU reset alignments
+            // the bottom line of the green grass of the play area may flicker black on the rightmost ~48 pixels, due to
+            // an extra count firing the IRQ one line earlier than expected.
+            if (ctr.spriteSize() == 8 && ctr.backgroundNameTable() == 0x1000 && ctr.spritePattern8() == 0 & this.cycles == 324 && preLine) {
+                mapper.tick();
+            }
+
+            //
+            // When using 8x16 sprites PPU A12 must be explicitly tracked. The exact time and number of times
+            // the counter is clocked will depend on the specific set of sprites present on every scanline.
+            // Specific combinations of sprites could cause the counter to decrement up to four times,
+            // or the IRQ to be delayed or early by some multiple of 8 pixels. If there are fewer than 8 sprites
+            // on a scanline, the PPU fetches tile $FF ($1FF0-$1FFF) for each leftover sprite and discards
+            // its value. Thus if a game uses 8x16 sprites with its background and sprites from PPU $0000, then
+            // the MMC3 ends up counting each scanline that doesn't use all eight sprites.
+            //
         }
     }
 

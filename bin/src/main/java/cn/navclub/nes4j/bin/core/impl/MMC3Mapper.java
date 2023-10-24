@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.core.impl;
 
 import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.config.CPUInterrupt;
 import cn.navclub.nes4j.bin.config.NameMirror;
 import cn.navclub.nes4j.bin.core.Mapper;
 import cn.navclub.nes4j.bin.io.Cartridge;
@@ -27,28 +28,39 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 public class MMC3Mapper extends Mapper {
     private static final int PRG_BANK_BANK = 8 * 1024;
     private int r;
-    private int latch;
-
     private int pbm;
+    private int latch;
+    private int counter;
     private int chrInversion;
-
-    private boolean clip;
-    private final byte[] prg;
     private boolean IRQEnable;
+    private boolean reloadFlag;
+    private final byte[] PRGRam;
+    private final int[] PRGBank;
 
 
     public MMC3Mapper(Cartridge cartridge, NES context) {
         super(cartridge, context);
         this.r = 0;
         this.latch = 0;
-        this.clip = false;
-        this.prg = new byte[PRG_BANK_BANK * 4];
-        //Fix the last bank to $E000-$FFFF
-        System.arraycopy(cartridge.getRgbrom(), this.getLastBank(PRG_BANK_BANK), this.prg, PRG_BANK_BANK * 3, PRG_BANK_BANK);
+        this.counter = 0;
+        this.IRQEnable = false;
+        this.reloadFlag = false;
+        this.PRGBank = new int[4];
+        this.PRGRam = new byte[PRG_BANK_BANK];
+        //
+        // Because the values in R6, R7, and $8000 are unspecified at power on, the reset vector must point
+        // into $E000-$FFFF,and code must initialize these before jumping out of $E000-$FFFF.
+        //
+        this.PRGBank[3] = this.prgSize() / PRG_BANK_BANK - 1;
     }
 
     @Override
     public void PRGWrite(int address, byte b) {
+        //CPU $6000-$7FFF: 8 KB PRG RAM bank (optional)
+        if (address < 0x8000) {
+            this.PRGRam[address - 0x6000] = b;
+            return;
+        }
         var even = (address & 1) == 0;
         //
         // Mirroring ($A000-$BFFE, even)
@@ -64,7 +76,7 @@ public class MMC3Mapper extends Mapper {
             this.context.getPpu().setMirrors((b & 1) == 1 ? NameMirror.HORIZONTAL : NameMirror.VERTICAL);
         }
 
-        if (address >= 0x8000 && address <= 0x9ffff) {
+        if (address <= 0x9fff) {
             // Bank select ($8000-$9FFE, even)
             // 7  bit  0
             // ---- ----
@@ -124,6 +136,10 @@ public class MMC3Mapper extends Mapper {
         //  |||| ||||
         //  ++++-++++- IRQ latch value
         //
+        // This register specifies the IRQ counter reload value. When the IRQ counter is zero (or a reload is
+        // requested through $C001), this value will be copied to the IRQ counter at the NEXT rising edge of
+        // the PPU address, presumably at PPU cycle 260 of the current scanline.
+        //
         if (address >= 0xc000 && address <= 0xdffe && even) {
             this.latch = uint8(b);
         }
@@ -139,11 +155,12 @@ public class MMC3Mapper extends Mapper {
         // at the NEXT rising edge of the PPU address, presumably at PPU cycle 260 of the current scanline.
         //
         if (address >= 0xc001 && address <= 0xdfff && !even) {
-            this.latch = 0;
+            this.counter = 0;
+            this.reloadFlag = true;
         }
 
-        // even: Writing any value to this register will disable MMC3 interrupts AND acknowledge any pending interrupts.
         // odd: Writing any value to this register will enable MMC3 interrupts.
+        // even: Writing any value to this register will disable MMC3 interrupts AND acknowledge any pending interrupts.
         if (address >= 0xe000 && address <= 0xffff) {
             this.IRQEnable = !even;
         }
@@ -156,25 +173,33 @@ public class MMC3Mapper extends Mapper {
         // ||++------ Nothing on the MMC3, see MMC6
         // |+-------- Write protection (0: allow writes; 1: deny writes)
         // +--------- PRG RAM chip enable (0: disable; 1: enable)
-        if (address >= 0xA001 && address <= 0xBFFF && !even) {
-            this.clip = ((b >> 7 & 1) == 1);
-        }
+        //
+        // Note: Though these bits are functional on the MMC3, their main purpose is to write-protect save
+        // RAM during power-off. Many emulators choose not to implement them as part of iNES Mapper 4 to avoid
+        // an incompatibility with the MMC6.
     }
 
     private void PRGSwap(byte b) {
-        var offset = uint8(b) * PRG_BANK_BANK;
-        if (this.r == 7) {
-            System.arraycopy(this.getRgbrom(), offset, this.prg, PRG_BANK_BANK, PRG_BANK_BANK);
+        //
+        //  R6 and R7 will ignore the top two bits, as the MMC3 has only 6 PRG ROM address lines.
+        //
+        // PRG map mode → $8000.D6 = 0	$8000.D6 = 1
+        //  CPU Bank	  Value  of MMC3 register
+        // $8000-$9FFF	  R6	        (-2)
+        // $A000-$BFFF	  R7	        R7
+        // $C000-$DFFF	  (-2)	        R6
+        // $E000-$FFFF	  (-1)	        (-1)
+        //
+        var offset = (b & 0x3f);
+        var mbn = this.PRGBank[3];
+        if (offset > mbn) {
+            return;
         }
-        if (this.r == 6) {
-            var swapIdx = this.pbm == 0 ? 0 : 1;
-            System.arraycopy(this.getRgbrom(), offset, this.prg, swapIdx * PRG_BANK_BANK, PRG_BANK_BANK);
-            var sdl = getLastBank(PRG_BANK_BANK) - PRG_BANK_BANK;
-            if (swapIdx == 0) {
-                System.arraycopy(this.getRgbrom(), sdl, this.prg, PRG_BANK_BANK, PRG_BANK_BANK);
-            } else {
-                System.arraycopy(this.getRgbrom(), sdl, this.prg, 0, PRG_BANK_BANK);
-            }
+        if (this.r == 7) {
+            this.PRGBank[1] = offset;
+        } else {
+            this.PRGBank[this.pbm << 1] = offset;
+            this.PRGBank[((this.pbm ^ 0xff) << 1) & 0x03] = mbn - 1;
         }
     }
 
@@ -184,6 +209,19 @@ public class MMC3Mapper extends Mapper {
         if (this.r < 2) {
             b &= 0b1111110;
         }
+        //
+        //
+        //  CHR map mode →	$8000.D7 = 0	$8000.D7 = 1
+        //  PPU Bank	Value of MMC3 register
+        //  $0000-$03FF	    R0	                R2
+        //  $0400-$07FF	                        R3
+        //  $0800-$0BFF	    R1	                R4
+        //  $0C00-$0FFF	                        R5
+        //  $1000-$13FF	    R2	                R0
+        //  $1400-$17FF	    R3
+        //  $1800-$1BFF	    R4	                R1
+        //  $1C00-$1FFF	    R5
+        //
         var offset = uint8(b) * 1024;
         if (this.chrInversion == 0) {
             if (this.r < 2) {
@@ -202,6 +240,28 @@ public class MMC3Mapper extends Mapper {
 
     @Override
     public byte PRGRead(int address) {
-        return prg[address];
+        final byte b;
+        //CPU $6000-$7FFF: 8 KB PRG RAM bank (optional)
+        if (address < 0) {
+            b = PRGRam[0x8000 + address - 0x6000];
+        } else {
+            var idx = address / PRG_BANK_BANK;
+            var offset = address % PRG_BANK_BANK;
+            b = super.PRGRead(this.PRGBank[idx] * 0x2000 + offset);
+        }
+        return b;
+    }
+
+    @Override
+    public void tick() {
+        if (this.counter == 0 || reloadFlag) {
+            this.counter = this.latch;
+            this.latch = 0;
+        } else {
+            this.counter--;
+        }
+        if (this.counter == 0 && this.IRQEnable) {
+            this.context.interrupt(CPUInterrupt.IRQ);
+        }
     }
 }
