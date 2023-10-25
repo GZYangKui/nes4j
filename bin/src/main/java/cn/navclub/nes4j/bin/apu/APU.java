@@ -209,12 +209,12 @@ public class APU implements Component {
         this.cycle++;
 
         if (this.cycle % 2 == 0) {
-            this.dmc.tick();
             this.pulse1.tick();
             this.pulse2.tick();
             this.noise.tick();
         }
 
+        this.dmc.tick();
         this.triangle.tick();
         this.frameCounter.tick();
         // 1.79 MHz / 44100 = 40
