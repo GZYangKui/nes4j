@@ -3,7 +3,10 @@ package cn.navclub.nes4j.bin.core;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.apu.APU;
 import cn.navclub.nes4j.bin.io.JoyPad;
+import cn.navclub.nes4j.bin.logging.LoggerDelegate;
+import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import cn.navclub.nes4j.bin.ppu.PPU;
+import cn.navclub.nes4j.bin.util.BinUtil;
 import lombok.Getter;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.int8;
@@ -13,9 +16,10 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class Bus implements Component {
-    private static final int RPG_ROM = 0x6000;
+    private static final int RPG_ROM_START = 0x8000;
     private static final int RPG_ROM_END = 0xFFFF;
     private static final int RAM_MIRROR_END = 0x1fff;
+    private static final LoggerDelegate log = LoggerFactory.logger(Bus.class);
     private final NES context;
     @Getter
     private final byte[] ram;
@@ -26,6 +30,12 @@ public class Bus implements Component {
     @Getter
     private final PPU ppu;
     private final APU apu;
+    //$4020-0x6000 expansion rom
+    private final byte[] exp;
+    //  SRAM (WRAM) [$6000,$8000) is the Save RAM, the addresses used to access RAM in the cartridges
+    //  for storing save games.
+    private final byte[] sram;
+
 
     public Bus(NES context, JoyPad joyPad, JoyPad joyPad1) {
         this.context = context;
@@ -34,6 +44,8 @@ public class Bus implements Component {
         this.joyPad1 = joyPad1;
 
         this.ram = new byte[2048];
+        this.exp = new byte[0x1fe0];
+        this.sram = new byte[0x2000];
 
         this.apu = context.getApu();
         this.ppu = context.getPpu();
@@ -92,10 +104,19 @@ public class Bus implements Component {
                 || address == 0x2000) {
             b = 0;
         }
-        //Read rpg-rom data
-        else if (address >= RPG_ROM && address <= RPG_ROM_END) {
-            b = this.context.getMapper().PRGRead(address - 0x8000);
+        //Read a byte from expansion rom
+        else if (address >= 0x4020 && address < 0x6000) {
+            b = this.exp[address - 0x4020];
         }
+        //Read a byte from sram
+        else if (address >= 0x6000 && address < 0x8000) {
+            b = this.sram[address - 0x6000];
+        }
+        //Read rpg-rom data
+        else if (address >= RPG_ROM_START && address <= RPG_ROM_END) {
+            b = this.context.getMapper().PRGRead(address - RPG_ROM_START);
+        }
+
         //Default return 0
         else {
             b = 0;
@@ -173,15 +194,26 @@ public class Bus implements Component {
         else if (address == 0x4016) {
             this.joyPad.write(b);
         }
-
         //Write data to apu
         else if ((address >= 0x4000 && address <= 0x4013) || address == 0x4015 || address == 0x4017) {
             this.apu.write(address, b);
         }
-
+        //Write a byte to expansion rom
+        else if (address >= 0x4020 && address < 0x6000) {
+            this.exp[address - 0x4020] = b;
+        }
+        //Write a byte to sram
+        else if (address >= 0x6000 && address < 0x8000) {
+            this.sram[address - 0x6000] = b;
+        }
         //Write to cpu memory
-        else if (address >= RPG_ROM && address <= RPG_ROM_END) {
+        else if (address >= RPG_ROM_START && address <= RPG_ROM_END) {
             this.context.getMapper().PRGWrite(address, b);
+        }
+
+        //Unknown action
+        else {
+            log.warning("Unknown bus action write to 0x{}", BinUtil.toHexStr(address));
         }
 
     }

@@ -6,9 +6,11 @@ import cn.navclub.nes4j.bin.io.Cartridge;
 
 public class UXMapper extends Mapper {
     private int offset;
+    private final int mod;
 
     public UXMapper(Cartridge cartridge, NES context) {
         super(cartridge, context);
+        this.mod = this.calMaxBankIdx();
     }
 
     /**
@@ -26,11 +28,7 @@ public class UXMapper extends Mapper {
      */
     @Override
     public void PRGWrite(int address, byte b) {
-        var tmp = (b & 0x0f) * RPG_BANK_SIZE;
-        if (this.cartridge.getRgbSize() - tmp < RPG_BANK_SIZE) {
-            tmp = (b & 0x07) * RPG_BANK_SIZE;
-        }
-        this.offset = tmp;
+        this.offset = (b & this.mod) * RPG_BANK_SIZE;
     }
 
     @Override

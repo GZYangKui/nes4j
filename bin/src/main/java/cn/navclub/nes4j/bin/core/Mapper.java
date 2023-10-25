@@ -72,7 +72,11 @@ public abstract class Mapper {
     }
 
     protected int getLastBank() {
-        return ((this.cartridge.getRgbSize() / RPG_BANK_SIZE) - 1) * RPG_BANK_SIZE;
+        return calMaxBankIdx() * RPG_BANK_SIZE;
+    }
+
+    public final int calMaxBankIdx() {
+        return this.prgSize() / RPG_BANK_SIZE - 1;
     }
 
     /**

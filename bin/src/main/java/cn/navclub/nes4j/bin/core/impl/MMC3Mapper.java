@@ -34,9 +34,7 @@ public class MMC3Mapper extends Mapper {
     private int chrInversion;
     private boolean IRQEnable;
     private boolean reloadFlag;
-    private final byte[] PRGRam;
     private final int[] PRGBank;
-
 
     public MMC3Mapper(Cartridge cartridge, NES context) {
         super(cartridge, context);
@@ -46,7 +44,7 @@ public class MMC3Mapper extends Mapper {
         this.IRQEnable = false;
         this.reloadFlag = false;
         this.PRGBank = new int[4];
-        this.PRGRam = new byte[PRG_BANK_BANK];
+
         //
         // Because the values in R6, R7, and $8000 are unspecified at power on, the reset vector must point
         // into $E000-$FFFF,and code must initialize these before jumping out of $E000-$FFFF.
@@ -57,10 +55,6 @@ public class MMC3Mapper extends Mapper {
     @Override
     public void PRGWrite(int address, byte b) {
         //CPU $6000-$7FFF: 8 KB PRG RAM bank (optional)
-        if (address < 0x8000) {
-            this.PRGRam[address - 0x6000] = b;
-            return;
-        }
         var even = (address & 1) == 0;
         //
         // Mirroring ($A000-$BFFE, even)
@@ -237,16 +231,9 @@ public class MMC3Mapper extends Mapper {
 
     @Override
     public byte PRGRead(int address) {
-        final byte b;
-        //CPU $6000-$7FFF: 8 KB PRG RAM bank (optional)
-        if (address < 0) {
-            b = PRGRam[0x8000 + address - 0x6000];
-        } else {
-            var idx = address / PRG_BANK_BANK;
-            var offset = address % PRG_BANK_BANK;
-            b = super.PRGRead(this.PRGBank[idx] * 0x2000 + offset);
-        }
-        return b;
+        var idx = address / PRG_BANK_BANK;
+        var offset = address % PRG_BANK_BANK;
+        return super.PRGRead(this.PRGBank[idx] * 0x2000 + offset);
     }
 
     @Override
