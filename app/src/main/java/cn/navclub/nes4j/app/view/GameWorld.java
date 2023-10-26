@@ -73,48 +73,19 @@ public class GameWorld extends Stage {
         this.intBuffer = IntBuffer.allocate(this.scale * this.scale);
         this.image = new WritableImage(this.scale * Frame.width, this.scale * Frame.height);
 
+        this.ctx = canvas.getGraphicsContext2D();
         this.canvas.setWidth(this.image.getWidth());
         this.canvas.setHeight(this.image.getHeight());
-        this.ctx = canvas.getGraphicsContext2D();
-        //Use black color fill whole canvas
-        this.ctx.setStroke(Color.BLACK);
-        this.ctx.fillRect(0, 0, image.getWidth(), image.getHeight());
-
-
-        this.setScene(scene);
-        this.setResizable(false);
         this.stackPane.heightProperty().addListener(
                 (observable, oldValue, newValue) ->
                         this.setHeight(newValue.intValue() + this.image.getHeight())
         );
-
-
+        //Fill default background color
+        this.fillDefaultBG();
+        this.setScene(scene);
+        this.setResizable(false);
         this.setOnCloseRequest(event -> this.dispose(null));
-        this.getScene().addEventHandler(KeyEvent.ANY, event -> {
-            var code = event.getCode();
-            var eventType = event.getEventType();
-            if (!(eventType == KeyEvent.KEY_PRESSED || eventType == KeyEvent.KEY_RELEASED)) {
-                return;
-            }
-            for (KeyMapper keyMapper : INes.config().getMapper()) {
-                if (keyMapper.getKeyCode() == code) {
-                    try {
-                        this.eventQueue.put(new GameEventWrap(eventType, keyMapper.getButton()));
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-
-            //Change emulator speed
-            if (code == KeyCode.ADD || code == KeyCode.SUBTRACT) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Change ppu output frame action:{}", code);
-                }
-                this.instance.speed(code == KeyCode.ADD ? -1 : 1);
-                this.speedPopup.show(this);
-            }
-        });
+        this.getScene().addEventHandler(KeyEvent.ANY, this::keyEventHandler);
     }
 
     @SuppressWarnings("all")
@@ -193,6 +164,7 @@ public class GameWorld extends Stage {
         if (this.instance == null) {
             return;
         }
+        this.fillDefaultBG();
         this.instance.SWReset();
     }
 
@@ -236,6 +208,37 @@ public class GameWorld extends Stage {
             //Draw fps
             this.fbl.setText(String.format("fps:%d", this.fps));
         });
+    }
+
+    private void keyEventHandler(KeyEvent event) {
+        var code = event.getCode();
+        var eventType = event.getEventType();
+        if (!(eventType == KeyEvent.KEY_PRESSED || eventType == KeyEvent.KEY_RELEASED)) {
+            return;
+        }
+        for (KeyMapper keyMapper : INes.config().getMapper()) {
+            if (keyMapper.getKeyCode() == code) {
+                try {
+                    this.eventQueue.put(new GameEventWrap(eventType, keyMapper.getButton()));
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        //Change emulator speed
+        if (code == KeyCode.ADD || code == KeyCode.SUBTRACT) {
+            if (log.isDebugEnabled()) {
+                log.debug("Change ppu output frame action:{}", code);
+            }
+            this.instance.speed(code == KeyCode.ADD ? -1 : 1);
+            this.speedPopup.show(this);
+        }
+    }
+
+    private void fillDefaultBG() {
+        this.ctx.setStroke(Color.BLACK);
+        this.ctx.fillRect(0, 0, image.getWidth(), image.getHeight());
     }
 
 
