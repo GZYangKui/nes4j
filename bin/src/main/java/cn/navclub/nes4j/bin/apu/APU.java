@@ -182,19 +182,13 @@ public class APU implements Component {
         //
         var value = 0;
 
-        var c0 = pulse1.getLengthCounter().getCounter();
-        var c1 = pulse2.getLengthCounter().getCounter();
-        var c2 = triangle.getLengthCounter().getCounter();
-        var c3 = this.noise.getLengthCounter().getCounter();
-
-
-        value |= (c0 > 0 ? 1 : 0);
-        value |= (c1 > 0 ? 1 << 1 : 0);
-        value |= (c2 > 0 ? 1 << 2 : 0);
-        value |= (c3 > 0 ? 1 << 3 : 0);
-        value |= (this.dmc.getCurrentLength() > 0 ? 1 << 4 : 0);
-        value |= this.frameCounter.isInterrupt() ? 1 << 6 : 0;
+        value |= this.dmc.readState();
+        value |= this.noise.readState();
+        value |= this.pulse1.readState();
+        value |= this.pulse2.readState();
+        value |= this.triangle.readState();
         value |= this.dmc.isIRQFlag() ? 1 << 7 : 0;
+        value |= this.frameCounter.isInterrupt() ? 1 << 6 : 0;
 
         //Reading this register clears the frame interrupt flag (but not the DMC interrupt flag).
         this.frameCounter.setInterrupt(false);
@@ -213,7 +207,6 @@ public class APU implements Component {
             this.pulse2.tick();
             this.noise.tick();
         }
-
         this.dmc.tick();
         this.triangle.tick();
         this.frameCounter.tick();

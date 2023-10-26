@@ -24,8 +24,8 @@ import lombok.Getter;
  * Timer ---> Gate ----------> Gate ---> Sequencer ---> (to mixer)
  * </pre>
  */
+@Getter
 public class TriangleChannel extends Channel<TriangleSequencer> {
-    @Getter
     private final LinearCounter linearCounter;
 
     public TriangleChannel(APU apu) {
@@ -76,5 +76,10 @@ public class TriangleChannel extends Channel<TriangleSequencer> {
             return 0;
         }
         return sequencer.value();
+    }
+
+    @Override
+    public int readState() {
+        return this.lengthCounter.stateVal() << 2;
     }
 }

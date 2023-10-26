@@ -16,7 +16,9 @@ public interface Component extends CycleDriver {
     /**
      * Read a byte from address
      */
-    byte read(int address);
+    default byte read(int address) {
+        throw new UnsupportedOperationException("Current component not support read operator.");
+    }
 
     /**
      * When {@link cn.navclub.nes4j.bin.NES} instance stop call

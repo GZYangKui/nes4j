@@ -38,6 +38,7 @@ public class PulseChannel extends Channel<SeqSequencer> {
 
     @Override
     public void write(int address, byte b) {
+        //$4000/4 ddle nnnn   duty, loop env/disable length, env disable, vol/env
         if (address == 0x4000 || address == 0x4004) {
             this.envelope.update(b);
 
@@ -108,5 +109,10 @@ public class PulseChannel extends Channel<SeqSequencer> {
     public void lengthTick() {
         super.lengthTick();
         this.sweepUnit.tick();
+    }
+
+    @Override
+    public int readState() {
+        return this.lengthCounter.stateVal() << (this.second ? 1 : 0);
     }
 }

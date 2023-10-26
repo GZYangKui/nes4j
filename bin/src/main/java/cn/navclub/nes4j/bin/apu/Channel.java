@@ -109,4 +109,8 @@ public abstract class Channel<T extends Sequencer> implements Component {
         }
 
     }
+
+    public int readState() {
+        return 0;
+    }
 }

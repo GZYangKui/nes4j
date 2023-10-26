@@ -140,9 +140,4 @@ public class FrameCounter implements Component {
 
         }
     }
-
-    @Override
-    public byte read(int address) {
-        return 0;
-    }
 }

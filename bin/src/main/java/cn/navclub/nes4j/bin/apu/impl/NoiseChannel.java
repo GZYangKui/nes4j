@@ -109,4 +109,9 @@ public class NoiseChannel extends Channel<NoiseSequencer> {
         }
         return this.envelope.getVolume();
     }
+
+    @Override
+    public int readState() {
+        return this.lengthCounter.stateVal() << 3;
+    }
 }
