@@ -55,14 +55,11 @@ public class DMChannel extends Channel<Sequencer> {
 
     private int period;
     private int counter;
-
-    //IRQ whether enable
-    private boolean inhibit;
-
-    @Getter
     @Setter
-    private boolean interrupt;
-
+    @Getter
+    private boolean IRQFlag;
+    //IRQ enable
+    private boolean IRQEnable;
 
     public DMChannel(APU apu) {
         super(apu, null);
@@ -77,9 +74,18 @@ public class DMChannel extends Channel<Sequencer> {
         // cycle. A rate of 428 means the output level changes every 214 APU cycles.
         //
         if (address == 0x4010) {
+            // 6-7	this is the playback mode.
+            //
+            //	00 - play DMC sample until length counter reaches 0 (see $4013)
+            //	x1 - loop the DMC sample (x = immaterial)
+            //	10 - play DMC sample until length counter reaches 0, then generate a CPU
             this.loop = (b & 0x40) == 0x40;
-            this.inhibit = (b & 0x80) == 0x80;
+            this.IRQEnable = (b & 0x80) == 0x80;
             this.period = (FREQ_TABLE[b & 0x0f]);
+
+            if (!this.IRQEnable) {
+                this.IRQFlag = false;
+            }
         }
         //
         // A write to $4011 sets the counter and DAC to a new value:
@@ -233,8 +239,8 @@ public class DMChannel extends Channel<Sequencer> {
 
             if (this.currentLength == 0 && this.loop) {
                 this.reset();
-            } else if (this.currentLength == 0 && this.inhibit) {
-                this.interrupt = true;
+            } else if (this.currentLength == 0 && this.IRQEnable) {
+                this.IRQFlag = true;
             }
         }
     }

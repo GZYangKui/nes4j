@@ -132,7 +132,7 @@ public class APU implements Component {
             }
             this.dmc.setEnable(enable);
             //Writing to this register clears the DMC interrupt flag.
-            this.dmc.setInterrupt(false);
+            this.dmc.setIRQFlag(false);
         }
         //0x4000-0x4003 Square Channel1
         else if (address >= 0x4000 && address <= 0x4003) {
@@ -194,7 +194,7 @@ public class APU implements Component {
         value |= (c3 > 0 ? 1 << 3 : 0);
         value |= (this.dmc.getCurrentLength() > 0 ? 1 << 4 : 0);
         value |= this.frameCounter.isInterrupt() ? 1 << 6 : 0;
-        value |= this.dmc.isInterrupt() ? 1 << 7 : 0;
+        value |= this.dmc.isIRQFlag() ? 1 << 7 : 0;
 
         //Reading this register clears the frame interrupt flag (but not the DMC interrupt flag).
         this.frameCounter.setInterrupt(false);
@@ -227,7 +227,7 @@ public class APU implements Component {
 
         // At any time, if the interrupt flag is set, the CPU's IRQ line is continuously asserted
         // until the interrupt flag is cleared. The processor will continue on from where it was stalled.
-        if (this.dmc.isInterrupt()) {
+        if (this.dmc.isIRQFlag()) {
             this.fireIRQ();
         }
     }
