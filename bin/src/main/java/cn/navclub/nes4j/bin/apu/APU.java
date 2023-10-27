@@ -120,14 +120,14 @@ public class APU implements Component {
             // silence when it empties.
             //
             if (!enable) {
-                this.dmc.setCurrentLength(0);
+                this.dmc.setLCounter(0);
             }
             //
             // If the DMC bit is set, the DMC sample will be restarted only if its bytes remaining is 0.
             // If there are bits remaining in the 1-byte sample buffer, these will finish playing before
             // the next sample is fetched.
             //
-            if (enable && this.dmc.getCurrentLength() == 0) {
+            if (enable && this.dmc.getLCounter() == 0) {
                 this.dmc.reset();
             }
             this.dmc.setEnable(enable);

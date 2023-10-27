@@ -29,6 +29,7 @@ public abstract class Channel<T extends Sequencer> implements Component {
 
     public Channel(final APU apu, T sequencer) {
         this.apu = apu;
+        this.enable = false;
         this.sequencer = sequencer;
         this.lengthCounter = new LengthCounter();
         this.timer = sequencer == null ? null : new Timer<>(this.sequencer);

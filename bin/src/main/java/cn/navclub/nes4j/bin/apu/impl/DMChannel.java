@@ -23,6 +23,29 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class DMChannel extends Channel<Sequencer> {
+    // 6-7	this is the playback mode.
+    //
+    //	00 - play DMC sample until length counter reaches 0 (see $4013)
+    //	x1 - loop the DMC sample (x = immaterial)
+    //	10 - play DMC sample until length counter reaches 0, then generate a CPU IRQ
+    enum PlaybackMode {
+        //  If playback mode "00" is chosen, the sample plays until the length counter
+        //  reaches 0. No interrupt is generated.
+        _00,
+        //  Looping (playback mode "x1") will have the chunk of memory played over and
+        //  over, until the channel is disabled (via $4015). In this case, after the
+        //  length counter reaches 0, it will be reloaded with the calculated length
+        //  value of $4013.
+        _X1,
+        //  If playback mode "10" is chosen, an interrupt will be dispached when the
+        //  length counter reaches 0 (after the sample is done playing). There are 2
+        //  ways to acknowledge the DMC's interrupt request upon recieving it. The first
+        //  is a write to this register ($4010), with the MSB (bit 7) cleared (0). The
+        //  second is any write to $4015 (see the $4015 register description for more
+        //  details).
+        _10
+    }
+
     private final static int[] FREQ_TABLE = {
             0x1AC,
             0x17C,
@@ -42,15 +65,14 @@ public class DMChannel extends Channel<Sequencer> {
             0x036,
     };
     private byte sample;
-    private boolean loop;
-    private byte shifter;
     private byte bitCount;
+    private byte shiftReg;
     private int sampleLength;
     private int sampleAddress;
     //$4013: length of play code
     @Setter
     @Getter
-    private int currentLength;
+    private int lCounter;
     //$4012: play code's starting address
     private int currentAddress;
     private byte dacLSB;
@@ -61,14 +83,19 @@ public class DMChannel extends Channel<Sequencer> {
     @Setter
     @Getter
     private boolean IRQFlag;
-    private boolean IRQEnable;
+    private boolean silence;
+    private int downCounter;
+    private PlaybackMode mode;
 
     public DMChannel(APU apu) {
         super(apu, null);
+        this.silence = true;
+        this.mode = PlaybackMode._00;
     }
 
     @Override
     public void write(int address, byte b) {
+        var c = uint8(b);
         //
         // The rate determines for how many CPU cycles happen between changes in the output level during automatic
         // delta-encoded sample playback. For example, on NTSC (1.789773 MHz), a rate of 428 gives a frequency of
@@ -76,30 +103,11 @@ public class DMChannel extends Channel<Sequencer> {
         // cycle. A rate of 428 means the output level changes every 214 APU cycles.
         //
         if (address == 0x4010) {
-            //
-            // 6-7	this is the playback mode.
-            //
-            //	00 - play DMC sample until length counter reaches 0 (see $4013)
-            //	x1 - loop the DMC sample (x = immaterial)
-            //	10 - play DMC sample until length counter reaches 0, then generate a CPU IRQ
-            //
-            //  Looping (playback mode "x1") will have the chunk of memory played over and
-            //  over, until the channel is disabled (via $4015). In this case, after the
-            //  length counter reaches 0, it will be reloaded with the calculated length
-            //  value of $4013.
-            //
-            //  If playback mode "10" is chosen, an interrupt will be dispached when the
-            //  length counter reaches 0 (after the sample is done playing). There are 2
-            //  ways to acknowledge the DMC's interrupt request upon recieving it. The first
-            //  is a write to this register ($4010), with the MSB (bit 7) cleared (0). The
-            //  second is any write to $4015 (see the $4015 register description for more
-            //  details).
-            //
-            //  If playback mode "00" is chosen, the sample plays until the length counter
-            //  reaches 0. No interrupt is generated.
-            //
-            this.loop = (b & 0x40) == 0x40;
-            this.IRQEnable = (b & 0x80) == 0x80;
+            var index = (c >> 6) & 3;
+            if (index == 3) {
+                index = 1;
+            }
+            this.mode = PlaybackMode.values()[index];
             //
             //  3-0	this is the DMC frequency control. Valid values are from 0 - F. The
             //  value of this register determines how many CPU clocks to wait before the DMA
@@ -111,8 +119,8 @@ public class DMChannel extends Channel<Sequencer> {
             //  length counter has reached 0 (if not in the looping playback mode). The
             //  exact number of CPU clock cycles is as follows:
             //
-            this.frequency = (FREQ_TABLE[b & 0x0f]);
-            if (!this.IRQEnable) {
+            this.frequency = (FREQ_TABLE[c & 0x0f]);
+            if (this.mode != PlaybackMode._10) {
                 this.IRQFlag = false;
             }
         }
@@ -139,8 +147,8 @@ public class DMChannel extends Channel<Sequencer> {
         //  1.79 MHz).
         //
         if (address == 0x4011) {
-            this.dacLSB = (byte) (b & 1);
-            this.deltaCounter = (b >>> 1) & 0x3f;
+            this.dacLSB = (byte) (c & 1);
+            this.deltaCounter = (c >> 1) & 0x3f;
             this.sample = (byte) ((this.deltaCounter << 1) + this.dacLSB);
         }
         //
@@ -158,7 +166,7 @@ public class DMChannel extends Channel<Sequencer> {
         //  has arrived at terminal count (count=0), if in the looping playback mode.
         //
         if (address == 0x4012) {
-            this.sampleAddress = 0xc000 | (uint8(b) << 6);
+            this.sampleAddress = 0xc000 | (c << 6);
         }
         //
         // $4013 - DMA length register
@@ -176,7 +184,7 @@ public class DMChannel extends Channel<Sequencer> {
         //  long; if $4013=FF, sample length is $FF1 bytes long).
         //
         if (address == 0x4013) {
-            this.sampleLength = (uint8(b) << 4) | 1;
+            this.sampleLength = (c << 4) | 1;
         }
     }
 
@@ -208,14 +216,38 @@ public class DMChannel extends Channel<Sequencer> {
      */
     @Override
     public void tick() {
-        if (this.deltaCounter == 0) {
-            this.clock();
-            this.deltaCounter = this.frequency;
-        } else {
-            this.deltaCounter--;
+        if (!this.enable) {
+            return;
         }
-        if (this.currentLength > 0 && this.bitCount == 0) {
-            this.reader();
+        //  The channel fetches the
+        //  next DMC sample byte when the count reaches 0, and then reloads the count.
+        //  This process repeats until the channel is disabled by $4015, or when the
+        //  length counter has reached 0 (if not in the looping playback mode).
+
+        if (this.downCounter == 0) {
+            if (!this.silence) {
+                this.timerClock();
+            }
+            this.downCounter = this.frequency;
+        } else {
+            this.downCounter--;
+        }
+        //  When an output cycle ends, a new cycle is started as follows:
+        //
+        //  The bits-remaining counter is loaded with 8.
+        //  If the sample buffer is empty, then the silence flag is set; otherwise, the silence flag is
+        //  cleared and the sample buffer is emptied into the shift register.
+        var cycleOutputFinish = (this.bitCount == 0);
+        if (cycleOutputFinish) {
+            // If the sample buffer is empty, then the silence flag is set; otherwise, the silence flag
+            // is cleared and the sample buffer is emptied into the shift register.
+            this.silence = this.lCounter == 0;
+//            this.sample = (byte) (this.deltaCounter << 1 | this.dacLSB);
+            this.sample = (byte) this.deltaCounter;
+            if (!this.silence) {
+                this.reader();
+                this.bitCount = 8;
+            }
         }
     }
 
@@ -237,20 +269,17 @@ public class DMChannel extends Channel<Sequencer> {
      * As stated above, the bits-remaining counter is decremented. If it becomes zero, a new output cycle is started.
      * </li>
      */
-    private void clock() {
-        if (this.bitCount == 0) {
-            return;
-        }
-        if ((this.shifter & 1) == 1) {
-            if (this.sample <= 125) {
-                this.sample += 2;
+    private void timerClock() {
+        if ((this.shiftReg & 1) == 1) {
+            if (this.deltaCounter < 126) {
+                this.deltaCounter += 2;
             }
         } else {
-            if (this.sample >= 2) {
-                this.sample -= 2;
+            if (this.deltaCounter > 1) {
+                this.deltaCounter -= 2;
             }
         }
-        this.shifter >>= 2;
+        this.shiftReg >>= 2;
         this.bitCount--;
     }
 
@@ -285,12 +314,12 @@ public class DMChannel extends Channel<Sequencer> {
      * </li>
      */
     public void reader() {
-        this.bitCount = 8;
+
         var ctx = this.apu.getContext();
 
         ctx.setStall(4);
 
-        this.shifter = ctx.I8Read(this.currentAddress);
+        this.shiftReg = ctx.I8Read(this.currentAddress);
 
         this.currentAddress += 1;
 
@@ -299,20 +328,20 @@ public class DMChannel extends Channel<Sequencer> {
             this.currentAddress = 0x8000;
         }
 
-        //
         // The bytes remaining counter is decremented;
+        this.lCounter--;
+        //
         // if it becomes zero and the loop flag is set, the sample is restarted (see above);
         // otherwise, if the bytes remaining counter becomes zero and the IRQ
         // enabled flag is set, the interrupt flag is set.
         //
-        this.currentLength--;
-
-        if (this.currentLength == 0 && this.loop) {
-            this.reset();
-        } else if (this.currentLength == 0 && this.IRQEnable) {
-            this.IRQFlag = true;
+        if (this.lCounter == 0) {
+            if (this.mode == PlaybackMode._X1) {
+                this.reset();
+            } else if (this.mode == PlaybackMode._10) {
+                this.IRQFlag = true;
+            }
         }
-
     }
 
     /**
@@ -320,7 +349,7 @@ public class DMChannel extends Channel<Sequencer> {
      * and bytes remaining is set to the sample length.
      */
     public void reset() {
-        this.currentLength = sampleLength;
+        this.lCounter = sampleLength;
         this.currentAddress = sampleAddress;
     }
 
@@ -340,6 +369,6 @@ public class DMChannel extends Channel<Sequencer> {
 
     @Override
     public int readState() {
-        return this.currentLength == 0 ? 0 : 1 << 4;
+        return this.lCounter == 0 ? 0 : 1 << 4;
     }
 }
