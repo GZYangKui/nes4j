@@ -21,8 +21,7 @@ public class SweepUnit implements CycleDriver {
     private int result;
     //Shift
     private int shift;
-    //Record write operate from the last tick
-    private boolean write;
+    private boolean reloadFlag;
     //Enable flag
     private boolean enable;
     @Getter
@@ -58,10 +57,10 @@ public class SweepUnit implements CycleDriver {
      * eppp nsss       enable, period, negate, shift
      *
      * The divider's period is set to p + 1.
-     * </p>
+     * </pre>
      */
     public void update(byte value) {
-        this.write = true;
+        this.reloadFlag = true;
         this.shift = value & 0x07;
         this.enable = ((value & 0x80) == 0x80);
         this.negative = (value & 0x08) == 0x08;
@@ -75,20 +74,19 @@ public class SweepUnit implements CycleDriver {
      * second square channel, the inverted value is incremented by 1. The resulting
      * value is added with the channel's current period, yielding the final result.
      *
-     * @param period Current timer period
      * @return Calculate result
      */
-    private int calculate(int period) {
-        var result = (period >> this.shift);
+    private int calculate(int val) {
+        var tmp = (val >> this.shift);
 
         if (this.negative) {
-            result = -result;
+            tmp = Math.negateExact(tmp);
             if (this.channel.isSecond()) {
-                result -= 1;
+                tmp -= 1;
             }
         }
 
-        return result + period;
+        return tmp + val;
     }
 
     /**
@@ -99,15 +97,12 @@ public class SweepUnit implements CycleDriver {
     @Override
     public void tick() {
         this.divider.tick();
-
-        if (this.write) {
-            this.write = false;
+        if (this.reloadFlag) {
             this.divider.reset();
+            this.reloadFlag = false;
         }
-
-        var period = this.channel.timer.getPeriod();
-        this.result = this.calculate(period);
-
-        this.silence = period < 8 || result > 0x7ff;
+        var tmp = this.channel.timer.period;
+        this.result = this.calculate(tmp);
+        this.silence = tmp < 8 || result > 0x7ff;
     }
 }

@@ -6,6 +6,20 @@ import cn.navclub.nes4j.bin.apu.impl.sequencer.NoiseSequencer;
 import cn.navclub.nes4j.bin.apu.APU;
 import lombok.Getter;
 
+/**
+ * <h1>Noise channel</h1>
+ * <pre>
+ *     +---------+    +---------+    +---------+
+ *     |  Timer  |--->| Random  |    | Length  |
+ *     +---------+    +---------+    +---------+
+ *                         |              |
+ *                         v              v
+ *     +---------+        |\             |\         +---------+
+ *     |Envelope |------->| >----------->| >------->|   DAC   |
+ *     +---------+        |/             |/         +---------+
+ * </pre>
+ */
+@Getter
 public class NoiseChannel extends Channel<NoiseSequencer> {
     private static final int[] LOOK_TABLE = {
             0x004,
@@ -25,7 +39,6 @@ public class NoiseChannel extends Channel<NoiseSequencer> {
             0x3f2,
             0xfe4
     };
-    @Getter
     private final Envelope envelope;
 
     public NoiseChannel(APU apu) {
@@ -83,17 +96,6 @@ public class NoiseChannel extends Channel<NoiseSequencer> {
     }
 
     /**
-     * <pre>
-     *     +---------+    +---------+    +---------+
-     *     |  Timer  |--->| Random  |    | Length  |
-     *     +---------+    +---------+    +---------+
-     *                         |              |
-     *                         v              v
-     *     +---------+        |\             |\         +---------+
-     *     |Envelope |------->| >----------->| >------->|   DAC   |
-     *     +---------+        |/             |/         +---------+
-     * </pre>
-     *
      * <p> The mixer receives the current envelope volume except when</p>
      *
      * <li>Bit 0 of the shift register is set, or</li>
