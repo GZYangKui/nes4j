@@ -3,7 +3,6 @@ package cn.navclub.nes4j.bin.apu;
 import cn.navclub.nes4j.bin.core.Component;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.function.Consumer;
 
@@ -51,7 +50,7 @@ public class FrameCounter implements Component {
     private final Consumer<Integer> consumer;
 
     public FrameCounter(APU apu, Consumer<Integer> consumer) {
-        this.index = 1;
+        this.reset();
         this.apu = apu;
         this.consumer = consumer;
         this.sequencers = new int[][]{
@@ -139,5 +138,15 @@ public class FrameCounter implements Component {
             }
 
         }
+    }
+
+    @Override
+    public void reset() {
+        this.mode = 0;
+        this.delay = 0;
+        this.cycle = 0;
+        this.index = 1;
+        this.inhibit = false;
+        this.interrupt = false;
     }
 }

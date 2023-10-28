@@ -33,9 +33,9 @@ public class JoyPad {
 
     public void updateBtnStatus(JoypadButton action, boolean press) {
         if (press) {
-            this.bits |= (1 << action.ordinal());
+            this.bits |= (byte) (1 << action.ordinal());
         } else {
-            this.bits &= (0xff - (int) (Math.pow(2, action.ordinal())));
+            this.bits &= (byte) (0xff - (int) (Math.pow(2, action.ordinal())));
         }
     }
 

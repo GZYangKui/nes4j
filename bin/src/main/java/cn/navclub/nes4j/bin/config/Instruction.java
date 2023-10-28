@@ -666,6 +666,6 @@ public enum Instruction {
                 }
             }
         }
-        throw new RuntimeException("Illegal open code:0x" + Integer.toHexString(openCode & 0xff));
+        return null;
     }
 }

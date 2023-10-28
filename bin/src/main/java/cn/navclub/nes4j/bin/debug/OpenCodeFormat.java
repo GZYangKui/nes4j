@@ -19,10 +19,11 @@ public class OpenCodeFormat {
         var list = new ArrayList<OpenCode>();
         for (int i = 0; i < buffer.length; ) {
             var b = buffer[i];
-            try {
-                i += 1;
 
-                var instance = Instruction.getInstance(b);
+            i += 1;
+
+            var instance = Instruction.getInstance(b);
+            if (instance != null) {
                 var mode = instance.getAddressMode();
 
                 var operator = switch (mode) {
@@ -44,8 +45,9 @@ public class OpenCodeFormat {
                 var index = 0x8000 + i - 1;
                 list.add(new OpenCode(index, instance.getInstruction(), operator));
                 i += (instance.getSize() - 1);
-            } catch (Exception ignore) {
+            } else {
                 list.add(new OpenCode(0x8000 + i - 1, null, null));
+
             }
         }
         return list;

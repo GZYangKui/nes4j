@@ -374,6 +374,10 @@ public class CPU {
         }
 
         var instruction6502 = Instruction.getInstance(openCode);
+        if (instruction6502 == null) {
+            logger.warning("Unknown opecode 0x{} in address 0x{}", Integer.toHexString(uint8(openCode)), Integer.toHexString(state - 1));
+            return 0;
+        }
         var mode = instruction6502.getAddressMode();
         var instruction = instruction6502.getInstruction();
 

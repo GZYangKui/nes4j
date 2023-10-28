@@ -50,4 +50,10 @@ public class SeqSequencer implements Sequencer {
     public int value() {
         return this.sequences[this.duty][this.index];
     }
+
+    @Override
+    public void reset() {
+        this.duty = 0;
+        this.index = 0;
+    }
 }

@@ -88,7 +88,7 @@ public class NoiseChannel extends Channel<NoiseSequencer> {
         }
 
         if (address == 0x400f) {
-            this.envelope.reset();
+            this.envelope.resetLoop();
             if (this.enable) {
                 this.lengthCounter.setCounter(b >>> 3);
             }
@@ -106,7 +106,7 @@ public class NoiseChannel extends Channel<NoiseSequencer> {
     public int output() {
         if (!this.enable
                 || this.sequencer.value() == 1
-                || this.lengthCounter.getCounter() == 0) {
+                || this.lengthCounter.silence()) {
             return 0;
         }
         return this.envelope.getVolume();
@@ -115,5 +115,11 @@ public class NoiseChannel extends Channel<NoiseSequencer> {
     @Override
     public int readState() {
         return this.lengthCounter.stateVal() << 3;
+    }
+
+    @Override
+    public void reset() {
+        super.reset();
+        this.envelope.reset();
     }
 }

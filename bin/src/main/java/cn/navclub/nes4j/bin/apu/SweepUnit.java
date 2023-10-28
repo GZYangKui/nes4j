@@ -105,4 +105,15 @@ public class SweepUnit implements CycleDriver {
         this.result = this.calculate(tmp);
         this.silence = tmp < 8 || result > 0x7ff;
     }
+
+    public void reset() {
+        this.shift = 0;
+        this.result = 0;
+        this.enable = false;
+        this.silence = false;
+        this.negative = false;
+        this.reloadFlag = false;
+        this.divider.period = 0;
+        this.divider.counter = 0;
+    }
 }

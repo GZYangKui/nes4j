@@ -55,7 +55,7 @@ public class PulseChannel extends Channel<SeqSequencer> {
         }
 
         if (address == 0x4003 || address == 0x4007) {
-            this.envelope.reset();
+            this.envelope.resetLoop();
             if (this.enable) {
                 this.lengthCounter.lookupTable(b);
             }
@@ -98,7 +98,7 @@ public class PulseChannel extends Channel<SeqSequencer> {
     public int output() {
         if (!this.enable
                 || this.sequencer.value() == 0
-                || this.lengthCounter.getCounter() == 0
+                || this.lengthCounter.silence()
                 || this.sweepUnit.isSilence()) {
             return 0;
         }
@@ -114,5 +114,12 @@ public class PulseChannel extends Channel<SeqSequencer> {
     @Override
     public int readState() {
         return this.lengthCounter.stateVal() << (this.second ? 1 : 0);
+    }
+
+    @Override
+    public void reset() {
+        super.reset();
+        this.envelope.reset();
+        this.sweepUnit.reset();
     }
 }

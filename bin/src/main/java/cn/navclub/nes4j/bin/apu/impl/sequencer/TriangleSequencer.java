@@ -49,4 +49,9 @@ public class TriangleSequencer implements Sequencer {
     public void tick() {
         this.index = (this.index + 1) % sequencer.length;
     }
+
+    @Override
+    public void reset() {
+        this.index = 0;
+    }
 }

@@ -114,4 +114,18 @@ public abstract class Channel<T extends Sequencer> implements Component {
     public int readState() {
         return 0;
     }
+
+    @Override
+    public void reset() {
+        this.enable = false;
+        this.lengthCounter.setCounter(0);
+        this.lengthCounter.setHalt(true);
+        if (this.timer != null) {
+            this.timer.period = 0;
+            this.timer.counter = 0;
+        }
+        if (this.sequencer != null) {
+            this.sequencer.reset();
+        }
+    }
 }

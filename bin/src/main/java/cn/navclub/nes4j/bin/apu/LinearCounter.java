@@ -48,4 +48,11 @@ public class LinearCounter implements CycleDriver {
         }
         this.halt = (this.halt && this.control);
     }
+
+    public void reset() {
+        this.counter = 0;
+        this.halt = false;
+        this.control = false;
+        this.reloadValue = 0;
+    }
 }

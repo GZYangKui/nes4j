@@ -72,7 +72,7 @@ public class TriangleChannel extends Channel<TriangleSequencer> {
     public int output() {
         if (!this.enable
                 || this.linearCounter.getCounter() == 0
-                || this.lengthCounter.getCounter() == 0) {
+                || this.lengthCounter.silence()) {
             return 0;
         }
         return sequencer.value();
@@ -81,5 +81,11 @@ public class TriangleChannel extends Channel<TriangleSequencer> {
     @Override
     public int readState() {
         return this.lengthCounter.stateVal() << 2;
+    }
+
+    @Override
+    public void reset() {
+        super.reset();
+        this.linearCounter.reset();
     }
 }

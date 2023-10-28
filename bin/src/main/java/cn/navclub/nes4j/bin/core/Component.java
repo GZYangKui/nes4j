@@ -51,4 +51,9 @@ public interface Component extends CycleDriver {
     default void load(byte[] snapshot) {
 
     }
+
+    @Override
+    default void tick() {
+
+    }
 }

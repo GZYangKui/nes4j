@@ -103,9 +103,19 @@ public class Envelope implements CycleDriver {
      * if there was a write to the fourth channel register since the last clock, the counter is set
      * to 15 and the divider is reset
      */
-    public void reset() {
+    public void resetLoop() {
         this.counter = 15;
         this.divider.reset();
+    }
+
+    public void reset() {
+        this.counter = 0;
+        this.constant = 0;
+        this.loop = false;
+        this.cflag = false;
+        this.startFlag = false;
+        this.divider.period = 0;
+        this.divider.counter = 0;
     }
 
     /**

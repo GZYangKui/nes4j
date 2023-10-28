@@ -9,6 +9,8 @@ import cn.navclub.nes4j.bin.ppu.PPU;
 import cn.navclub.nes4j.bin.util.BinUtil;
 import lombok.Getter;
 
+import java.util.Arrays;
+
 import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
 
@@ -49,6 +51,8 @@ public class Bus implements Component {
 
         this.apu = context.getApu();
         this.ppu = context.getPpu();
+
+        this.reset();
     }
 
     /**
@@ -251,13 +255,9 @@ public class Bus implements Component {
     }
 
     @Override
-    public void stop() {
-        this.apu.stop();
-        this.ppu.stop();
-    }
-
-    @Override
-    public void tick() {
-
+    public void reset() {
+        Arrays.fill(this.ram, (byte) 0);
+        Arrays.fill(this.exp, (byte) 0);
+        Arrays.fill(this.sram, (byte) 0);
     }
 }

@@ -19,4 +19,9 @@ public interface Sequencer extends CycleDriver {
      * @return Return current sequencer value
      */
     int value();
+
+    /**
+     * Reset Sequencer
+     */
+    void reset();
 }

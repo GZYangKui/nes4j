@@ -80,4 +80,17 @@ public class LengthCounter implements CycleDriver {
     public int stateVal() {
         return this.counter > 0 ? 1 : 0;
     }
+
+    /**
+     *
+     * In the actual APU, the length counter silences the channel when clocked while already zero
+     * (provided the length counter halt flag isn't set). The values in the above table are the actual
+     * values the length counter gets loaded with plus one, to allow us to use a model where the channel
+     * is silenced when the length counter becomes zero.
+     * <p>
+     * The triangle's linear counter works differently, and does silence the channel when it reaches zero.
+     */
+    public boolean silence() {
+        return this.counter == 0 && !this.halt;
+    }
 }

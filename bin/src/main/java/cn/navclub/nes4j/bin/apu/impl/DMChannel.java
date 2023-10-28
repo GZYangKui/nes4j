@@ -89,8 +89,7 @@ public class DMChannel extends Channel<Sequencer> {
 
     public DMChannel(APU apu) {
         super(apu, null);
-        this.silence = true;
-        this.mode = PlaybackMode._00;
+        this.reset();
     }
 
     @Override
@@ -337,7 +336,7 @@ public class DMChannel extends Channel<Sequencer> {
         //
         if (this.lCounter == 0) {
             if (this.mode == PlaybackMode._X1) {
-                this.reset();
+                this.loopReader();
             } else if (this.mode == PlaybackMode._10) {
                 this.IRQFlag = true;
             }
@@ -348,9 +347,23 @@ public class DMChannel extends Channel<Sequencer> {
      * When a sample is (re)started, the current address is set to the sample address,
      * and bytes remaining is set to the sample length.
      */
-    public void reset() {
+    public void loopReader() {
         this.lCounter = sampleLength;
         this.currentAddress = sampleAddress;
+    }
+
+    @Override
+    public void reset() {
+        super.reset();
+
+        this.dacLSB = 0;
+        this.sample = 0;
+        this.lCounter = 0;
+        this.silence = true;
+        this.downCounter = 0;
+        this.IRQFlag = false;
+        this.currentAddress = 0;
+        this.mode = PlaybackMode._00;
     }
 
     /**
@@ -371,4 +384,6 @@ public class DMChannel extends Channel<Sequencer> {
     public int readState() {
         return this.lCounter == 0 ? 0 : 1 << 4;
     }
+
+
 }

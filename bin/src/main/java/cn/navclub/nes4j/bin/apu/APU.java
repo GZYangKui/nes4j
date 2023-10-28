@@ -128,7 +128,7 @@ public class APU implements Component {
             // the next sample is fetched.
             //
             if (enable && this.dmc.getLCounter() == 0) {
-                this.dmc.reset();
+                this.dmc.loopReader();
             }
             this.dmc.setEnable(enable);
             //Writing to this register clears the DMC interrupt flag.
@@ -293,5 +293,16 @@ public class APU implements Component {
         this.pulse1.getEnvelope().tick();
         this.pulse2.getEnvelope().tick();
         this.triangle.getLinearCounter().tick();
+    }
+
+    @Override
+    public void reset() {
+        this.cycle = 0;
+        this.dmc.reset();
+        this.noise.reset();
+        this.pulse1.reset();
+        this.pulse2.reset();
+        this.triangle.reset();
+        this.frameCounter.reset();
     }
 }

@@ -140,6 +140,7 @@ public class NES {
         this.apu.reset();
         this.ppu.reset();
         this.cpu.reset();
+        this.bus.reset();
         this.reset = false;
     }
 
@@ -179,6 +180,8 @@ public class NES {
     public void stop() {
         this.stop = true;
         this.bus.stop();
+        this.apu.stop();
+        this.ppu.stop();
         LockSupport.unpark(this.thread);
     }
 
