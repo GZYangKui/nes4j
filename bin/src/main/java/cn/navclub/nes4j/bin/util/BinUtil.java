@@ -94,7 +94,7 @@ public class BinUtil {
     }
 
     public static char toVisualChar(byte b) {
-        if (b >= 0 && b < 32 || b == 127) {
+        if (!(b > 31 && b < 127)) {
             return '.';
         }
         return (char) b;
