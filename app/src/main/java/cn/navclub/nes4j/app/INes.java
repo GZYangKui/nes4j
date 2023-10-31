@@ -31,7 +31,7 @@ public class INes extends Application {
         if (!config.isExtraNes()) {
             new GameHall(stage);
         } else {
-            GameWorld.run(config.getExtraNes());
+            GameWorld.run(config.getExtraNes(), 3);
         }
     }
 

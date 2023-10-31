@@ -11,15 +11,18 @@ import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Window;
 
 import java.io.File;
 import java.util.Arrays;
 
 public class DNesHeader extends Dialog<Boolean> {
+    private static final int DEFAULT_SCALE = 3;
+    @FXML
+    private GridPane attrGrid;
     @FXML
     private ToggleGroup vGroup;
-
     @FXML
     private ChoiceBox<String> cb0;
     @FXML
@@ -29,6 +32,8 @@ public class DNesHeader extends Dialog<Boolean> {
     @FXML
     private ChoiceBox<TV> cb3;
     @FXML
+    private TextField scaleTextField;
+    @FXML
     private ChoiceBox<NMapper> cbMapper;
 
     public DNesHeader(File file, Window owner) {
@@ -37,15 +42,17 @@ public class DNesHeader extends Dialog<Boolean> {
 
         var pane = this.getDialogPane();
 
-        var gridPane = FXResource.loadFXML(this);
+        pane.setContent(FXResource.loadFXML(this));
 
-        //Mask GridPane mouse event
-        gridPane.addEventFilter(MouseEvent.ANY, Event::consume);
+        //Read only attribute
+        this.attrGrid.addEventFilter(MouseEvent.ANY, Event::consume);
+
 
         Arrays.stream(TV.values()).forEach(it -> this.cb3.getItems().add(it));
         Arrays.stream(NameMirror.values()).forEach(it -> this.cb2.getItems().add(it));
         Arrays.stream(NMapper.values()).forEach(it -> this.cbMapper.getItems().add(it));
 
+        this.scaleTextField.setText(Integer.toString(DEFAULT_SCALE));
         this.cb1.getSelectionModel().select(StrUtil.toKB(cartridge.getChSize()));
         this.cb0.getSelectionModel().select(StrUtil.toKB(cartridge.getRgbSize()));
         this.cb2.getSelectionModel().select(cartridge.getMirrors().ordinal());
@@ -54,7 +61,6 @@ public class DNesHeader extends Dialog<Boolean> {
         this.vGroup.selectToggle(this.vGroup.getToggles().get(cartridge.getFormat().ordinal()));
 
 
-        pane.setContent(gridPane);
         pane.getButtonTypes().addAll(ButtonType.APPLY);
         var btn = ((Button) (pane.lookupButton(ButtonType.APPLY)));
         if (cartridge.getMapper().isImpl()) {
@@ -65,5 +71,18 @@ public class DNesHeader extends Dialog<Boolean> {
         this.initOwner(owner);
         this.setTitle(StrUtil.getFileName(file));
         this.setResultConverter(buttonType -> !(buttonType == null) && cartridge.getMapper().isImpl());
+    }
+
+    public int viewportScale() {
+        var scale = DEFAULT_SCALE;
+        var text = scaleTextField.getText();
+        if (StrUtil.isNotBlank(text)) {
+            try {
+                scale = Integer.parseInt(text);
+            } catch (Exception ignore) {
+
+            }
+        }
+        return scale;
     }
 }

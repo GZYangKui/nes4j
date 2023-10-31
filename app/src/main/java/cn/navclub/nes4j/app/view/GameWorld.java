@@ -61,10 +61,10 @@ public class GameWorld extends Stage {
     private TaskService<Void> service;
     private final IconPopup speedPopup;
 
-    public GameWorld() {
+    public GameWorld(int scale) {
         var scene = new Scene(FXResource.loadFXML(this));
 
-        this.scale = 3;
+        this.scale = scale;
         this.eventQueue = new LinkedBlockingDeque<>();
 
         this.tracer = new FPSTracer(it -> this.fps = it);
@@ -242,7 +242,7 @@ public class GameWorld extends Stage {
     }
 
 
-    public static void run(File file) {
-        new GameWorld().execute(file);
+    public static void run(File file, int scale) {
+        new GameWorld(scale).execute(file);
     }
 }

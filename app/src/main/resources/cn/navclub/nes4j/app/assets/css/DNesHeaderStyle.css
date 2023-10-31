@@ -1,10 +1,14 @@
 @import "Common.css";
 
+.header-box {
+    -fx-spacing: 1em;
+}
+
 GridPane {
     -fx-hgap: 1em;
     -fx-vgap: 1em;
 }
 
-.choice-box {
+.choice-box, .text-field {
     -fx-pref-width: 15em;
 }

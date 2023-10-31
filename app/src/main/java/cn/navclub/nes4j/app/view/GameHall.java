@@ -126,7 +126,7 @@ public class GameHall {
         var header = new DNesHeader(message.body(), this.stage);
         var execute = header.showAndWait().orElse(false);
         if (execute) {
-            GameWorld.run(file);
+            GameWorld.run(file, header.viewportScale());
         }
         return execute;
     }

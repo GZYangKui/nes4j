@@ -5,52 +5,59 @@
 
 <?import java.lang.String?>
 <?import javafx.collections.FXCollections?>
-<GridPane xmlns="http://javafx.com/javafx"
-          xmlns:fx="http://javafx.com/fxml" stylesheets="@../css/DNesHeaderStyle.css">
-    <fx:define>
-        <ToggleGroup fx:id="vGroup"/>
-    </fx:define>
-    <Label text="Version:"/>
-    <HBox GridPane.columnIndex="1" alignment="CENTER_LEFT" spacing="5">
-        <RadioButton toggleGroup="${vGroup}" text="INes"/>
-        <RadioButton toggleGroup="${vGroup}" text="NES 2.0"/>
-    </HBox>
-    <Label GridPane.columnIndex="2" text="Mapper #:"/>
-    <ChoiceBox GridPane.columnIndex="3" fx:id="cbMapper"/>
-    <Label text="RPG ROM:" GridPane.rowIndex="1"/>
-    <ChoiceBox GridPane.rowIndex="1" GridPane.columnIndex="1" fx:id="cb0">
-        <items>
-            <FXCollections fx:factory="observableArrayList">
-                <String fx:value="0B"/>
-                <String fx:value="16KB"/>
-                <String fx:value="32KB"/>
-                <String fx:value="64KB"/>
-                <String fx:value="128KB"/>
-                <String fx:value="256KB"/>
-                <String fx:value="512KB"/>
-                <String fx:value="1024KB"/>
-                <String fx:value="2048KB"/>
-            </FXCollections>
-        </items>
-    </ChoiceBox>
-    <Label text="CHR ROM:" GridPane.rowIndex="1" GridPane.columnIndex="2"/>
-    <ChoiceBox GridPane.rowIndex="1" GridPane.columnIndex="3" fx:id="cb1">
-        <items>
-            <FXCollections fx:factory="observableArrayList">
-                <String fx:value="0B"/>
-                <String fx:value="16KB"/>
-                <String fx:value="32KB"/>
-                <String fx:value="64KB"/>
-                <String fx:value="128KB"/>
-                <String fx:value="256KB"/>
-                <String fx:value="512KB"/>
-                <String fx:value="1024KB"/>
-                <String fx:value="2048KB"/>
-            </FXCollections>
-        </items>
-    </ChoiceBox>
-    <Label GridPane.rowIndex="2" text="Mirroring"/>
-    <ChoiceBox GridPane.rowIndex="2" GridPane.columnIndex="1" fx:id="cb2"/>
-    <Label GridPane.rowIndex="2" text="Region" GridPane.columnIndex="2"/>
-    <ChoiceBox GridPane.rowIndex="2" GridPane.columnIndex="3" fx:id="cb3"/>
-</GridPane>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml" stylesheets="@../css/DNesHeaderStyle.css" styleClass="header-box">
+    <GridPane fx:id="attrGrid">
+        <fx:define>
+            <ToggleGroup fx:id="vGroup"/>
+        </fx:define>
+        <Label text="Version："/>
+        <HBox GridPane.columnIndex="1" alignment="CENTER_LEFT" spacing="5">
+            <RadioButton toggleGroup="${vGroup}" text="INes"/>
+            <RadioButton toggleGroup="${vGroup}" text="NES 2.0"/>
+        </HBox>
+        <Label GridPane.columnIndex="2" text="Mapper #:"/>
+        <ChoiceBox GridPane.columnIndex="3" fx:id="cbMapper"/>
+        <Label text="RPG ROM：" GridPane.rowIndex="1"/>
+        <ChoiceBox GridPane.rowIndex="1" GridPane.columnIndex="1" fx:id="cb0">
+            <items>
+                <FXCollections fx:factory="observableArrayList">
+                    <String fx:value="0B"/>
+                    <String fx:value="16KB"/>
+                    <String fx:value="32KB"/>
+                    <String fx:value="64KB"/>
+                    <String fx:value="128KB"/>
+                    <String fx:value="256KB"/>
+                    <String fx:value="512KB"/>
+                    <String fx:value="1024KB"/>
+                    <String fx:value="2048KB"/>
+                </FXCollections>
+            </items>
+        </ChoiceBox>
+        <Label text="CHR ROM：" GridPane.rowIndex="1" GridPane.columnIndex="2"/>
+        <ChoiceBox GridPane.rowIndex="1" GridPane.columnIndex="3" fx:id="cb1">
+            <items>
+                <FXCollections fx:factory="observableArrayList">
+                    <String fx:value="0B"/>
+                    <String fx:value="16KB"/>
+                    <String fx:value="32KB"/>
+                    <String fx:value="64KB"/>
+                    <String fx:value="128KB"/>
+                    <String fx:value="256KB"/>
+                    <String fx:value="512KB"/>
+                    <String fx:value="1024KB"/>
+                    <String fx:value="2048KB"/>
+                </FXCollections>
+            </items>
+        </ChoiceBox>
+        <Label GridPane.rowIndex="2" text="Mirroring："/>
+        <ChoiceBox GridPane.rowIndex="2" GridPane.columnIndex="1" fx:id="cb2"/>
+        <Label GridPane.rowIndex="2" text="Region：" GridPane.columnIndex="2"/>
+        <ChoiceBox GridPane.rowIndex="2" GridPane.columnIndex="3" fx:id="cb3"/>
+    </GridPane>
+    <GridPane>
+        <Label text="Viewport： "/>
+        <TextField GridPane.columnIndex="1" fx:id="scaleTextField"/>
+    </GridPane>
+</VBox>
+
