@@ -5,7 +5,6 @@ package cn.navclub.nes4j.bin.apu;
  */
 public interface Player {
     /**
-     *
      * When apu component product a sample will call this method
      *
      * @param sample Audio sample
@@ -13,11 +12,14 @@ public interface Player {
     void output(byte sample);
 
     /**
-     *
      * When game was close will call this method release resource
-     *
      */
     default void stop() {
+
+    }
+
+
+    default void reset() {
 
     }
 
@@ -25,8 +27,7 @@ public interface Player {
         try {
             return clazz.getConstructor().newInstance();
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            throw new RuntimeException(e);
         }
     }
 }

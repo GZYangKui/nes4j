@@ -6,12 +6,10 @@ import cn.navclub.nes4j.bin.logging.LoggerFactory;
 
 import javax.sound.sampled.*;
 
-import java.util.Base64;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 
-import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 
 @SuppressWarnings("all")
 public class JavaXAudio implements Player {
@@ -88,5 +86,14 @@ public class JavaXAudio implements Player {
         this.stop = true;
         LockSupport.unpark(this.thread);
         this.line.close();
+    }
+
+    @Override
+    public void reset() {
+        synchronized (this) {
+            this.ldx = 0;
+            this.index = 0;
+            Arrays.fill(this.sample, (byte) 0);
+        }
     }
 }

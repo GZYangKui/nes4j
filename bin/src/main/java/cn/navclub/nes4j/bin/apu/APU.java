@@ -302,6 +302,7 @@ public class APU implements Component {
         this.noise.reset();
         this.pulse1.reset();
         this.pulse2.reset();
+        this.player.reset();
         this.triangle.reset();
         this.frameCounter.reset();
     }
