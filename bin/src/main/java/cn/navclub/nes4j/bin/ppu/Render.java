@@ -101,7 +101,7 @@ public class Render implements CycleDriver {
     //Background pixel shift
     private int shift;
     //Record product frame counter
-    private long frames;
+    protected long frames;
     //Whether odd frame
     private boolean odd;
 

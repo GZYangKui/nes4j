@@ -13,6 +13,7 @@ import java.util.Arrays;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
+import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
 
 /**
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
@@ -37,7 +38,6 @@ public class Bus implements Component {
     //  SRAM (WRAM) [$6000,$8000) is the Save RAM, the addresses used to access RAM in the cartridges
     //  for storing save games.
     private final byte[] sram;
-
 
     public Bus(NES context, JoyPad joyPad, JoyPad joyPad1) {
         this.context = context;
@@ -76,11 +76,7 @@ public class Bus implements Component {
         address = this.map(address);
         if (address >= 0 && address <= RAM_MIRROR_END) {
             b = this.ram[address];
-        } else if (address == 0x2002) {
-            b = this.ppu.readStatus();
-        } else if (address == 0x2004) {
-            b = this.ppu.readOam();
-        } else if (address == 0x2007) {
+        } else if (address <= 0x2007) {
             b = this.ppu.read(address);
         }
         //player1
@@ -98,15 +94,6 @@ public class Bus implements Component {
         //Read from apu
         else if (address == 0x4015) {
             return this.apu.read(0x4015);
-        }
-        //only write memory area
-        else if (address == 0x2006
-                || address == 0x4014
-                || address == 0x2005
-                || address == 0x2003
-                || address == 0x2001
-                || address == 0x2000) {
-            b = 0;
         }
         //Read a byte from expansion rom
         else if (address >= 0x4020 && address < 0x6000) {
@@ -140,46 +127,10 @@ public class Bus implements Component {
         if (address >= 0 && address <= RAM_MIRROR_END) {
             this.ram[address] = b;
         }
-
-        //https://www.nesdev.org/wiki/PPU_programmer_reference#Controller_($2000)_%3E_write
-        else if (address == 0x2000) {
-            this.ppu.writeCtr(b);
-        }
-
-        //https://www.nesdev.org/wiki/PPU_programmer_reference#Mask_($2001)_%3E_write
-        else if (address == 0x2001) {
-            this.ppu.MaskWrite(b);
-        }
-//        //https://www.nesdev.org/wiki/PPU_programmer_reference#Status_($2002)_%3C_read
-//        else if (address == 0x2002) {
-//            throw new RuntimeException("Attempt write only read ppu register.");
-//        }
-
-        //https://www.nesdev.org/wiki/PPU_programmer_reference#OAM_address_($2003)_%3E_write
-        else if (address == 0x2003) {
-            this.ppu.OAMAddrWrite(b);
-        }
-
-        //https://www.nesdev.org/wiki/PPU_programmer_reference#OAM_data_($2004)_%3C%3E_read/write
-        else if (address == 0x2004) {
-            this.ppu.OAMWrite(b);
-        }
-
-        //https://www.nesdev.org/wiki/PPU_programmer_reference#Scroll_($2005)_%3E%3E_write_x2
-        else if (address == 0x2005) {
-            this.ppu.ScrollWrite(b);
-        }
-
-        //https://www.nesdev.org/wiki/PPU_programmer_reference#Address_($2006)_%3E%3E_write_x2
-        else if (address == 0x2006) {
-            this.ppu.AddrWrite(b);
-        }
-
-        //https://www.nesdev.org/wiki/PPU_programmer_reference#Data_($2007)_%3C%3E_read/write
-        else if (address == 0x2007) {
+        //Writer ppu inner register
+        else if (address <= 0x2007) {
             this.ppu.write(address, b);
         }
-
         //https://www.nesdev.org/wiki/PPU_programmer_reference#OAM_DMA_($4014)_%3E_write
         else if (address == 0x4014) {
             var buffer = new byte[0x100];
@@ -191,7 +142,7 @@ public class Bus implements Component {
             // Once the STA instruction finishes, it needs to consume an additional 512 cycles (since it's performing
             // 256 reads and 256 writes) plus another 1-2 cycles of "synchronization" within the Sprite DMA logic.
             //
-            this.ppu.DMAWrite(buffer);
+            this.ppu.dmcWrite(buffer);
             this.context.setStall(512);
         }
         //Write to standard controller

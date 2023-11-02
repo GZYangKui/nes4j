@@ -66,7 +66,7 @@ public class NES {
         this.mapper = this.cartridge.getMapper().newProvider(this.cartridge, this);
 
         this.apu = new APU(this);
-        this.ppu = new PPU(this, cartridge.getChrom(), cartridge.getMirrors());
+        this.ppu = new PPU(this, cartridge.getMirrors());
 
         this.bus = new Bus(this, joyPad, joyPad1);
 

@@ -13,6 +13,7 @@ import cn.navclub.nes4j.bin.ppu.register.PPUStatus;
 import lombok.Getter;
 import lombok.Setter;
 
+
 import static cn.navclub.nes4j.bin.util.BinUtil.*;
 import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
 import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
@@ -161,9 +162,7 @@ public class PPU implements Component {
     private boolean suppress;
 
 
-    public PPU(final NES context, byte[] ch, NameMirror mirrors) {
-        this.oamAddr = 0;
-        this.byteBuf = 0;
+    public PPU(final NES context, NameMirror mirrors) {
         this.context = context;
         this.mirrors = mirrors;
         this.oam = new byte[256];
@@ -174,10 +173,8 @@ public class PPU implements Component {
         this.status = new PPUStatus();
         this.palette = new byte[32];
         this.render = new Render(this);
-    }
 
-    public PPU(NES context, NameMirror mirrors) {
-        this(context, new byte[2048], mirrors);
+        this.reset();
     }
 
 
@@ -187,6 +184,8 @@ public class PPU implements Component {
         this.v = 0;
         this.w = 0;
         this.x = 0;
+        this.oamAddr = 0;
+        this.byteBuf = 0;
         this.render.reset();
         this.suppress = false;
         this.ctr.setBits(int8(0));
@@ -201,27 +200,7 @@ public class PPU implements Component {
         }
     }
 
-    public void DMAWrite(byte[] arr) {
-        for (byte b : arr) {
-            this.oam[this.oamAddr] = b;
-            this.oamAddr = u8add(this.oamAddr, 1);
-        }
-    }
-
-    public void OAMWrite(byte b) {
-        this.oam[this.oamAddr] = b;
-        this.oamAddr = u8sbc(this.oamAddr, 1);
-    }
-
-    public byte readOam() {
-        return this.oam[this.oamAddr];
-    }
-
-    public void OAMAddrWrite(byte b) {
-        this.oamAddr = uint8(b);
-    }
-
-    public void AddrWrite(byte b) {
+    private void updateVideoAddr(byte b) {
         //Note that while the v register has 15 bits, the PPU memory space is only 14 bits wide. The highest bit is unused for access through $2007.
         if (this.w == 0) {
             this.w = 1;
@@ -244,34 +223,74 @@ public class PPU implements Component {
 
     @Override
     public byte read(int address) {
-        var addr = this.v % 0x4000;
+        byte value = 0;
+        var mask = 0xff;
+        if (address == 0x2002) {
+            mask = 0x1f;
+            value = this.readStatus();
+        } else if (address == 0x2004) {
+            mask = 0;
+            value = this.oam[this.oamAddr];
+        } else if (address == 0x2007) {
+            var addr = this.v % 0x4000;
+            //
+            // After each write to $2007, the address is incremented by either 1 or 32 as dictated by
+            // bit 2 of $2000. The first read from $2007 is invalid and the data will actually be buffered and
+            // returned on the next read. This does not apply to colour palettes.
+            //
+            value = this.byteBuf;
 
-        //
-        // After each write to $2007, the address is incremented by either 1 or 32 as dictated by
-        // bit 2 of $2000. The first read from $2007 is invalid and the data will actually be buffered and
-        // returned on the next read. This does not apply to colour palettes.
-        //
-        var temp = this.byteBuf;
+            //Read pattern table
+            if (addr < 0x2000) {
+                this.byteBuf = this.context.getMapper().CHRead(addr);
+            }
+            //Read name table
+            else if (addr < 0x3f00) {
+                this.byteBuf = this.vram[VRAMirror(addr)];
+            }
+            //Read palette table
+            else if (addr < 0x3f20) {
+                value = this.palette[this.paletteMirror(addr)];
+            }
 
-        //Read pattern table
-        if (addr < 0x2000) {
-            this.byteBuf = this.context.getMapper().CHRead(addr);
+            this.v += this.ctr.inc();
         }
-        //Read name table
-        else if (addr < 0x3f00) {
-            this.byteBuf = this.vram[VRAMirror(addr)];
-        }
-        //Read palette table
-        else if (addr < 0x3f20) {
-            temp = this.palette[this.paletteMirror(addr)];
-        } else {
-            log.warning("Write:unknown ppu register address:[0x{}].", Integer.toHexString(address));
-        }
-
-        this.v += this.ctr.inc();
-
-        return temp;
+        return value;
     }
+
+    @Override
+    public void write(int address, byte b) {
+        if (address == 0x2000) {
+            this.writeCtr(b);
+        } else if (address == 0x2001) {
+            this.mask.setBits(b);
+        } else if (address == 0x2003) {
+            this.oamAddr = uint8(b);
+        } else if (address == 0x2004) {
+            this.oam[this.oamAddr] = b;
+            this.oamAddr = u8sbc(this.oamAddr, 1);
+        } else if (address == 0x2005) {
+            this.updateScrollPos(b);
+        } else if (address == 0x2006) {
+            this.updateVideoAddr(b);
+        } else if (address == 0x2007) {
+            var addr = this.v % 0x4000;
+            //Update pattern table
+            if (addr < 0x2000) {
+                this.context.getMapper().CHWrite(addr, b);
+            }
+            //Update name table
+            else if (addr < 0x3f00) {
+                this.vram[this.VRAMirror(addr)] = b;
+            }
+            //Update palette value
+            else if (addr < 0x3f20) {
+                this.palette[this.paletteMirror(addr)] = b;
+            }
+            this.v += this.ctr.inc();
+        }
+    }
+
 
     protected int iRead(int address) {
         final byte b;
@@ -292,29 +311,7 @@ public class PPU implements Component {
         return uint8(b);
     }
 
-    @Override
-    public void write(int address, byte b) {
-        var addr = this.v % 0x4000;
-
-        //Update pattern table
-        if (addr < 0x2000) {
-            this.context.getMapper().CHWrite(addr, b);
-        }
-        //Update name table
-        else if (addr < 0x3f00) {
-            this.vram[this.VRAMirror(addr)] = b;
-        }
-        //Update palette value
-        else if (addr < 0x3f20) {
-            this.palette[this.paletteMirror(addr)] = b;
-        } else {
-            log.warning("Write:unknown ppu register address:[0x{}].", Integer.toHexString(address));
-        }
-
-        this.v += this.ctr.inc();
-    }
-
-    public byte readStatus() {
+    private byte readStatus() {
         var b = this.status.getBits();
         //w:      <- 0(Reset scroll and address register)
         this.w = 0;
@@ -427,7 +424,7 @@ public class PPU implements Component {
      *
      * @param b Update byte value
      */
-    public void writeCtr(byte b) {
+    private void writeCtr(byte b) {
         var bit = this.ctr.getBits();
         var firmNMI = ((bit & 0x80) == 0) && ((b & 0x80) == 0x80);
         if (firmNMI && this.status.contain(PStatus.V_BLANK_OCCUR)) {
@@ -461,7 +458,7 @@ public class PPU implements Component {
      *
      * @param b Scroll value
      */
-    public void ScrollWrite(byte b) {
+    private void updateScrollPos(byte b) {
         if (this.w == 0) {
             this.w = 1;
             //t: ........ ..ABCDE <- d: ABCDE...(Update coarse X scroll)
@@ -476,9 +473,6 @@ public class PPU implements Component {
         }
     }
 
-    public void MaskWrite(byte b) {
-        this.mask.setBits(b);
-    }
 
     public byte getStatus() {
         return this.status.getBits();
@@ -496,6 +490,32 @@ public class PPU implements Component {
         return (this.v >> 5) & 0x1f | (this.v >> 7 & 0x1f);
     }
 
+    /**
+     * <p>
+     * This port is located on the CPU. Writing $XX will upload 256 bytes of data from CPU page
+     * $XX00–$XXFF to the internal PPU OAM. This page is typically located in internal RAM, commonly
+     * $0200–$02FF, but cartridge RAM or ROM can be used as well.
+     * </p>
+     * <p>
+     * The CPU is suspended during the transfer, which will take 513 or 514 cycles after the $4014
+     * write tick. (1 wait state cycle while waiting for writes to complete, +1 if on a put cycle,
+     * then 256 alternating get/put cycles. See DMA for more information.)
+     * The OAM DMA is the only effective method for initializing all 256 bytes of OAM. Because of the
+     * decay of OAM's dynamic RAM when rendering is disabled, the initialization should take place
+     * within vblank. Writes through OAMDATA are generally too slow for this task.
+     * The DMA transfer will begin at the current OAM write address. It is common practice to
+     * initialize it to 0 with a write to OAMADDR before the DMA transfer. Different starting
+     * addresses can be used for a simple OAM cycling technique, to alleviate sprite priority
+     * conflicts by flickering. If using this technique, after the DMA OAMADDR should be set to
+     * 0 before the end of vblank to prevent potential OAM corruption (see errata). However,
+     * due to OAMADDR writes also having a "corruption" effect,[4] this technique is not recommended.
+     */
+    public void dmcWrite(byte[] buffer) {
+        for (byte b : buffer) {
+            this.oam[this.oamAddr] = b;
+            this.oamAddr = u8add(this.oamAddr, 1);
+        }
+    }
 
     /**
      * Output one frame video sign.
