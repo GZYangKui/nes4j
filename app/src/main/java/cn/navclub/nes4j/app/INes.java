@@ -15,8 +15,6 @@ public class INes extends Application {
     public final static EventBus eventBus;
     public static final ResourceBundle RESOURCE_BUNDLE;
 
-    protected static NESConfig config;
-
     static {
         eventBus = new EventBus();
         System.setProperty("java.util.PropertyResourceBundle.encoding", "UTF-8");
@@ -27,6 +25,7 @@ public class INes extends Application {
     @Override
     public void start(Stage stage) {
         this.localEventBus();
+        var config = NESConfig.getInstance();
         //If set extra nes show game hall otherwise load extra nes game rom
         if (!config.isExtraNes()) {
             new GameHall(stage);
@@ -67,9 +66,5 @@ public class INes extends Application {
             value = new String(arr);
         }
         return value;
-    }
-
-    public static NESConfig config() {
-        return INes.config;
     }
 }

@@ -72,9 +72,9 @@ public class OSUtil {
     public static String workstation(String subdir) {
         final File file;
         if (StrUtil.isNotBlank(subdir)) {
-            file = new File(String.format("%s%s%s", userHome("nes4j"), File.separator, subdir));
+            file = new File(String.format("%s%s%s", userHome(".nes4j"), File.separator, subdir));
         } else {
-            file = new File(userHome("nes4j"));
+            file = new File(userHome(".nes4j"));
         }
         if (!file.exists()) {
             var ok = file.mkdirs();

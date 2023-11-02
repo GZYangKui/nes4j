@@ -17,8 +17,8 @@ function CompilerAndLink {
     echo "${NES4J_HOME}"
     if [ -e "${NES4J_HOME}" ]; then
         printf "Starting game.......\n"
-        NES4J_BIN="${NES4J_HOME}"/bin/nes4j
-        ${NES4J_BIN} --extra-nes "$NES_FILE"
+        echo "$(pwd)/$NES_FILE"
+        ${NES4J_BIN} "$(pwd)/$NES_FILE"
     fi
 }
 

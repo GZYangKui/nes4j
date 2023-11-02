@@ -3,6 +3,7 @@ package cn.navclub.nes4j.app.view;
 import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.INes;
 import cn.navclub.nes4j.app.audio.JavaXAudio;
+import cn.navclub.nes4j.app.config.NESConfig;
 import cn.navclub.nes4j.app.control.IconPopup;
 import cn.navclub.nes4j.app.service.TaskService;
 import cn.navclub.nes4j.app.dialog.DHandle;
@@ -151,11 +152,12 @@ public class GameWorld extends Stage {
 
     @FXML
     public void handle() {
-        var dialog = new DHandle(INes.config().getMapper());
+        var config = NESConfig.getInstance();
+        var dialog = new DHandle(config.getMapper());
         var optional = dialog.showAndWait();
         optional.ifPresent(keyMappers -> {
-            INes.config().setMapper(keyMappers);
-            INes.config().save();
+            config.setMapper(keyMappers);
+            config.save();
         });
     }
 
@@ -216,7 +218,7 @@ public class GameWorld extends Stage {
         if (!(eventType == KeyEvent.KEY_PRESSED || eventType == KeyEvent.KEY_RELEASED)) {
             return;
         }
-        for (KeyMapper keyMapper : INes.config().getMapper()) {
+        for (KeyMapper keyMapper : NESConfig.getInstance().getMapper()) {
             if (keyMapper.getKeyCode() == code) {
                 try {
                     this.eventQueue.put(new GameEventWrap(eventType, keyMapper.getButton()));

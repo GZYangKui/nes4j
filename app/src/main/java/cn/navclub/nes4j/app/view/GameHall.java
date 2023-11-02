@@ -57,8 +57,8 @@ public class GameHall {
         this.stage.setWidth(1200);
         this.stage.setHeight(900);
         this.stage.setTitle("nes4j");
-        this.stage.setScene(new Scene(FXResource.loadFXML(this)));
         this.stage.initStyle(StageStyle.UNDECORATED);
+        this.stage.setScene(new Scene(FXResource.loadFXML(this)));
         this.stage.getIcons().add(FXResource.loadImage("nes4j.png"));
 
 
@@ -152,8 +152,8 @@ public class GameHall {
     @FXML
     public void repository() {
         final String uri;
-        var tid = TimeZone.getDefault().getID();
-        if (tid.toLowerCase().contains("shanghai")) {
+        var country = System.getProperty("user.country");
+        if (country != null && country.equals("CN")) {
             uri = "https://gitee.com/navigatorcode/nes4j";
         } else {
             uri = "https://github.com/GZYangKui/nes4j";
@@ -179,19 +179,20 @@ public class GameHall {
      */
     @FXML
     public void mkdirs() {
-        final String str;
-        {
-            var optional = UIUtil.prompt("nes4j.assort.name");
-            if (optional.isEmpty() || StrUtil.isBlank(optional.get())) {
-                return;
-            }
-            str = optional.get();
-        }
-        var optional = OSUtil.mkdirAssort(str);
-        if (optional.isEmpty()) {
+        var optional = UIUtil.prompt("nes4j.assort.name");
+        var path = optional.orElse(null);
+        if (optional.isEmpty() || StrUtil.isBlank(path)) {
             return;
         }
-        this.rootItem.getChildren().add(new GTreeItem(optional.get()));
+
+        var mkdirOpt = OSUtil.mkdirAssort(path);
+        if (mkdirOpt.isEmpty()) {
+            return;
+        }
+        var item = new GTreeItem(mkdirOpt.get());
+        this.rootItem.getChildren().add(item);
+        //Default selected the latest item
+        this.treeView.getSelectionModel().select(item);
     }
 
     /**
