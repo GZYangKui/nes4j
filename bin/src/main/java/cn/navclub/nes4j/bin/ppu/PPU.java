@@ -1,5 +1,6 @@
 package cn.navclub.nes4j.bin.ppu;
 
+
 import cn.navclub.nes4j.bin.core.Component;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
@@ -113,7 +114,6 @@ public class PPU implements Component {
     private final Render render;
     @Getter
     protected final PPUControl ctr;
-    @Getter
     protected final byte[] oam;
     /**
      * <h1>Color Palette</h1>
@@ -224,12 +224,9 @@ public class PPU implements Component {
     @Override
     public byte read(int address) {
         byte value = 0;
-        var mask = 0xff;
         if (address == 0x2002) {
-            mask = 0x1f;
             value = this.readStatus();
         } else if (address == 0x2004) {
-            mask = 0;
             value = this.oam[this.oamAddr];
         } else if (address == 0x2007) {
             var addr = this.v % 0x4000;
@@ -510,11 +507,18 @@ public class PPU implements Component {
      * 0 before the end of vblank to prevent potential OAM corruption (see errata). However,
      * due to OAMADDR writes also having a "corruption" effect,[4] this technique is not recommended.
      */
-    public void dmcWrite(byte[] buffer) {
-        for (byte b : buffer) {
-            this.oam[this.oamAddr] = b;
+    public void dmcWrite(byte value) {
+        var addr = uint8(value) << 8;
+        var bus = this.context.getBus();
+        for (int i = 0; i < 0x100; i++) {
+            this.oam[this.oamAddr] = bus.read(addr + i);
             this.oamAddr = u8add(this.oamAddr, 1);
         }
+        //
+        // Once the STA instruction finishes, it needs to consume an additional 512 cycles (since it's performing
+        // 256 reads and 256 writes) plus another 1-2 cycles of "synchronization" within the Sprite DMA logic.
+        //
+        this.context.setStall(512);
     }
 
     /**

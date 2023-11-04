@@ -133,17 +133,7 @@ public class Bus implements Component {
         }
         //https://www.nesdev.org/wiki/PPU_programmer_reference#OAM_DMA_($4014)_%3E_write
         else if (address == 0x4014) {
-            var buffer = new byte[0x100];
-            var msb = uint8(b) << 8;
-            for (int i = 0; i < 0x100; i++) {
-                buffer[i] = this.read(msb + i);
-            }
-            //
-            // Once the STA instruction finishes, it needs to consume an additional 512 cycles (since it's performing
-            // 256 reads and 256 writes) plus another 1-2 cycles of "synchronization" within the Sprite DMA logic.
-            //
-            this.ppu.dmcWrite(buffer);
-            this.context.setStall(512);
+            this.ppu.dmcWrite(b);
         }
         //Write to standard controller
         else if (address == 0x4016) {
