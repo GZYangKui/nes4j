@@ -134,10 +134,10 @@ public class CPUControlPane extends Tab {
         this.stackFlag.setText("Stack:$%s".formatted(Integer.toHexString(cpu.getSp())));
         this.cycles.setText(String.format("%d(+%d)", context.getCycles(), context.getDcycle()));
 
-        var length = 0x100 - cpu.getSp();
+        var length = 0xff - cpu.getSp();
         if (length > 0) {
             try (var buffer = new ByteArrayOutputStream()) {
-                var offset = CPU.STACK + cpu.getSp();
+                var offset = CPU.STACK + cpu.getSp() + 1;
                 BinUtil.snapshot(buffer, 16, context.getBus().getRam(), offset, length);
                 this.stackPane.setText(buffer.toString());
             } catch (Exception e) {
