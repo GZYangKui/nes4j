@@ -53,7 +53,7 @@
                     </graphic>
                 </Button>
             </HBox>
-            <TabPane>
+            <TabPane VBox.vgrow="ALWAYS">
                 <CPUControlPane fx:id="controlPane"/>
                 <PPUControlPane fx:id="ppuControlPane"/>
             </TabPane>

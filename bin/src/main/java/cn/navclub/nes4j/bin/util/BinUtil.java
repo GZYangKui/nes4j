@@ -15,6 +15,15 @@ public class BinUtil {
         return (byte) value;
     }
 
+
+    public static int u8add(int a, int b) {
+        return uint8(a + b);
+    }
+
+    public static int u8sbc(int a, int b) {
+        return (a - b) & 0xff;
+    }
+
     /**
      * Byte transform binary string
      */
@@ -61,36 +70,47 @@ public class BinUtil {
         return i & 0xffff;
     }
 
+    public static void snapshot(File file, int row, byte[] src, int offset) {
+        try (var os = new FileOutputStream(file)) {
+            snapshot(os, row, src, offset, src.length);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Snapshot target memory view
      */
-    public static void snapshot(File file, int row, byte[] src, int offset) {
-        var l = src.length;
-        if (offset >= l) {
+    public static void snapshot(OutputStream outputStream, int row, byte[] src, int offset, int length) throws IOException {
+        if (offset + length > src.length) {
             throw new ArrayIndexOutOfBoundsException("Out of array length.");
         }
-        try (var buffer = new BufferedWriter(new FileWriter(file))) {
-            var h = ((l - offset) / 16) + ((l - offset) % 16 != 0 ? 1 : 0);
-            var sb = new StringBuilder("|");
-            for (int i = 0; i < h; i++) {
-                var oft = (i * row + offset);
-                var tmp = l - oft;
-                var k = Math.min(tmp, row);
-                sb.delete(1, sb.length());
-                buffer.append(BinUtil.toHexStr(i * row)).append(" ");
-                for (int j = 0; j < k; j++) {
-                    var b = src[oft + j];
-                    buffer.append(BinUtil.toHexStr(src[oft + j])).append(" ");
-                    sb.append(toVisualChar(b));
+        var endSymbol = offset + length;
+        var buffer = new OutputStreamWriter(outputStream);
+        var h = length / 16 + ((length) % 16 != 0 ? 1 : 0);
+        var sb = new StringBuilder("|");
+        for (int i = 0; i < h; i++) {
+            var oft = (i * row + offset);
+            var tmp = endSymbol - oft;
+            var k = Math.min(tmp, row);
+            sb.delete(1, sb.length());
+            buffer.append(BinUtil.toHexStr(offset + i * row)).append(" ");
+            for (int j = 0; j < 16; j++) {
+                final byte value;
+                if (j < k) {
+                    value = src[oft + j];
+                    buffer.append(BinUtil.toHexStr(value)).append(" ");
+                } else {
+                    value = 0;
+                    buffer.append(". ");
                 }
-                sb.append("|");
-                buffer.append(sb);
-                buffer.append("\r\n");
+                sb.append(toVisualChar(value));
             }
-            buffer.flush();
-        } catch (Exception e) {
-            log.fatal("Snapshot memory view fail.", e);
+            sb.append("|");
+            buffer.append(sb);
+            buffer.append("\r\n");
         }
+        buffer.flush();
     }
 
     public static char toVisualChar(byte b) {

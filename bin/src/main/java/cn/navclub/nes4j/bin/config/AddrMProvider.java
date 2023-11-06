@@ -5,7 +5,8 @@ import cn.navclub.nes4j.bin.core.CPU;
 import lombok.Getter;
 import lombok.Setter;
 
-import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
+import static cn.navclub.nes4j.bin.util.BinUtil.u8add;
+
 
 /**
  * <a href="http://www.emulator101.com/6502-addressing-modes.html">6502 address mode</a>

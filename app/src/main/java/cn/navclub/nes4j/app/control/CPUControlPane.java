@@ -2,14 +2,17 @@ package cn.navclub.nes4j.app.control;
 
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.config.ICPUStatus;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TextField;
+import cn.navclub.nes4j.bin.core.CPU;
+import cn.navclub.nes4j.bin.util.BinUtil;
+import javafx.geometry.Insets;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 public class CPUControlPane extends Tab {
@@ -28,6 +31,11 @@ public class CPUControlPane extends Tab {
     private final CheckBox I;
     private final CheckBox Z;
     private final CheckBox C;
+
+    private final Label stackFlag;
+
+    private final TextArea stackPane;
+
 
     public CPUControlPane() {
         var content = new VBox();
@@ -86,9 +94,26 @@ public class CPUControlPane extends Tab {
         gridPane0.add(Z, 3, 2);
         gridPane0.add(C, 4, 2);
 
+
         gridPane0.getStyleClass().add("status-grid");
 
-        content.getChildren().addAll(gridPane, gridPane0);
+
+        var vbox = new VBox();
+
+        this.stackPane = new TextArea();
+        this.stackPane.setWrapText(true);
+        this.stackPane.setEditable(false);
+        this.stackFlag = new Label("Stack:$fd");
+
+
+        vbox.setSpacing(5);
+        vbox.setPadding(new Insets(5));
+        VBox.setVgrow(this.stackPane, Priority.ALWAYS);
+        vbox.getChildren().addAll(this.stackFlag, this.stackPane);
+
+        VBox.setVgrow(vbox, Priority.ALWAYS);
+
+        content.getChildren().addAll(gridPane, gridPane0, vbox);
 
         this.setText("CPU");
         this.setClosable(false);
@@ -103,7 +128,19 @@ public class CPUControlPane extends Tab {
         this.y.setText(Integer.toHexString(cpu.getRy()));
         this.a.setText(Integer.toHexString(cpu.getRa()));
         this.instructions.setText(Long.toString(context.getIns()));
+        this.stackFlag.setText("Stack:$%s".formatted(Integer.toHexString(cpu.getSp())));
         this.cycles.setText(String.format("%d(+%d)", context.getCycles(), context.getDcycle()));
+
+        var length = 0xff - cpu.getSp();
+        if (length > 0) {
+            try (var buffer = new ByteArrayOutputStream()) {
+                var offset = CPU.STACK + cpu.getSp();
+                BinUtil.snapshot(buffer, 16, context.getBus().getRam(), offset, length);
+                this.stackPane.setText(buffer.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         // Init cpu status flag value
         var arr = new CheckBox[]{

@@ -13,7 +13,6 @@ import java.util.Arrays;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
-import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
 
 /**
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>

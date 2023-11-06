@@ -7,10 +7,7 @@ import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import lombok.Getter;
 
-import static cn.navclub.nes4j.bin.util.BinUtil.int8;
-import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
-import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
-import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
+import static cn.navclub.nes4j.bin.util.BinUtil.*;
 
 /**
  * 6502 cpu instance

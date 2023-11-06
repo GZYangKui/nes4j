@@ -16,8 +16,6 @@ import lombok.Setter;
 
 
 import static cn.navclub.nes4j.bin.util.BinUtil.*;
-import static cn.navclub.nes4j.bin.util.MathUtil.u8add;
-import static cn.navclub.nes4j.bin.util.MathUtil.u8sbc;
 
 
 /**
