@@ -3,6 +3,8 @@ package cn.navclub.nes4j.app.control;
 import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.config.ICPUStatus;
 import cn.navclub.nes4j.bin.core.CPU;
+import cn.navclub.nes4j.bin.logging.LoggerDelegate;
+import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import cn.navclub.nes4j.bin.util.BinUtil;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
@@ -16,6 +18,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 public class CPUControlPane extends Tab {
+    private static final LoggerDelegate log = LoggerFactory.logger(CPUControlPane.class);
     private final TextField a;
     private final TextField x;
     private final TextField y;
@@ -131,14 +134,14 @@ public class CPUControlPane extends Tab {
         this.stackFlag.setText("Stack:$%s".formatted(Integer.toHexString(cpu.getSp())));
         this.cycles.setText(String.format("%d(+%d)", context.getCycles(), context.getDcycle()));
 
-        var length = 0xff - cpu.getSp();
+        var length = 0x100 - cpu.getSp();
         if (length > 0) {
             try (var buffer = new ByteArrayOutputStream()) {
                 var offset = CPU.STACK + cpu.getSp();
                 BinUtil.snapshot(buffer, 16, context.getBus().getRam(), offset, length);
                 this.stackPane.setText(buffer.toString());
             } catch (Exception e) {
-                e.printStackTrace();
+                log.fatal("Snapshot cpu stack memory view fail.", e);
             }
         }
 
