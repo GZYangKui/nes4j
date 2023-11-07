@@ -6,7 +6,7 @@ import cn.navclub.nes4j.app.config.EventBusAddress;
 import cn.navclub.nes4j.app.control.BreakLine;
 import cn.navclub.nes4j.app.control.CPUControlPane;
 import cn.navclub.nes4j.app.control.PPUControlPane;
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.debug.OpenCode;
 import cn.navclub.nes4j.bin.debug.OpenCodeFormat;
 import cn.navclub.nes4j.bin.util.BinUtil;
@@ -39,7 +39,7 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
     @FXML
     private PPUControlPane ppuControlPane;
 
-    private NES instance;
+    private NesConsole instance;
     private boolean stepInto;
     private volatile BreakLine currentLine;
 
@@ -90,7 +90,7 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
     }
 
     @Override
-    public boolean hack(NES context) {
+    public boolean hack(NesConsole context) {
         if (!this.isShowing()) {
             return false;
         }
@@ -173,7 +173,7 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
     }
 
     @Override
-    public void inject(NES instance) {
+    public void inject(NesConsole instance) {
         this.instance = instance;
     }
 }

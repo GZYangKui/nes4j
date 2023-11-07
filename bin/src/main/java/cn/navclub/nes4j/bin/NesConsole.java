@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
 
 @Getter
-public class NES {
+public class NesConsole {
     private final Bus bus;
     private final CPU cpu;
     private final APU apu;
@@ -48,7 +48,7 @@ public class NES {
     @Getter
     private final Class<? extends Player> player;
 
-    private NES(NESBuilder builder) {
+    private NesConsole(Builder builder) {
         if (builder.buffer != null) {
             this.cartridge = new Cartridge(builder.buffer);
         } else {
@@ -209,43 +209,43 @@ public class NES {
         return this.speed;
     }
 
-    public static class NESBuilder {
+    public static class Builder {
         private File file;
         private byte[] buffer;
         private Class<? extends Player> player;
         private FCallback<Frame, JoyPad, JoyPad, Long> gameLoopCallback;
 
-        public NESBuilder buffer(byte[] buffer) {
+        public Builder buffer(byte[] buffer) {
             this.buffer = buffer;
             return this;
         }
 
-        public NESBuilder file(File file) {
+        public Builder file(File file) {
             this.file = file;
             return this;
         }
 
-        public NESBuilder file(String file) {
+        public Builder file(String file) {
             this.file = new File(file);
             return this;
         }
 
-        public NESBuilder player(Class<? extends Player> clazz) {
+        public Builder player(Class<? extends Player> clazz) {
             this.player = clazz;
             return this;
         }
 
-        public NESBuilder gameLoopCallback(FCallback<Frame, JoyPad, JoyPad, Long> gameLoopCallback) {
+        public Builder gameLoopCallback(FCallback<Frame, JoyPad, JoyPad, Long> gameLoopCallback) {
             this.gameLoopCallback = gameLoopCallback;
             return this;
         }
 
-        public NES build() {
-            return new NES(this);
+        public NesConsole build() {
+            return new NesConsole(this);
         }
 
-        public static NESBuilder newBuilder() {
-            return new NESBuilder();
+        public static Builder newBuilder() {
+            return new Builder();
         }
     }
 }

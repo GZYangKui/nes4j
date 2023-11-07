@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.core.impl;
 
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
 import cn.navclub.nes4j.bin.config.NameMirror;
 import cn.navclub.nes4j.bin.core.Mapper;
@@ -36,8 +36,8 @@ public class MMC3Mapper extends Mapper {
     private boolean reloadFlag;
     private final int[] PRGBank;
 
-    public MMC3Mapper(Cartridge cartridge, NES context) {
-        super(cartridge, context);
+    public MMC3Mapper(Cartridge cartridge, NesConsole console) {
+        super(cartridge, console);
         this.r = 0;
         this.latch = 0;
         this.counter = 0;
@@ -67,7 +67,7 @@ public class MMC3Mapper extends Mapper {
         // This bit has no effect on cartridges with hardwired 4-screen VRAM. In the iNES and NES 2.0 formats, this can be identified through bit 3 of byte $06 of the header.
         if (even && address >= 0xa000 && address <= 0xbfff
                 && this.cartridge.getMirrors() != NameMirror.FOUR_SCREEN) {
-            this.context.getPpu().setMirrors((b & 1) == 1 ? NameMirror.HORIZONTAL : NameMirror.VERTICAL);
+            this.console.getPpu().setMirrors((b & 1) == 1 ? NameMirror.HORIZONTAL : NameMirror.VERTICAL);
         }
 
         if (address <= 0x9fff) {
@@ -245,7 +245,7 @@ public class MMC3Mapper extends Mapper {
             this.counter--;
         }
         if (this.counter == 0 && this.IRQEnable) {
-            this.context.interrupt(CPUInterrupt.IRQ);
+            this.console.interrupt(CPUInterrupt.IRQ);
         }
     }
 }

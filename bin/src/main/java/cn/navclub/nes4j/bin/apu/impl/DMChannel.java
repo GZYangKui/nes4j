@@ -314,11 +314,11 @@ public class DMChannel extends Channel<Sequencer> {
      */
     public void reader() {
 
-        var ctx = this.apu.getContext();
+        var console = this.apu.getConsole();
 
-        ctx.setStall(4);
+        console.setStall(4);
 
-        this.shiftReg = ctx.I8Read(this.currentAddress);
+        this.shiftReg = console.I8Read(this.currentAddress);
 
         this.currentAddress += 1;
 

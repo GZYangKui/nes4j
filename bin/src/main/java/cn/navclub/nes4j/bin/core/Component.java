@@ -1,5 +1,6 @@
 package cn.navclub.nes4j.bin.core;
 
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.function.CycleDriver;
 
 /**
@@ -21,14 +22,14 @@ public interface Component extends CycleDriver {
     }
 
     /**
-     * When {@link cn.navclub.nes4j.bin.NES} instance stop call
+     * When {@link NesConsole} instance stop call
      */
     default void stop() {
 
     }
 
     /**
-     * When {@link cn.navclub.nes4j.bin.NES} was reset call
+     * When {@link NesConsole} was reset call
      */
     default void reset() {
 

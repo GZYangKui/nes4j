@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.app.control;
 
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.util.BinUtil;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
@@ -67,8 +67,8 @@ public class PPUControlPane extends Tab {
         this.setContent(gridPane);
     }
 
-    public void update(NES context) {
-        var ppu = context.getPpu();
+    public void update(NesConsole console) {
+        var ppu = console.getPpu();
 
         this.x.setText(Integer.toString(ppu.x()));
         this.y.setText(Integer.toString(ppu.y()));

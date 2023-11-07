@@ -1,7 +1,6 @@
 package cn.navclub.nes4j.app.control;
 
-import cn.navclub.nes4j.bin.NES;
-import cn.navclub.nes4j.bin.config.ICPUStatus;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.core.CPU;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import cn.navclub.nes4j.bin.logging.LoggerFactory;
@@ -9,13 +8,10 @@ import cn.navclub.nes4j.bin.util.BinUtil;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.List;
 
 public class CPUControlPane extends Tab {
     private static final LoggerDelegate log = LoggerFactory.logger(CPUControlPane.class);
@@ -124,21 +120,21 @@ public class CPUControlPane extends Tab {
     }
 
 
-    public void update(NES context) {
-        var cpu = context.getCpu();
+    public void update(NesConsole console) {
+        var cpu = console.getCpu();
         this.pc.setText(Long.toHexString(cpu.getPc()));
         this.x.setText(Integer.toHexString(cpu.getRx()));
         this.y.setText(Integer.toHexString(cpu.getRy()));
         this.a.setText(Integer.toHexString(cpu.getRa()));
-        this.instructions.setText(Long.toString(context.getIns()));
+        this.instructions.setText(Long.toString(console.getIns()));
         this.stackFlag.setText("Stack:$%s".formatted(Integer.toHexString(cpu.getSp())));
-        this.cycles.setText(String.format("%d(+%d)", context.getCycles(), context.getDcycle()));
+        this.cycles.setText(String.format("%d(+%d)", console.getCycles(), console.getDcycle()));
 
         var length = 0xff - cpu.getSp();
         if (length > 0) {
             try (var buffer = new ByteArrayOutputStream()) {
                 var offset = CPU.STACK + cpu.getSp() + 1;
-                BinUtil.snapshot(buffer, 16, context.getBus().getRam(), offset, length);
+                BinUtil.snapshot(buffer, 16, console.getBus().getRam(), offset, length);
                 this.stackPane.setText(buffer.toString());
             } catch (Exception e) {
                 log.fatal("Snapshot cpu stack memory view fail.", e);

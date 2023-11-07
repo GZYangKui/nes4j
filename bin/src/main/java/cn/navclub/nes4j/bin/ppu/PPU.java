@@ -2,7 +2,7 @@ package cn.navclub.nes4j.bin.ppu;
 
 
 import cn.navclub.nes4j.bin.core.Component;
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import cn.navclub.nes4j.bin.ppu.register.PPUControl;
@@ -141,7 +141,7 @@ public class PPU implements Component {
     @Getter
     @Setter
     private NameMirror mirrors;
-    protected final NES context;
+    protected final NesConsole console;
     // The PPU uses the current VRAM address for both reading and writing PPU memory thru $2007,
     // and for fetching nametable data to draw the background. As it's drawing the background,
     // it updates the address to point to the nametable data currently being drawn.
@@ -160,8 +160,8 @@ public class PPU implements Component {
     private boolean suppress;
 
 
-    public PPU(final NES context, NameMirror mirrors) {
-        this.context = context;
+    public PPU(final NesConsole console, NameMirror mirrors) {
+        this.console = console;
         this.mirrors = mirrors;
         this.oam = new byte[256];
         //From 2048 expand to 4096 prepare to support four screen
@@ -237,7 +237,7 @@ public class PPU implements Component {
 
             //Read pattern table
             if (addr < 0x2000) {
-                this.byteBuf = this.context.getMapper().CHRead(addr);
+                this.byteBuf = this.console.getMapper().CHRead(addr);
             }
             //Read name table
             else if (addr < 0x3f00) {
@@ -272,7 +272,7 @@ public class PPU implements Component {
             var addr = this.v % 0x4000;
             //Update pattern table
             if (addr < 0x2000) {
-                this.context.getMapper().CHWrite(addr, b);
+                this.console.getMapper().CHWrite(addr, b);
             }
             //Update name table
             else if (addr < 0x3f00) {
@@ -291,7 +291,7 @@ public class PPU implements Component {
         final byte b;
         //Read chr-rom data
         if (address < 0x2000) {
-            b = this.context.getMapper().CHRead(address);
+            b = this.console.getMapper().CHRead(address);
         }
         //Read name table data
         else if (address < 0x3f00) {
@@ -507,7 +507,7 @@ public class PPU implements Component {
      */
     public void dmcWrite(byte value) {
         var addr = uint8(value) << 8;
-        var bus = this.context.getBus();
+        var bus = this.console.getBus();
         for (int i = 0; i < 0x100; i++) {
             this.oam[this.oamAddr] = bus.read(addr + i);
             this.oamAddr = u8add(this.oamAddr, 1);
@@ -516,7 +516,7 @@ public class PPU implements Component {
         // Once the STA instruction finishes, it needs to consume an additional 512 cycles (since it's performing
         // 256 reads and 256 writes) plus another 1-2 cycles of "synchronization" within the Sprite DMA logic.
         //
-        this.context.setStall(512);
+        this.console.setStall(512);
     }
 
     /**
@@ -526,7 +526,7 @@ public class PPU implements Component {
         if (!this.suppress) {
             this.status.set(PStatus.V_BLANK_OCCUR);
             if (this.ctr.generateVBlankNMI()) {
-                this.context.interrupt(CPUInterrupt.NMI);
+                this.console.interrupt(CPUInterrupt.NMI);
             }
         }
         this.suppress = false;

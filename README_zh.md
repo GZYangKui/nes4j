@@ -107,13 +107,13 @@ implementation("cn.navclub:nes4j-bin:1.0.2")
 
 ```java
 
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.io.JoyPad;
 import cn.navclub.nes4j.bin.ppu.Frame;
 
 public class GameWorld {
     public NES create() {
-        NES instance = NES.NESBuilder
+        NesConsole console = NesConsole.Builder
                 .newBuilder()
                 //nes游戏rom
                 .file(file)
@@ -124,7 +124,7 @@ public class GameWorld {
                 .build();
         try {
             //一旦当前方法被调用将会阻塞当前线程直到游戏结束或者异常发生
-            instance.execute();
+            console.execute();
         } catch (Exception e) {
             //todo 当异常发生当前游戏立即停止
         }

@@ -155,7 +155,7 @@ public class Render implements CycleDriver {
             // If render was disable output frame will product a white screen.
             //
             if (this.mask.enableRender()) {
-                this.ppu.context.videoOutput(this.frame);
+                this.ppu.console.videoOutput(this.frame);
             }
         }
 
@@ -339,7 +339,7 @@ public class Render implements CycleDriver {
             this.ppu.v = uint16((this.ppu.v & 0x841f) | (this.ppu.t & 0x7be0));
         }
 
-        var mapper = this.ppu.context.getMapper();
+        var mapper = this.ppu.console.getMapper();
         if (mapper.type() == NMapper.MMC3) {
             var ctr = this.ppu.getCtr();
             //

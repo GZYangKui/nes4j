@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.core.impl;
 
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.core.Mapper;
 import cn.navclub.nes4j.bin.io.Cartridge;
 
@@ -34,8 +34,8 @@ import cn.navclub.nes4j.bin.io.Cartridge;
 public class CNMapper extends Mapper {
     private final int shifter;
 
-    public CNMapper(Cartridge cartridge, NES context) {
-        super(cartridge, context);
+    public CNMapper(Cartridge cartridge, NesConsole console) {
+        super(cartridge, console);
         this.shifter = (cartridge.getChSize() - CHR_BANK_SIZE) / CHR_BANK_SIZE;
     }
 

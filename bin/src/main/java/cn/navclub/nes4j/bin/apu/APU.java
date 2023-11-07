@@ -1,7 +1,7 @@
 package cn.navclub.nes4j.bin.apu;
 
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.core.Component;
-import cn.navclub.nes4j.bin.NES;
 import cn.navclub.nes4j.bin.apu.impl.*;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
 import lombok.Getter;
@@ -74,7 +74,7 @@ public class APU implements Component {
     }
 
     @Getter
-    private final NES context;
+    private final NesConsole console;
     private final DMChannel dmc;
     private final Player player;
     private final NoiseChannel noise;
@@ -83,12 +83,12 @@ public class APU implements Component {
     private final TriangleChannel triangle;
     private final FrameCounter frameCounter;
 
-    public APU(NES context) {
-        this.context = context;
+    public APU(NesConsole console) {
+        this.console = console;
         this.dmc = new DMChannel(this);
         this.noise = new NoiseChannel(this);
         this.triangle = new TriangleChannel(this);
-        this.player = Player.newInstance(context.getPlayer());
+        this.player = Player.newInstance(console.getPlayer());
         this.pulse1 = new PulseChannel(this, false);
         this.pulse2 = new PulseChannel(this, true);
         this.frameCounter = new FrameCounter(this, this::frameSequence);
@@ -213,7 +213,7 @@ public class APU implements Component {
         // 1.79 MHz / 44100 = 40
         if ((this.cycle / 2) % 40 == 0) {
             var output = this.lookupSample();
-            if (this.player != null && !this.context.isMute()) {
+            if (this.player != null && !this.console.isMute()) {
                 this.player.output(output);
             }
         }
@@ -264,7 +264,7 @@ public class APU implements Component {
 
 
     public void fireIRQ() {
-        this.context.interrupt(CPUInterrupt.IRQ);
+        this.console.interrupt(CPUInterrupt.IRQ);
     }
 
     @Override

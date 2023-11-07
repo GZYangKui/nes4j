@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.debug;
 
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.core.CPU;
 
 /**
@@ -14,19 +14,19 @@ public interface Debugger {
      *
      * @return If return {@code true} block current thread,otherwise do nothing.
      */
-    boolean hack(NES context);
+    boolean hack(NesConsole context);
 
     /**
-     * When {@link NES} instance rpg-rom data happen change call
+     * When {@link NesConsole} instance rpg-rom data happen change call
      *
      * @param buffer Change after rpg data
      */
     void buffer(byte[] buffer);
 
     /**
-     * When {@link NES} wsa created  call
+     * When {@link NesConsole} wsa created  call
      *
-     * @param instance {@link NES} instance
+     * @param instance {@link NesConsole} instance
      */
-    void inject(NES instance);
+    void inject(NesConsole instance);
 }

@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.core.impl;
 
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.config.NameMirror;
 import cn.navclub.nes4j.bin.core.Mapper;
 import cn.navclub.nes4j.bin.io.Cartridge;
@@ -34,8 +34,8 @@ public class MMC1Mapper extends Mapper {
     private int bankNum;
 
 
-    public MMC1Mapper(Cartridge cartridge, NES context) {
-        super(cartridge, context);
+    public MMC1Mapper(Cartridge cartridge, NesConsole console) {
+        super(cartridge, console);
         this.reset();
     }
 
@@ -120,7 +120,7 @@ public class MMC1Mapper extends Mapper {
                 case 2 -> NameMirror.VERTICAL;
                 default -> NameMirror.HORIZONTAL;
             };
-            this.context.getPpu().setMirrors(mirror);
+            this.console.getPpu().setMirrors(mirror);
 
             this.prgMode = (this.MMC1SR >> 2) & 3;
             this.chrMode = (this.MMC1SR >> 4) & 1;

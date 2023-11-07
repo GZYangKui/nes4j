@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.config.*;
 import cn.navclub.nes4j.bin.core.register.CPUStatus;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
@@ -40,13 +40,11 @@ public class CPU {
     //Stack pointer
     private int sp;
     private final Bus bus;
-    private final NES context;
     private final AddrMProvider modeProvider;
     //CPU status
     private final CPUStatus status;
 
-    public CPU(NES context) {
-        this.context = context;
+    public CPU(NesConsole context) {
         this.bus = context.getBus();
         this.status = new CPUStatus();
         this.modeProvider = new AddrMProvider(this, this.bus);

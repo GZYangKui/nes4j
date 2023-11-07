@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.config.NMapper;
 import cn.navclub.nes4j.bin.io.Cartridge;
 
@@ -12,11 +12,11 @@ public abstract class Mapper {
     protected static final int RPG_BANK_SIZE = 16 * 1024;
 
     protected final byte[] chr;
-    protected final NES context;
+    protected final NesConsole console;
     protected final Cartridge cartridge;
 
-    public Mapper(Cartridge cartridge, NES context) {
-        this.context = context;
+    public Mapper(Cartridge cartridge, NesConsole console) {
+        this.console = console;
         this.cartridge = cartridge;
         this.chr = new byte[CHR_BANK_SIZE];
         System.arraycopy(cartridge.getChrom(), 0, this.chr, 0, Math.min(chrSize(), CHR_BANK_SIZE));

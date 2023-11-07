@@ -12,7 +12,7 @@ import cn.navclub.nes4j.app.event.GameEventWrap;
 import cn.navclub.nes4j.app.model.KeyMapper;
 import cn.navclub.nes4j.app.util.StrUtil;
 import cn.navclub.nes4j.app.util.UIUtil;
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.io.JoyPad;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import cn.navclub.nes4j.bin.logging.LoggerFactory;
@@ -56,7 +56,7 @@ public class GameWorld extends Stage {
     private final WritableImage image;
     private final BlockingQueue<GameEventWrap> eventQueue;
 
-    private NES instance;
+    private NesConsole instance;
     private volatile int fps;
     private Debugger debugger;
     private TaskService<Void> service;
@@ -105,7 +105,7 @@ public class GameWorld extends Stage {
         this.service = TaskService.execute(new Task<>() {
             @Override
             protected Void call() {
-                GameWorld.this.instance = NES.NESBuilder
+                GameWorld.this.instance = NesConsole.Builder
                         .newBuilder()
                         .file(file)
                         .player(JavaXAudio.class)

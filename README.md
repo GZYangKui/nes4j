@@ -109,13 +109,13 @@ implementation("cn.navclub:nes4j-bin:1.0.2")
 
 ```java
 
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.io.JoyPad;
 import cn.navclub.nes4j.bin.ppu.Frame;
 
 public class GameWorld {
     public NES create() {
-        NES instance = NES.NESBuilder
+        NesConsole console = NesConsole.Builder
                 .newBuilder()
                 //nes game rom
                 .file(file)
@@ -126,7 +126,7 @@ public class GameWorld {
                 .build();
         try {
             //Current method was called current will block current thread until game stop or exception occurred
-            instance.execute();
+            console.execute();
         } catch (Exception e) {
             //todo An error occurred during the game.Once error occurred game immediate stop 
         }

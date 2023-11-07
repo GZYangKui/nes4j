@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.config;
 
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.core.Mapper;
 import cn.navclub.nes4j.bin.core.impl.*;
 import cn.navclub.nes4j.bin.io.Cartridge;
@@ -28,11 +28,11 @@ public enum NMapper {
     }
 
     @SuppressWarnings("all")
-    public <T> T newProvider(Cartridge cartridge, NES context) {
+    public <T> T newProvider(Cartridge cartridge, NesConsole context) {
         try {
             return (T) this
                     .provider
-                    .getDeclaredConstructor(Cartridge.class, NES.class)
+                    .getDeclaredConstructor(Cartridge.class, NesConsole.class)
                     .newInstance(cartridge, context);
         } catch (Exception e) {
             throw new RuntimeException(e);

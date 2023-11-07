@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.app.view;
 
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.util.BinUtil;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -63,7 +63,7 @@ public class PPUViewer extends Stage {
         this.show();
     }
 
-    public PPUViewer(NES instance) {
+    public PPUViewer(NesConsole instance) {
         this(instance.getCartridge().getChrom(), DEF_FILL_COLOR);
     }
 }

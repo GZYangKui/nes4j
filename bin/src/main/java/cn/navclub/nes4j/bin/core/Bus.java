@@ -1,6 +1,6 @@
 package cn.navclub.nes4j.bin.core;
 
-import cn.navclub.nes4j.bin.NES;
+import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.apu.APU;
 import cn.navclub.nes4j.bin.io.JoyPad;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
@@ -22,7 +22,7 @@ public class Bus implements Component {
     private static final int RPG_ROM_END = 0xFFFF;
     private static final int RAM_MIRROR_END = 0x1fff;
     private static final LoggerDelegate log = LoggerFactory.logger(Bus.class);
-    private final NES context;
+    private final NesConsole console;
     @Getter
     private final byte[] ram;
     //Player1
@@ -38,8 +38,8 @@ public class Bus implements Component {
     //  for storing save games.
     private final byte[] sram;
 
-    public Bus(NES context, JoyPad joyPad, JoyPad joyPad1) {
-        this.context = context;
+    public Bus(NesConsole context, JoyPad joyPad, JoyPad joyPad1) {
+        this.console = context;
 
         this.joyPad = joyPad;
         this.joyPad1 = joyPad1;
@@ -104,7 +104,7 @@ public class Bus implements Component {
         }
         //Read rpg-rom data
         else if (address >= RPG_ROM_START && address <= RPG_ROM_END) {
-            b = this.context.getMapper().PRGRead(address - RPG_ROM_START);
+            b = this.console.getMapper().PRGRead(address - RPG_ROM_START);
         }
 
         //Default return 0
@@ -152,7 +152,7 @@ public class Bus implements Component {
         }
         //Write to cpu memory
         else if (address >= RPG_ROM_START && address <= RPG_ROM_END) {
-            this.context.getMapper().PRGWrite(address, b);
+            this.console.getMapper().PRGWrite(address, b);
         }
 
         //Unknown action
