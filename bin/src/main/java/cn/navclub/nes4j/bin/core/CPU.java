@@ -40,11 +40,13 @@ public class CPU {
     //Stack pointer
     private int sp;
     private final Bus bus;
+    private final NES context;
     private final AddrMProvider modeProvider;
     //CPU status
     private final CPUStatus status;
 
     public CPU(NES context) {
+        this.context = context;
         this.bus = context.getBus();
         this.status = new CPUStatus();
         this.modeProvider = new AddrMProvider(this, this.bus);
@@ -89,7 +91,7 @@ public class CPU {
     }
 
 
-    private void lda(AddressMode mode) {
+    private void LDAImpl(AddressMode mode) {
         var address = this.modeProvider.getAbsAddr(mode);
         var value = this.bus.ReadU8(address);
         this.raUpdate(value);
@@ -115,7 +117,7 @@ public class CPU {
     /**
      * Or and not operator
      */
-    private void logic(Instruction instruction, AddressMode addressMode) {
+    private void LogicImpl(Instruction instruction, AddressMode addressMode) {
         var address = this.modeProvider.getAbsAddr(addressMode);
         var a = this.ra;
         var b = this.bus.ReadU8(address);
@@ -128,7 +130,7 @@ public class CPU {
         this.raUpdate(c);
     }
 
-    private void lsr(AddressMode mode) {
+    private void LSRImpl(AddressMode mode) {
         var addr = 0;
         var operand = mode == AddressMode.Accumulator
                 ? this.ra
@@ -144,7 +146,7 @@ public class CPU {
         }
     }
 
-    private void rol(AddressMode mode) {
+    private void ROLImpl(AddressMode mode) {
         var bit = 0;
         var addr = 0;
         var value = 0;
@@ -167,7 +169,7 @@ public class CPU {
         }
     }
 
-    private void ror(AddressMode mode) {
+    private void RORImpl(AddressMode mode) {
         var addr = 0;
         var value = this.ra;
         var rora = mode == AddressMode.Accumulator;
@@ -187,14 +189,14 @@ public class CPU {
         }
     }
 
-    private void asl(InstructionWrap instruction6502) {
+    private void ASLImpl(AddressMode mode) {
         int b;
-        var a = (instruction6502.getAddressMode() == AddressMode.Accumulator);
+        var a = (mode == AddressMode.Accumulator);
         var address = -1;
         if (a) {
             b = this.ra;
         } else {
-            address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
+            address = this.modeProvider.getAbsAddr(mode);
             b = this.bus.ReadU8(address);
         }
         //Check Carry flag
@@ -209,8 +211,7 @@ public class CPU {
         }
     }
 
-    private void push(InstructionWrap instruction6502) {
-        var instruction = instruction6502.getInstruction();
+    private void PUSHImpl(Instruction instruction) {
         if (instruction == Instruction.PHA) {
             this.push(int8(this.ra));
         } else {
@@ -220,8 +221,7 @@ public class CPU {
         }
     }
 
-    private void pull(InstructionWrap instruction6502) {
-        var instruction = instruction6502.getInstruction();
+    private void PULLImpl(Instruction instruction) {
         var value = this.pop();
         if (instruction == Instruction.PLA) {
             this.raUpdate(value);
@@ -232,13 +232,13 @@ public class CPU {
         }
     }
 
-    private void cmp(InstructionWrap instruction6502) {
-        var val = switch (instruction6502.getInstruction()) {
+    private void CMPImpl(Instruction instruction, AddressMode mode) {
+        var val = switch (instruction) {
             case CMP -> this.ra;
             case CPX -> this.rx;
             default -> this.ry;
         };
-        var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
+        var address = this.modeProvider.getAbsAddr(mode);
         var m = this.bus.ReadU8(address);
         //Set carry Flag
         this.status.update(ICPUStatus.CARRY, val >= m);
@@ -246,7 +246,7 @@ public class CPU {
         this.NZUpdate(u8sbc(val, m));
     }
 
-    private void inc(Instruction instruction, AddressMode mode) {
+    private void INCImpl(Instruction instruction, AddressMode mode) {
         final int result;
         if (instruction == Instruction.INC) {
             var address = this.modeProvider.getAbsAddr(mode);
@@ -262,7 +262,7 @@ public class CPU {
     }
 
 
-    private void adc(AddressMode mode, boolean sbc) {
+    private void ADCImpl(AddressMode mode, boolean sbc) {
         var addr = this.modeProvider.getAbsAddr(mode);
         var b = this.bus.read(addr);
         if (sbc) {
@@ -282,13 +282,13 @@ public class CPU {
 
 
     private void sbc(AddressMode mode) {
-        this.adc(mode, true);
+        this.ADCImpl(mode, true);
     }
 
-    private void loadXY(InstructionWrap instruction6502) {
-        var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
+    private void LDXYImpl(Instruction instruction, AddressMode mode) {
+        var address = this.modeProvider.getAbsAddr(mode);
         var data = this.bus.ReadU8(address);
-        if (instruction6502.getInstruction() == Instruction.LDX) {
+        if (instruction == Instruction.LDX) {
             this.rx = data;
         } else {
             this.ry = data;
@@ -296,7 +296,7 @@ public class CPU {
         this.NZUpdate(data);
     }
 
-    private void branch(boolean condition) {
+    private void CheckBranchCondition(boolean condition) {
         //If condition was false not anything.
         if (!condition) {
             return;
@@ -313,19 +313,17 @@ public class CPU {
         this.pc = jump;
     }
 
-    private void bit(InstructionWrap instruction6502) {
-        var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
-        var value = this.bus.ReadU8(address);
+    private void BITImpl(AddressMode mode) {
+        var value = this.bus.ReadU8(this.modeProvider.getAbsAddr(mode));
         this.status.update(ICPUStatus.ZERO, (this.ra & value) == 0);
         this.status.update(ICPUStatus.NEGATIVE, (value >> 7) == 1);
         this.status.update(ICPUStatus.OVERFLOW, (value >> 6) == 1);
     }
 
-    private void dec(InstructionWrap instruction6502) {
-        var instruction = instruction6502.getInstruction();
+    private void DEYImpl(Instruction instruction, AddressMode mode) {
         var value = switch (instruction) {
             case DEC -> {
-                var address = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
+                var address = this.modeProvider.getAbsAddr(mode);
                 var b = u8sbc(this.bus.ReadU8(address), 1);
                 this.bus.WriteU8(address, b);
                 yield b;
@@ -334,6 +332,189 @@ public class CPU {
             default -> this.ry = u8sbc(this.ry, 1);
         };
         this.NZUpdate(value);
+    }
+
+    private void RTImpl() {
+        this.status.setBits(this.pop());
+        this.status.set(ICPUStatus.EMPTY);
+        this.status.clear(ICPUStatus.BREAK_COMMAND);
+        this.pc = this.popInt();
+    }
+
+    private void LASImpl(AddressMode mode) {
+        var addr = this.modeProvider.getAbsAddr(mode);
+        var value = this.bus.ReadU8(addr);
+        value = value & this.sp;
+        this.rx = value;
+        this.sp = value;
+        this.raUpdate(value);
+    }
+
+    private void LAXImpl(AddressMode mode) {
+        var addr = this.modeProvider.getAbsAddr(mode);
+        var value = this.bus.ReadU8(addr);
+        this.raUpdate(value);
+        this.rx = value;
+    }
+
+    private void SAXImpl(AddressMode mode) {
+        var data = this.ra & this.rx;
+        var addr = this.modeProvider.getAbsAddr(mode);
+        this.bus.WriteU8(addr, data);
+    }
+
+    private void RRAImpl(AddressMode mode) {
+        this.RORImpl(mode);
+        this.ADCImpl(mode, false);
+    }
+
+    private void ARRImpl(AddressMode mode) {
+        var addr = this.modeProvider.getAbsAddr(mode);
+        var b = this.bus.ReadU8(addr);
+        this.raUpdate(b & this.ra);
+        this.RORImpl(AddressMode.Accumulator);
+        var result = this.ra;
+        var b5 = (result >> 5 & 1);
+        var b6 = (result >> 6 & 1);
+        this.status.update(ICPUStatus.CARRY, b6 == 1);
+        this.status.update(ICPUStatus.OVERFLOW, (b5 ^ b6) == 1);
+        this.NZUpdate(result);
+    }
+
+    private void DCPImpl(AddressMode mode) {
+        var addr = this.modeProvider.getAbsAddr(mode);
+        var value = this.bus.ReadU8(addr);
+        value = u8sbc(value, 1);
+        this.bus.WriteU8(addr, value);
+        if (value <= this.ra) {
+            this.status.set(ICPUStatus.CARRY);
+        }
+        this.NZUpdate(u8sbc(this.ra, value));
+    }
+
+    private void XAAImpl(AddressMode mode) {
+        this.raUpdate(this.rx);
+        var addr = this.modeProvider.getAbsAddr(mode);
+        var b = this.bus.ReadU8(addr);
+        this.raUpdate(b & this.ra);
+    }
+
+    private void SHXImpl(AddressMode mode) {
+        var addr = this.modeProvider.getAbsAddr(mode);
+        var value = this.rx & u8add(uint8(addr >> 8), 1);
+        this.bus.WriteU8(addr, value);
+    }
+
+    private void LXAImpl(AddressMode mode) {
+        this.LDAImpl(mode);
+        this.rx = this.ra;
+        this.NZUpdate(this.rx);
+    }
+
+    private void SRE_LSRImpl(Instruction instruction, AddressMode mode) {
+        this.LSRImpl(mode);
+        if (instruction == Instruction.SRE) {
+            this.LogicImpl(Instruction.EOR, mode);
+        }
+    }
+
+    private void TAXImpl() {
+        this.rx = this.ra;
+        this.NZUpdate(this.rx);
+    }
+
+    private void TAYImpl() {
+        this.ry = this.ra;
+        this.NZUpdate(this.ry);
+    }
+
+    private void TSXImpl() {
+        this.rx = this.sp;
+        this.NZUpdate(this.rx);
+    }
+
+    private void JSRImpl() {
+        this.pushInt(this.pc + 1);
+        this.pc = this.bus.readInt(this.pc);
+    }
+
+    private void SLOImpl(AddressMode mode) {
+        this.ASLImpl(mode);
+        this.LogicImpl(Instruction.ORA, mode);
+    }
+
+    private void ISCImpl(AddressMode mode) {
+        this.INCImpl(Instruction.INC, mode);
+        this.ADCImpl(mode, true);
+    }
+
+    private void RLAImpl(AddressMode mode) {
+        this.ROLImpl(mode);
+        this.ADCImpl(mode, false);
+    }
+
+    private void ALRImpl(AddressMode mode) {
+        this.LogicImpl(Instruction.AND, mode);
+        this.LSRImpl(mode);
+    }
+
+    private void ANCImpl(AddressMode mode) {
+        this.ADCImpl(mode, false);
+        this.status.update(ICPUStatus.CARRY, this.status.contain(ICPUStatus.NEGATIVE));
+    }
+
+    private void RTSImpl() {
+        this.pc = this.popInt() + 1;
+    }
+
+    private void JMPImpl(AddressMode mode) {
+        this.pc = this.modeProvider.getAbsAddr(mode);
+    }
+
+    private void TXSImpl() {
+        this.sp = this.rx;
+    }
+
+    private void STA_X_YImpl(Instruction instruction, AddressMode mode) {
+        var value = switch (instruction) {
+            case STA -> this.ra;
+            case STX -> this.rx;
+            default -> this.ry;
+        };
+        this.bus.WriteU8(this.modeProvider.getAbsAddr(mode), value);
+    }
+
+    private void CLC_D_I_VImpl(Instruction instruction) {
+        switch (instruction) {
+            case CLC -> this.status.clear(ICPUStatus.CARRY);
+            case CLV -> this.status.clear(ICPUStatus.OVERFLOW);
+            case CLD -> this.status.clear(ICPUStatus.DECIMAL_MODE);
+            case CLI -> this.status.clear(ICPUStatus.INTERRUPT_DISABLE);
+        }
+    }
+
+    private void BPL_BMImpl(Instruction instruction) {
+        this.CheckBranchCondition((instruction == Instruction.BMI) == this.status.contain(ICPUStatus.NEGATIVE));
+    }
+
+    private void BEQ_BNEImpl(Instruction instruction) {
+        this.CheckBranchCondition((instruction == Instruction.BEQ) == this.status.contain(ICPUStatus.ZERO));
+    }
+
+    private void BVC_BVSImpl(Instruction instruction) {
+        this.CheckBranchCondition((instruction == Instruction.BVS) == this.status.contain(ICPUStatus.OVERFLOW));
+    }
+
+    private void BCS_BCCImpl(Instruction instruction) {
+        this.CheckBranchCondition((instruction == Instruction.BCS) == this.status.contain(ICPUStatus.CARRY));
+    }
+
+    private void SEC_D_Impl(Instruction instruction) {
+        switch (instruction) {
+            case SEC -> this.status.set(ICPUStatus.CARRY);
+            case SED -> this.status.set(ICPUStatus.DECIMAL_MODE);
+            case SEI -> this.status.set(ICPUStatus.INTERRUPT_DISABLE);
+        }
     }
 
     public int interrupt(CPUInterrupt interrupt) {
@@ -366,10 +547,6 @@ public class CPU {
         var openCode = this.bus.read(this.pc);
         var state = (++this.pc);
 
-        if (openCode == 0x00) {
-            return this.interrupt(CPUInterrupt.BRK);
-        }
-
         var instruction6502 = Instruction.getInstance(openCode);
         if (instruction6502 == null) {
             logger.warning("Unknown opecode 0x{} in address 0x{}", Integer.toHexString(uint8(openCode)), Integer.toHexString(state - 1));
@@ -395,282 +572,56 @@ public class CPU {
                     operand
             );
         }
-
         this.modeProvider.setCycles(0);
 
-        if (instruction == Instruction.JMP) {
-            this.pc = this.modeProvider.getAbsAddr(mode);
-        }
-
-        if (instruction == Instruction.RTI) {
-            this.status.setBits(this.pop());
-
-            this.status.set(ICPUStatus.EMPTY);
-            this.status.clear(ICPUStatus.BREAK_COMMAND);
-
-            this.pc = this.popInt();
-        }
-        if (instruction == Instruction.JSR) {
-            this.pushInt(this.pc + 1);
-            this.pc = this.bus.readInt(this.pc);
-        }
-
-        if (instruction == Instruction.RTS) {
-            this.pc = this.popInt() + 1;
-        }
-
-        if (instruction == Instruction.LDA) {
-            this.lda(mode);
-        }
-
-        if (instruction == Instruction.ADC) {
-            this.adc(instruction6502.getAddressMode(), false);
-        }
-
-        if (instruction == Instruction.SBC) {
-            this.sbc(instruction6502.getAddressMode());
-        }
-
-        if (instruction == Instruction.AND
-                || instruction == Instruction.ORA
-                || instruction == Instruction.EOR) {
-            this.logic(instruction6502.getInstruction(), instruction6502.getAddressMode());
-        }
-
-        if (instruction == Instruction.PHA || instruction == Instruction.PHP) {
-            this.push(instruction6502);
-        }
-
-        if (instruction == Instruction.PLA || instruction == Instruction.PLP) {
-            this.pull(instruction6502);
-        }
-
-        if (instruction == Instruction.ASL) {
-            this.asl(instruction6502);
-        }
-
-        if (instruction == Instruction.ROL) {
-            this.rol(mode);
-        }
-
-        if (instruction == Instruction.ROR) {
-            this.ror(mode);
-        }
-
-        if (instruction == Instruction.STA) {
-            var addr = this.modeProvider.getAbsAddr(mode);
-            this.bus.WriteU8(addr, this.ra);
-        }
-
-        if (instruction == Instruction.STY) {
-            this.bus.WriteU8(this.modeProvider.getAbsAddr(mode), this.ry);
-        }
-
-        if (instruction == Instruction.STX) {
-            this.bus.WriteU8(this.modeProvider.getAbsAddr(mode), this.rx);
-        }
-
-        if (instruction == Instruction.CLC) {
-            this.status.clear(ICPUStatus.CARRY);
-        }
-
-        if (instruction == Instruction.CLD) {
-            this.status.clear(ICPUStatus.DECIMAL_MODE);
-        }
-
-        if (instruction == Instruction.CLI) {
-            this.status.clear(ICPUStatus.INTERRUPT_DISABLE);
-        }
-
-        if (instruction == Instruction.CLV) {
-            this.status.clear(ICPUStatus.OVERFLOW);
-        }
-
-        if (instruction == Instruction.CMP
-                || instruction == Instruction.CPX
-                || instruction == Instruction.CPY) {
-            this.cmp(instruction6502);
-        }
-
-        if (instruction == Instruction.INC
-                || instruction == Instruction.INX
-                || instruction == Instruction.INY) {
-            this.inc(instruction6502.getInstruction(), instruction6502.getAddressMode());
-        }
-
-
-        if (instruction == Instruction.LDX || instruction == Instruction.LDY) {
-            this.loadXY(instruction6502);
-        }
-
-        if (instruction == Instruction.BIT) {
-            this.bit(instruction6502);
-        }
-
-        //By negative flag to jump
-        if (instruction == Instruction.BPL || instruction == Instruction.BMI) {
-            this.branch((instruction == Instruction.BMI) == this.status.contain(ICPUStatus.NEGATIVE));
-        }
-
-        //By zero flag to jump
-        if (instruction == Instruction.BEQ || instruction == Instruction.BNE) {
-            this.branch((instruction == Instruction.BEQ) == this.status.contain(ICPUStatus.ZERO));
-        }
-
-        //By overflow flag to jump
-        if (instruction == Instruction.BVC || instruction == Instruction.BVS) {
-            this.branch((instruction == Instruction.BVS) == this.status.contain(ICPUStatus.OVERFLOW));
-        }
-
-        if (instruction == Instruction.BCS || instruction == Instruction.BCC) {
-            this.branch((instruction == Instruction.BCS) == this.status.contain(ICPUStatus.CARRY));
-        }
-
-        if (instruction == Instruction.DEC
-                || instruction == Instruction.DEX
-                || instruction == Instruction.DEY) {
-            this.dec(instruction6502);
-        }
-
-
-        if (instruction == Instruction.SEC) {
-            this.status.set(ICPUStatus.CARRY);
-        }
-
-        if (instruction == Instruction.SED) {
-            this.status.set(ICPUStatus.DECIMAL_MODE);
-        }
-
-        if (instruction == Instruction.SEI) {
-            this.status.set(ICPUStatus.INTERRUPT_DISABLE);
-        }
-
-        if (instruction == Instruction.TAX) {
-            this.rx = this.ra;
-            this.NZUpdate(this.rx);
-        }
-        if (instruction == Instruction.TAY) {
-            this.ry = this.ra;
-            this.NZUpdate(this.ry);
-        }
-        if (instruction == Instruction.TSX) {
-            this.rx = this.sp;
-            this.NZUpdate(this.rx);
-        }
-        if (instruction == Instruction.TXA) {
-            this.raUpdate(this.rx);
-        }
-
-        if (instruction == Instruction.TXS) {
-            this.sp = this.rx;
-        }
-
-        if (instruction == Instruction.TYA) {
-            this.raUpdate(this.ry);
-        }
-
-        if (instruction == Instruction.SLO) {
-            this.asl(instruction6502);
-            this.logic(Instruction.ORA, instruction6502.getAddressMode());
-        }
-
-        if (instruction == Instruction.ISC) {
-            this.inc(Instruction.INC, instruction6502.getAddressMode());
-            this.sbc(instruction6502.getAddressMode());
-        }
-
-        if (instruction == Instruction.RLA) {
-            this.rol(mode);
-            this.adc(mode, false);
-        }
-
-        if (instruction == Instruction.ALR) {
-            this.logic(Instruction.AND, mode);
-            this.lsr(mode);
-        }
-
-        if (instruction == Instruction.ANC) {
-            this.adc(mode, false);
-            this.status.update(ICPUStatus.CARRY, this.status.contain(ICPUStatus.NEGATIVE));
-        }
-
-        if (instruction == Instruction.XAA) {
-            this.raUpdate(this.rx);
-            var addr = this.modeProvider.getAbsAddr(mode);
-            var b = this.bus.ReadU8(addr);
-            this.raUpdate(b & this.ra);
-        }
-
-        if (instruction == Instruction.ARR) {
-            var addr = this.modeProvider.getAbsAddr(mode);
-            var b = this.bus.ReadU8(addr);
-            this.raUpdate(b & this.ra);
-            this.ror(AddressMode.Accumulator);
-            var result = this.ra;
-            var b5 = (result >> 5 & 1);
-            var b6 = (result >> 6 & 1);
-            this.status.update(ICPUStatus.CARRY, b6 == 1);
-            this.status.update(ICPUStatus.OVERFLOW, (b5 ^ b6) == 1);
-            this.NZUpdate(result);
-        }
-
-        if (instruction == Instruction.DCP) {
-            var addr = this.modeProvider.getAbsAddr(mode);
-            var value = this.bus.ReadU8(addr);
-            value = u8sbc(value, 1);
-            this.bus.WriteU8(addr, value);
-            if (value <= this.ra) {
-                this.status.set(ICPUStatus.CARRY);
-            }
-            this.NZUpdate(u8sbc(this.ra, value));
-        }
-
-        if (instruction == Instruction.LAS) {
-            var addr = this.modeProvider.getAbsAddr(mode);
-            var value = this.bus.ReadU8(addr);
-            value = value & this.sp;
-            this.rx = value;
-            this.sp = value;
-            this.raUpdate(value);
-        }
-
-        if (instruction == Instruction.LAX) {
-            var addr = this.modeProvider.getAbsAddr(mode);
-            var value = this.bus.ReadU8(addr);
-            this.raUpdate(value);
-            this.rx = value;
-        }
-
-        if (instruction == Instruction.SRE || instruction == Instruction.LSR) {
-            this.lsr(instruction6502.getAddressMode());
-            if (instruction == Instruction.SRE) {
-                this.logic(Instruction.EOR, instruction6502.getAddressMode());
-            }
-        }
-
-        if (instruction == Instruction.SHX) {
-            var addr = this.modeProvider.getAbsAddr(mode);
-            var value = this.rx & u8add(uint8(addr >> 8), 1);
-            this.bus.WriteU8(addr, value);
-        }
-
-        if (instruction == Instruction.TAX || instruction == Instruction.LXA) {
-            if (instruction == Instruction.LXA) {
-                this.lda(mode);
-            }
-            this.rx = this.ra;
-            this.NZUpdate(this.rx);
-        }
-
-        if (instruction == Instruction.SAX) {
-            var data = this.ra & this.rx;
-            var addr = this.modeProvider.getAbsAddr(instruction6502.getAddressMode());
-            this.bus.WriteU8(addr, data);
-        }
-
-        if (instruction == Instruction.RRA) {
-            this.ror(instruction6502.getAddressMode());
-            this.adc(instruction6502.getAddressMode(), false);
+        switch (instruction) {
+            case RTI -> this.RTImpl();
+            case JSR -> this.JSRImpl();
+            case RTS -> this.RTSImpl();
+            case TAX -> this.TAXImpl();
+            case TAY -> this.TAYImpl();
+            case TSX -> this.TSXImpl();
+            case TXS -> this.TXSImpl();
+            case ASL -> this.ASLImpl(mode);
+            case ROL -> this.ROLImpl(mode);
+            case ROR -> this.RORImpl(mode);
+            case BIT -> this.BITImpl(mode);
+            case SLO -> this.SLOImpl(mode);
+            case ISC -> this.ISCImpl(mode);
+            case RLA -> this.RLAImpl(mode);
+            case ALR -> this.ALRImpl(mode);
+            case ANC -> this.ANCImpl(mode);
+            case XAA -> this.XAAImpl(mode);
+            case ARR -> this.ARRImpl(mode);
+            case DCP -> this.DCPImpl(mode);
+            case LAS -> this.LASImpl(mode);
+            case LAX -> this.LAXImpl(mode);
+            case SHX -> this.SHXImpl(mode);
+            case LXA -> this.LXAImpl(mode);
+            case SAX -> this.SAXImpl(mode);
+            case RRA -> this.RRAImpl(mode);
+            case LDA -> this.LDAImpl(mode);
+            case JMP -> this.JMPImpl(mode);
+            case TYA -> this.raUpdate(this.ry);
+            case TXA -> this.raUpdate(this.rx);
+            case SBC -> this.ADCImpl(mode, true);
+            case ADC -> this.ADCImpl(mode, false);
+            case PHA, PHP -> this.PUSHImpl(instruction);
+            case PLA, PLP -> this.PULLImpl(instruction);
+            case BRK -> this.interrupt(CPUInterrupt.BRK);
+            case BPL, BMI -> this.BPL_BMImpl(instruction);
+            case BEQ, BNE -> this.BEQ_BNEImpl(instruction);
+            case BVC, BVS -> this.BVC_BVSImpl(instruction);
+            case BCS, BCC -> this.BCS_BCCImpl(instruction);
+            case LDX, LDY -> this.LDXYImpl(instruction, mode);
+            case SEC, SED, SEI -> this.SEC_D_Impl(instruction);
+            case SRE, LSR -> this.SRE_LSRImpl(instruction, mode);
+            case DEC, DEX, DEY -> this.DEYImpl(instruction, mode);
+            case CMP, CPX, CPY -> this.CMPImpl(instruction, mode);
+            case INC, INX, INY -> this.INCImpl(instruction, mode);
+            case AND, ORA, EOR -> this.LogicImpl(instruction, mode);
+            case STA, STY, STX -> this.STA_X_YImpl(instruction, mode);
+            case CLC, CLD, CLI, CLV -> this.CLC_D_I_VImpl(instruction);
         }
 
         //
