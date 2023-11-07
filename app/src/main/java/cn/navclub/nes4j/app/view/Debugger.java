@@ -39,7 +39,7 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
     @FXML
     private PPUControlPane ppuControlPane;
 
-    private NesConsole instance;
+    private NesConsole console;
     private boolean stepInto;
     private volatile BreakLine currentLine;
 
@@ -55,10 +55,10 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
         this.setResizable(false);
         this.setTitle(INes.localeValue("nes4j.assembler.debugger"));
         this.showingProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue || this.instance == null) {
+            if (newValue || this.console == null) {
                 return;
             }
-            this.instance.release();
+            this.console.release();
         });
 
         this.setOnCloseRequest(event -> owner.debugDispose());
@@ -73,28 +73,28 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
     @SuppressWarnings("all")
     @FXML
     public void stepOut() {
-        if (this.instance == null) {
+        if (this.console == null) {
             return;
         }
-        this.instance.release();
+        this.console.release();
     }
 
     @SuppressWarnings("all")
     @FXML
     public void execute() {
-        if (this.instance == null) {
+        if (this.console == null) {
             return;
         }
         this.stepInto = false;
-        this.instance.release();
+        this.console.release();
     }
 
     @Override
-    public boolean hack(NesConsole context) {
+    public boolean hack(NesConsole console) {
         if (!this.isShowing()) {
             return false;
         }
-        var cpu = context.getCpu();
+        var cpu = console.getCpu();
         var programCounter = cpu.getPc();
         var debug = this.debuggers.containsKey(programCounter);
         debug = debug || this.stepInto;
@@ -111,8 +111,8 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
                         this.currentLine.debug(true);
                     }
                     this.listView.scrollTo(item);
-                    this.controlPane.update(context);
-                    this.ppuControlPane.update(context);
+                    this.controlPane.update(console);
+                    this.ppuControlPane.update(console);
                     this.listView.getSelectionModel().select(item);
                 });
             }
@@ -161,7 +161,7 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
     @FXML
     private void handleVSnapshot() {
         var file = new File("vram.txt");
-        BinUtil.snapshot(file, 16, this.instance.getPpu().getVram(), 0);
+        BinUtil.snapshot(file, 16, this.console.getPpu().getVram(), 0);
         INes.eventBus.publish(EventBusAddress.OPEN_URI, file.toURI().toString());
     }
 
@@ -169,11 +169,11 @@ public class Debugger extends Stage implements cn.navclub.nes4j.bin.debug.Debugg
     private void handleRSnapshot() {
         var file = new File("ram.txt");
         //Snapshot cpu ram to 'ram.txt'
-        BinUtil.snapshot(file, 16, this.instance.getBus().getRam(), 0);
+        BinUtil.snapshot(file, 16, this.console.getBus().getRam(), 0);
     }
 
     @Override
-    public void inject(NesConsole instance) {
-        this.instance = instance;
+    public void inject(NesConsole console) {
+        this.console = console;
     }
 }

@@ -44,8 +44,8 @@ public class CPU {
     //CPU status
     private final CPUStatus status;
 
-    public CPU(NesConsole context) {
-        this.bus = context.getBus();
+    public CPU(NesConsole console) {
+        this.bus = console.getBus();
         this.status = new CPUStatus();
         this.modeProvider = new AddrMProvider(this, this.bus);
     }

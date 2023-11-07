@@ -14,7 +14,7 @@ public interface Debugger {
      *
      * @return If return {@code true} block current thread,otherwise do nothing.
      */
-    boolean hack(NesConsole context);
+    boolean hack(NesConsole console);
 
     /**
      * When {@link NesConsole} instance rpg-rom data happen change call
@@ -26,7 +26,7 @@ public interface Debugger {
     /**
      * When {@link NesConsole} wsa created  call
      *
-     * @param instance {@link NesConsole} instance
+     * @param console {@link NesConsole} instance
      */
-    void inject(NesConsole instance);
+    void inject(NesConsole console);
 }

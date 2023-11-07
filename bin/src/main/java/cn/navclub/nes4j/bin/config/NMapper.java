@@ -28,12 +28,12 @@ public enum NMapper {
     }
 
     @SuppressWarnings("all")
-    public <T> T newProvider(Cartridge cartridge, NesConsole context) {
+    public <T> T newProvider(Cartridge cartridge, NesConsole console) {
         try {
             return (T) this
                     .provider
                     .getDeclaredConstructor(Cartridge.class, NesConsole.class)
-                    .newInstance(cartridge, context);
+                    .newInstance(cartridge, console);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -63,7 +63,7 @@ public class PPUViewer extends Stage {
         this.show();
     }
 
-    public PPUViewer(NesConsole instance) {
-        this(instance.getCartridge().getChrom(), DEF_FILL_COLOR);
+    public PPUViewer(NesConsole console) {
+        this(console.getCartridge().getChrom(), DEF_FILL_COLOR);
     }
 }

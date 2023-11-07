@@ -38,8 +38,8 @@ public class Bus implements Component {
     //  for storing save games.
     private final byte[] sram;
 
-    public Bus(NesConsole context, JoyPad joyPad, JoyPad joyPad1) {
-        this.console = context;
+    public Bus(NesConsole console, JoyPad joyPad, JoyPad joyPad1) {
+        this.console = console;
 
         this.joyPad = joyPad;
         this.joyPad1 = joyPad1;
@@ -48,8 +48,8 @@ public class Bus implements Component {
         this.exp = new byte[0x1fe0];
         this.sram = new byte[0x2000];
 
-        this.apu = context.getApu();
-        this.ppu = context.getPpu();
+        this.apu = console.getApu();
+        this.ppu = console.getPpu();
 
         this.reset();
     }
