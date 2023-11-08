@@ -15,6 +15,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 
+import java.util.concurrent.locks.LockSupport;
+
 import static cn.navclub.nes4j.bin.util.BinUtil.*;
 
 
@@ -158,6 +160,7 @@ public class PPU implements Component {
     protected byte x;
     //Suppress val or nmi flag
     private boolean suppress;
+    private long lastFrameTime;
 
 
     public PPU(final NesConsole console, NameMirror mirrors) {
@@ -186,6 +189,7 @@ public class PPU implements Component {
         this.byteBuf = 0;
         this.render.reset();
         this.suppress = false;
+        this.lastFrameTime = 0;
         this.ctr.setBits(int8(0));
         this.mask.setBits(int8(0));
         this.status.setBits(int8(0));
@@ -193,6 +197,9 @@ public class PPU implements Component {
 
     @Override
     public void tick() {
+        if (this.lastFrameTime == 0) {
+            this.lastFrameTime = System.nanoTime();
+        }
         for (int i = 0; i < 3; i++) {
             this.render.tick();
         }
@@ -530,6 +537,22 @@ public class PPU implements Component {
             }
         }
         this.suppress = false;
+    }
+
+    /**
+     * Simple use fixed time step update way fixed game output fps was 60.
+     *
+     * @param now Video frame output finish timestamp
+     */
+    protected void calVideoPauseTime(long now) {
+        var unit = 1000000000 / this.console.getSpeed();
+        var span = unit - (now - this.lastFrameTime);
+        if (span > 0) {
+            LockSupport.parkNanos(span);
+            this.lastFrameTime = System.nanoTime();
+        } else {
+            this.lastFrameTime = now + span;
+        }
     }
 
     public long getCycle() {

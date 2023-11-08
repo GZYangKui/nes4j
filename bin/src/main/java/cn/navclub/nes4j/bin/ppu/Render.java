@@ -3,8 +3,6 @@ package cn.navclub.nes4j.bin.ppu;
 import cn.navclub.nes4j.bin.config.NMapper;
 import cn.navclub.nes4j.bin.config.PStatus;
 import cn.navclub.nes4j.bin.function.CycleDriver;
-import cn.navclub.nes4j.bin.logging.LoggerDelegate;
-import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import cn.navclub.nes4j.bin.ppu.register.PPUMask;
 import lombok.Getter;
 
@@ -129,8 +127,8 @@ public class Render implements CycleDriver {
     public void reset() {
         this.cycles = 0;
         this.frames = 0L;
-        this.scanline = 240;
         this.frame.clear();
+        this.scanline = 240;
     }
 
     @Override
@@ -155,8 +153,10 @@ public class Render implements CycleDriver {
             // If render was disable output frame will product a white screen.
             //
             if (this.mask.enableRender()) {
-                this.ppu.console.videoOutput(this.frame);
+                this.ppu.console.videoOutput(this.frame, System.nanoTime());
             }
+            //Check and pause some time to keep 60 fps
+            this.ppu.calVideoPauseTime(System.nanoTime());
         }
 
         //

@@ -38,6 +38,7 @@ public class NesConsole {
     private final FCallback<Frame, JoyPad, JoyPad, Long> gameLoopCallback;
     //cpu stall cycle
     private int stall;
+    @Getter
     private int speed;
     //APU mute
     @Setter
@@ -46,10 +47,10 @@ public class NesConsole {
     private long cycles;
     private long dcycle;
 
-    private long lastFrameTime;
     private Debugger debugger;
     private volatile boolean stop;
     private volatile boolean reset;
+    @SuppressWarnings("all")
     private Optional<CPUInterrupt> optional;
     @Getter
     private final Class<? extends Player> player;
@@ -68,7 +69,6 @@ public class NesConsole {
         this.player = builder.player;
         this.optional = Optional.empty();
         this.thread = Thread.currentThread();
-        this.lastFrameTime = System.nanoTime();
         this.gameLoopCallback = builder.gameLoopCallback;
         this.mapper = this.cartridge.getMapper().newProvider(this.cartridge, this);
 
@@ -105,7 +105,6 @@ public class NesConsole {
             if (this.debugger != null && this.debugger.hack(this)) {
                 LockSupport.park();
                 this.dcycle = 0;
-                this.lastFrameTime = System.nanoTime();
             }
             tmp = this.cpu.next();
             this.cycles += this.cpu.getCycle();
@@ -169,21 +168,13 @@ public class NesConsole {
     }
 
 
-    public void videoOutput(Frame frame) {
+    public void videoOutput(Frame frame, long nano) {
         if (gameLoopCallback == null) {
             return;
         }
-        var tmp = System.nanoTime();
-        var unit = 1000000000 / this.speed;
-        var span = unit - (tmp - this.lastFrameTime);
-        if (span > 0) {
-            LockSupport.parkNanos(span);
-            this.lastFrameTime = System.nanoTime();
-        } else {
-            this.lastFrameTime = tmp + span;
-        }
-        this.gameLoopCallback.accept(frame, this.joyPad, this.joyPad1, tmp);
-        frame.clear();
+        this.gameLoopCallback.accept(frame, this.joyPad, this.joyPad1, nano);
+        // Should clear frame data??
+        //frame.clear();
     }
 
     public void setStall(int span) {
@@ -216,11 +207,11 @@ public class NesConsole {
      * @param span offset value
      */
     public void speed(int span) {
-        var temp = this.speed + span;
-        if (temp < 0) {
-            temp = 0;
+        var tmp = this.speed + span;
+        if (tmp < 0) {
+            tmp = 0;
         }
-        this.speed = temp;
+        this.speed = tmp;
     }
 
 
