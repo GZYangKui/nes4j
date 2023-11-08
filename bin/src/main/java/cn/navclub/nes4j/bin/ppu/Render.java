@@ -148,13 +148,7 @@ public class Render implements CycleDriver {
             //Move to next scanline must reset shift
             this.shift = 0;
             this.ppu.fireNMI();
-            //
-            // A frame render finish if render enable immediate output video.
-            // If render was disable output frame will product a white screen.
-            //
-            if (this.mask.enableRender()) {
-                this.ppu.console.videoOutput(this.frame, System.nanoTime());
-            }
+            this.ppu.console.videoOutput(System.nanoTime(), this.mask.enableRender(), this.frame);
             //Check and pause some time to keep 60 fps
             this.ppu.calVideoPauseTime(System.nanoTime());
         }

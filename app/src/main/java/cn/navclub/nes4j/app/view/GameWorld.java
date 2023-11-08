@@ -178,22 +178,25 @@ public class GameWorld extends Stage {
         new PPUViewer(this.instance);
     }
 
-    private void gameLoopCallback(Frame frame, JoyPad joyPad, JoyPad joyPad1, Long nano) {
-        var w = Frame.width;
-        var h = Frame.height;
-
-        var writer = image.getPixelWriter();
-        var format = PixelFormat.getIntArgbInstance();
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
-                var pixel = frame.getPixel(y * w + x);
-                for (int k = 0; k < this.scale * this.scale; k++) {
-                    intBuffer.put(k, pixel);
+    private void gameLoopCallback(long nano, boolean enableRender, Frame frame, JoyPad joyPad, JoyPad joyPad1) {
+        //If render enable transport pixel to javafx image otherwise do nothing.
+        if (enableRender) {
+            var w = Frame.width;
+            var h = Frame.height;
+            var writer = image.getPixelWriter();
+            var format = PixelFormat.getIntArgbInstance();
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
+                    var pixel = frame.getPixel(y * w + x);
+                    for (int k = 0; k < this.scale * this.scale; k++) {
+                        intBuffer.put(k, pixel);
+                    }
+                    writer.setPixels(x * this.scale, y * this.scale, this.scale, this.scale, format, this.intBuffer, 1);
                 }
-                writer.setPixels(x * this.scale, y * this.scale, this.scale, this.scale, format, this.intBuffer, 1);
             }
         }
 
+        //Poll keyword event
         var event = eventQueue.poll();
         if (event != null) {
             joyPad.updateBtnStatus(event.btn(), event.event() == KeyEvent.KEY_PRESSED);
@@ -201,12 +204,10 @@ public class GameWorld extends Stage {
 
         this.tracer.increment();
 
-
         Platform.runLater(() -> {
-            //Clear whole canvas
-            this.ctx.clearRect(0, 0, this.canvas.getWidth(), this.canvas.getHeight());
-            //Draw image
-            this.ctx.drawImage(image, 0, 0);
+            if (enableRender) {
+                this.ctx.drawImage(image, 0, 0);
+            }
             //Draw fps
             this.fbl.setText(String.format("fps:%d", this.fps));
         });

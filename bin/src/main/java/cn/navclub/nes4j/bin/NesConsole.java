@@ -35,7 +35,8 @@ public class NesConsole {
     private final JoyPad joyPad;
     private final JoyPad joyPad1;
     private final Cartridge cartridge;
-    private final FCallback<Frame, JoyPad, JoyPad, Long> gameLoopCallback;
+    //Game loop callback function(Timestamp of frame occur,Pixel data,Render enable,Joy1,Joy2)
+    private final FCallback<Long, Boolean, Frame, JoyPad, JoyPad> gameLoopCallback;
     //cpu stall cycle
     private int stall;
     @Getter
@@ -168,13 +169,11 @@ public class NesConsole {
     }
 
 
-    public void videoOutput(Frame frame, long nano) {
+    public void videoOutput(long nano, boolean renderEnable, Frame frame) {
         if (gameLoopCallback == null) {
             return;
         }
-        this.gameLoopCallback.accept(frame, this.joyPad, this.joyPad1, nano);
-        // Should clear frame data??
-        //frame.clear();
+        this.gameLoopCallback.accept(nano, renderEnable, frame, this.joyPad, this.joyPad1);
     }
 
     public void setStall(int span) {
@@ -219,7 +218,7 @@ public class NesConsole {
         private File file;
         private byte[] buffer;
         private Class<? extends Player> player;
-        private FCallback<Frame, JoyPad, JoyPad, Long> gameLoopCallback;
+        private FCallback<Long, Boolean, Frame, JoyPad, JoyPad> gameLoopCallback;
 
         public Builder buffer(byte[] buffer) {
             this.buffer = buffer;
@@ -241,7 +240,7 @@ public class NesConsole {
             return this;
         }
 
-        public Builder gameLoopCallback(FCallback<Frame, JoyPad, JoyPad, Long> gameLoopCallback) {
+        public Builder gameLoopCallback(FCallback<Long, Boolean, Frame, JoyPad, JoyPad> gameLoopCallback) {
             this.gameLoopCallback = gameLoopCallback;
             return this;
         }

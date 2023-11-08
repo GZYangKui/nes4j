@@ -7,6 +7,6 @@ package cn.navclub.nes4j.bin.function;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 @FunctionalInterface
-public interface FCallback<A, B, C, D> {
-    void accept(A a, B b, C c, D d);
+public interface FCallback<A, B, C, D, E> {
+    void accept(A a, B b, C c, D d, E e);
 }
