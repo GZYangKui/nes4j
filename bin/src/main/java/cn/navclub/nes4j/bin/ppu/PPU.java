@@ -526,7 +526,7 @@ public class PPU implements Component {
         if (!this.suppress) {
             this.status.set(PStatus.V_BLANK_OCCUR);
             if (this.ctr.generateVBlankNMI()) {
-                this.console.interrupt(CPUInterrupt.NMI);
+                this.console.hardwareInterrupt(CPUInterrupt.NMI);
             }
         }
         this.suppress = false;

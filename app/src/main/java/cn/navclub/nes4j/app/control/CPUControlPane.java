@@ -122,11 +122,12 @@ public class CPUControlPane extends Tab {
 
     public void update(NesConsole console) {
         var cpu = console.getCpu();
+
         this.pc.setText(Long.toHexString(cpu.getPc()));
         this.x.setText(Integer.toHexString(cpu.getRx()));
         this.y.setText(Integer.toHexString(cpu.getRy()));
         this.a.setText(Integer.toHexString(cpu.getRa()));
-        this.instructions.setText(Long.toString(console.getIns()));
+        this.instructions.setText(Long.toString(cpu.getInstructions()));
         this.stackFlag.setText("Stack:$%s".formatted(Integer.toHexString(cpu.getSp())));
         this.cycles.setText(String.format("%d(+%d)", console.getCycles(), console.getDcycle()));
 

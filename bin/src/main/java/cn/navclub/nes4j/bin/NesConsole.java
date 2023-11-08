@@ -2,6 +2,7 @@ package cn.navclub.nes4j.bin;
 
 import cn.navclub.nes4j.bin.apu.APU;
 import cn.navclub.nes4j.bin.apu.Player;
+import cn.navclub.nes4j.bin.config.ICPUStatus;
 import cn.navclub.nes4j.bin.core.*;
 import cn.navclub.nes4j.bin.debug.Debugger;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
@@ -14,23 +15,27 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
 
 @Getter
 public class NesConsole {
-    private final Bus bus;
     private final CPU cpu;
     private final APU apu;
     private final PPU ppu;
+    private final MemoryBus bus;
     private final Mapper mapper;
     private final Thread thread;
     private final JoyPad joyPad;
     private final JoyPad joyPad1;
     private final Cartridge cartridge;
     private final FCallback<Frame, JoyPad, JoyPad, Long> gameLoopCallback;
-    @Getter
-    private long ins;
     //cpu stall cycle
     private int stall;
     private int speed;
@@ -45,6 +50,7 @@ public class NesConsole {
     private Debugger debugger;
     private volatile boolean stop;
     private volatile boolean reset;
+    private Optional<CPUInterrupt> optional;
     @Getter
     private final Class<? extends Player> player;
 
@@ -60,6 +66,7 @@ public class NesConsole {
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
+        this.optional = Optional.empty();
         this.thread = Thread.currentThread();
         this.lastFrameTime = System.nanoTime();
         this.gameLoopCallback = builder.gameLoopCallback;
@@ -68,7 +75,7 @@ public class NesConsole {
         this.apu = new APU(this);
         this.ppu = new PPU(this, cartridge.getMirrors());
 
-        this.bus = new Bus(this, joyPad, joyPad1);
+        this.bus = new MemoryBus(this, joyPad, joyPad1);
 
 
         this.cpu = new CPU(this);
@@ -79,6 +86,13 @@ public class NesConsole {
             //Check if reset flag was set and execute reset logic
             if (this.reset) {
                 this.reset();
+            }
+            if (this.optional.isPresent()) {
+                var stall = this.cpu.NMI_IRQ_BRKInterrupt(optional.get());
+                if (stall > 0) {
+                    this.setStall(stall);
+                }
+                this.optional = Optional.empty();
             }
             this.execute0();
         }
@@ -93,14 +107,13 @@ public class NesConsole {
                 this.dcycle = 0;
                 this.lastFrameTime = System.nanoTime();
             }
-            this.ins++;
             tmp = this.cpu.next();
-            this.cycles += tmp;
-            this.dcycle += tmp;
+            this.cycles += this.cpu.getCycle();
+            this.dcycle += this.cpu.getCycle();
         } else {
-            this.stall -= tmp;
+            this.stall = 0;
         }
-        while ((--tmp) >= 0) {
+        while (--tmp >= 0) {
             this.apu.tick();
             this.ppu.tick();
         }
@@ -133,7 +146,6 @@ public class NesConsole {
     }
 
     private void reset() {
-        this.ins = 0;
         this.stall = 0;
         this.dcycle = 0;
         this.cycles = 0;
@@ -149,8 +161,11 @@ public class NesConsole {
      *
      * @param interrupt interrupt type
      */
-    public void interrupt(CPUInterrupt interrupt) {
-        this.stall += this.cpu.interrupt(interrupt);
+    public void hardwareInterrupt(CPUInterrupt interrupt) {
+        if ((this.cpu.getStatus() >> 2 & 1) == 1 && interrupt != CPUInterrupt.NMI) {
+            return;
+        }
+        this.optional = Optional.of(interrupt);
     }
 
 
@@ -200,14 +215,14 @@ public class NesConsole {
      *
      * @param span offset value
      */
-    public int speed(int span) {
+    public void speed(int span) {
         var temp = this.speed + span;
         if (temp < 0) {
             temp = 0;
         }
         this.speed = temp;
-        return this.speed;
     }
+
 
     public static class Builder {
         private File file;

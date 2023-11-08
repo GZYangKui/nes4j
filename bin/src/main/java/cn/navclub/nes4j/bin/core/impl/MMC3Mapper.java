@@ -245,7 +245,7 @@ public class MMC3Mapper extends Mapper {
             this.counter--;
         }
         if (this.counter == 0 && this.IRQEnable) {
-            this.console.interrupt(CPUInterrupt.IRQ);
+            this.console.hardwareInterrupt(CPUInterrupt.IRQ);
         }
     }
 }

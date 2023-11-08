@@ -264,7 +264,7 @@ public class APU implements Component {
 
 
     public void fireIRQ() {
-        this.console.interrupt(CPUInterrupt.IRQ);
+        this.console.hardwareInterrupt(CPUInterrupt.IRQ);
     }
 
     @Override
