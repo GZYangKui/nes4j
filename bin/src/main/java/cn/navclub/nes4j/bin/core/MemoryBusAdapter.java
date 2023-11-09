@@ -15,7 +15,6 @@ import static cn.navclub.nes4j.bin.util.BinUtil.u8add;
  */
 public class MemoryBusAdapter implements Bus {
     private final CPU cpu;
-    @Getter
     private final MemoryBus bus;
     private final NesConsole console;
     //Page cross product extra cycle
@@ -91,40 +90,40 @@ public class MemoryBusAdapter implements Bus {
 
     @Override
     public void WriteU8(int address, int value) {
-        this.tickOtherComponent();
+        this.APU_PPUSync();
         this.bus.WriteU8(address, value);
     }
 
     @Override
     public int ReadU8(int address) {
-        this.tickOtherComponent();
+        this.APU_PPUSync();
         return this.bus.ReadU8(address);
     }
 
     @Override
     public byte read(int address) {
-        this.tickOtherComponent();
+        this.APU_PPUSync();
         return this.bus.read(address);
     }
 
     @Override
     public void write(int address, byte value) {
-        this.tickOtherComponent();
+        this.APU_PPUSync();
         this.bus.write(address, value);
     }
 
     public void increment() {
         this.bulking++;
-        this.tickOtherComponent();
+        this.APU_PPUSync();
     }
 
     @Override
     public int readInt(int address) {
-        this.tickOtherComponent();
+        this.APU_PPUSync();
         return this.bus.readInt(address);
     }
 
-    private void tickOtherComponent() {
+    private void APU_PPUSync() {
         this.decrement--;
         this.console.getPpu().tick();
         this.console.getApu().tick();
@@ -134,6 +133,10 @@ public class MemoryBusAdapter implements Bus {
     public void reset() {
         this.bulking = 0;
         this.decrement = 0;
+    }
+
+    public byte directRead(int addr) {
+        return this.bus.read(addr);
     }
 
     public int calOffset() {

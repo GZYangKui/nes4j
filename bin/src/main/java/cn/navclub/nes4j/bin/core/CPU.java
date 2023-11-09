@@ -45,15 +45,12 @@ public class CPU {
     //Record game execute instruction number
     @Getter
     private long instructions;
-    private final MemoryBus bus;
-    //CPU status
     private final CPUStatus status;
-    private final MemoryBusAdapter adapter;
+    private final MemoryBusAdapter bus;
 
     public CPU(NesConsole console) {
-        this.bus = console.getBus();
         this.status = new CPUStatus();
-        this.adapter = new MemoryBusAdapter(this, console);
+        this.bus = new MemoryBusAdapter(this, console);
     }
 
 
@@ -66,13 +63,13 @@ public class CPU {
         this.ra = 0;
         this.sp = STACK_RESET;
         this.instructions = 0;
-        this.pc = this.adapter.readInt(PC_RESET);
+        this.pc = this.bus.readInt(PC_RESET);
         this.status.setBits(int8(0b000100));
     }
 
 
     public void push(byte data) {
-        this.adapter.write(STACK + this.sp, data);
+        this.bus.write(STACK + this.sp, data);
         this.sp = u8sbc(this.sp, 1);
     }
 
@@ -86,7 +83,7 @@ public class CPU {
 
     public byte pop() {
         this.sp = u8add(this.sp, 1);
-        return this.adapter.read(STACK + this.sp);
+        return this.bus.read(STACK + this.sp);
     }
 
     public int popInt() {
@@ -97,8 +94,8 @@ public class CPU {
 
 
     private void LDAImpl(AddressMode mode) {
-        var address = this.adapter.getAbsAddr(mode);
-        var value = this.adapter.ReadU8(address);
+        var address = this.bus.getAbsAddr(mode);
+        var value = this.bus.ReadU8(address);
         this.raUpdate(value);
     }
 
@@ -123,9 +120,9 @@ public class CPU {
      * Or and not operator
      */
     private void LogicImpl(Instruction instruction, AddressMode addressMode) {
-        var address = this.adapter.getAbsAddr(addressMode);
+        var address = this.bus.getAbsAddr(addressMode);
         var a = this.ra;
-        var b = this.adapter.ReadU8(address);
+        var b = this.bus.ReadU8(address);
         var c = switch (instruction) {
             case EOR -> a ^ b;
             case ORA -> a | b;
@@ -139,14 +136,14 @@ public class CPU {
         var addr = 0;
         var operand = mode == AddressMode.Accumulator
                 ? this.ra
-                : this.adapter.ReadU8(addr = this.adapter.getAbsAddr(mode));
+                : this.bus.ReadU8(addr = this.bus.getAbsAddr(mode));
 
         this.status.update(ICPUStatus.CARRY, (operand & 1) == 1);
         operand >>= 1;
         if (mode == AddressMode.Accumulator) {
             this.raUpdate(operand);
         } else {
-            this.adapter.WriteU8(addr, operand);
+            this.bus.WriteU8(addr, operand);
             this.NZUpdate(operand);
         }
     }
@@ -159,8 +156,8 @@ public class CPU {
         if (updateRA) {
             value = this.ra;
         } else {
-            addr = this.adapter.getAbsAddr(mode);
-            value = this.adapter.ReadU8(addr);
+            addr = this.bus.getAbsAddr(mode);
+            value = this.bus.ReadU8(addr);
         }
         bit = value >> 7;
         value <<= 1;
@@ -169,7 +166,7 @@ public class CPU {
         if (updateRA) {
             this.raUpdate(value);
         } else {
-            this.adapter.WriteU8(addr, value);
+            this.bus.WriteU8(addr, value);
             this.NZUpdate(value);
         }
     }
@@ -179,8 +176,8 @@ public class CPU {
         var value = this.ra;
         var rora = mode == AddressMode.Accumulator;
         if (!rora) {
-            addr = this.adapter.getAbsAddr(mode);
-            value = this.adapter.ReadU8(addr);
+            addr = this.bus.getAbsAddr(mode);
+            value = this.bus.ReadU8(addr);
         }
         var oBit = value & 1;
         value >>= 1;
@@ -189,7 +186,7 @@ public class CPU {
         if (rora) {
             this.raUpdate(value);
         } else {
-            this.adapter.WriteU8(addr, value);
+            this.bus.WriteU8(addr, value);
             this.NZUpdate(value);
         }
     }
@@ -201,8 +198,8 @@ public class CPU {
         if (a) {
             b = this.ra;
         } else {
-            address = this.adapter.getAbsAddr(mode);
-            b = this.adapter.ReadU8(address);
+            address = this.bus.getAbsAddr(mode);
+            b = this.bus.ReadU8(address);
         }
         //Check Carry flag
         this.status.update(ICPUStatus.CARRY, (b >> 7) == 1);
@@ -212,7 +209,7 @@ public class CPU {
             this.raUpdate(b);
         } else {
             this.NZUpdate(b);
-            this.adapter.WriteU8(address, b);
+            this.bus.WriteU8(address, b);
         }
     }
 
@@ -243,8 +240,8 @@ public class CPU {
             case CPX -> this.rx;
             default -> this.ry;
         };
-        var address = this.adapter.getAbsAddr(mode);
-        var m = this.adapter.ReadU8(address);
+        var address = this.bus.getAbsAddr(mode);
+        var m = this.bus.ReadU8(address);
         //Set carry Flag
         this.status.update(ICPUStatus.CARRY, val >= m);
         //Update cpu status
@@ -254,10 +251,10 @@ public class CPU {
     private void INCImpl(Instruction instruction, AddressMode mode) {
         final int result;
         if (instruction == Instruction.INC) {
-            var address = this.adapter.getAbsAddr(mode);
-            var m = this.adapter.ReadU8(address);
+            var address = this.bus.getAbsAddr(mode);
+            var m = this.bus.ReadU8(address);
             result = u8add(m, 1);
-            this.adapter.WriteU8(address, result);
+            this.bus.WriteU8(address, result);
         } else if (instruction == Instruction.INX) {
             this.rx = result = u8add(this.rx, 1);
         } else {
@@ -268,8 +265,8 @@ public class CPU {
 
 
     private void ADCImpl(AddressMode mode, boolean sbc) {
-        var addr = this.adapter.getAbsAddr(mode);
-        var b = this.adapter.read(addr);
+        var addr = this.bus.getAbsAddr(mode);
+        var b = this.bus.read(addr);
         if (sbc) {
             /* The absolute value of a negative number may be larger than the size
              * of the corresponding positive number, so here needs `-b -1` after
@@ -287,8 +284,8 @@ public class CPU {
 
 
     private void LDXYImpl(Instruction instruction, AddressMode mode) {
-        var address = this.adapter.getAbsAddr(mode);
-        var data = this.adapter.ReadU8(address);
+        var address = this.bus.getAbsAddr(mode);
+        var data = this.bus.ReadU8(address);
         if (instruction == Instruction.LDX) {
             this.rx = data;
         } else {
@@ -302,20 +299,20 @@ public class CPU {
         if (!condition) {
             return;
         }
-        this.adapter.increment();
+        this.bus.increment();
 
-        var b = this.adapter.read(this.pc);
+        var b = this.bus.read(this.pc);
         var jump = this.pc + 1 + b;
         var base = this.pc + 1;
 
         // Page-cross check
-        this.adapter.pageCross(base, jump);
+        this.bus.pageCross(base, jump);
 
         this.pc = jump;
     }
 
     private void BITImpl(AddressMode mode) {
-        var value = this.adapter.ReadU8(this.adapter.getAbsAddr(mode));
+        var value = this.bus.ReadU8(this.bus.getAbsAddr(mode));
         this.status.update(ICPUStatus.ZERO, (this.ra & value) == 0);
         this.status.update(ICPUStatus.NEGATIVE, (value >> 7) == 1);
         this.status.update(ICPUStatus.OVERFLOW, (value >> 6) == 1);
@@ -324,9 +321,9 @@ public class CPU {
     private void DEYImpl(Instruction instruction, AddressMode mode) {
         var value = switch (instruction) {
             case DEC -> {
-                var address = this.adapter.getAbsAddr(mode);
-                var b = u8sbc(this.adapter.ReadU8(address), 1);
-                this.adapter.WriteU8(address, b);
+                var address = this.bus.getAbsAddr(mode);
+                var b = u8sbc(this.bus.ReadU8(address), 1);
+                this.bus.WriteU8(address, b);
                 yield b;
             }
             case DEX -> this.rx = u8sbc(this.rx, 1);
@@ -343,8 +340,8 @@ public class CPU {
     }
 
     private void LASImpl(AddressMode mode) {
-        var addr = this.adapter.getAbsAddr(mode);
-        var value = this.adapter.ReadU8(addr);
+        var addr = this.bus.getAbsAddr(mode);
+        var value = this.bus.ReadU8(addr);
         value = value & this.sp;
         this.rx = value;
         this.sp = value;
@@ -352,16 +349,16 @@ public class CPU {
     }
 
     private void LAXImpl(AddressMode mode) {
-        var addr = this.adapter.getAbsAddr(mode);
-        var value = this.adapter.ReadU8(addr);
+        var addr = this.bus.getAbsAddr(mode);
+        var value = this.bus.ReadU8(addr);
         this.raUpdate(value);
         this.rx = value;
     }
 
     private void SAXImpl(AddressMode mode) {
         var data = this.ra & this.rx;
-        var addr = this.adapter.getAbsAddr(mode);
-        this.adapter.WriteU8(addr, data);
+        var addr = this.bus.getAbsAddr(mode);
+        this.bus.WriteU8(addr, data);
     }
 
     private void RRAImpl(AddressMode mode) {
@@ -370,8 +367,8 @@ public class CPU {
     }
 
     private void ARRImpl(AddressMode mode) {
-        var addr = this.adapter.getAbsAddr(mode);
-        var b = this.adapter.ReadU8(addr);
+        var addr = this.bus.getAbsAddr(mode);
+        var b = this.bus.ReadU8(addr);
         this.raUpdate(b & this.ra);
         this.RORImpl(AddressMode.Accumulator);
         var result = this.ra;
@@ -383,10 +380,10 @@ public class CPU {
     }
 
     private void DCPImpl(AddressMode mode) {
-        var addr = this.adapter.getAbsAddr(mode);
-        var value = this.adapter.ReadU8(addr);
+        var addr = this.bus.getAbsAddr(mode);
+        var value = this.bus.ReadU8(addr);
         value = u8sbc(value, 1);
-        this.adapter.WriteU8(addr, value);
+        this.bus.WriteU8(addr, value);
         if (value <= this.ra) {
             this.status.set(ICPUStatus.CARRY);
         }
@@ -395,15 +392,15 @@ public class CPU {
 
     private void XAAImpl(AddressMode mode) {
         this.raUpdate(this.rx);
-        var addr = this.adapter.getAbsAddr(mode);
-        var b = this.adapter.ReadU8(addr);
+        var addr = this.bus.getAbsAddr(mode);
+        var b = this.bus.ReadU8(addr);
         this.raUpdate(b & this.ra);
     }
 
     private void SHXImpl(AddressMode mode) {
-        var addr = this.adapter.getAbsAddr(mode);
+        var addr = this.bus.getAbsAddr(mode);
         var value = this.rx & u8add(uint8(addr >> 8), 1);
-        this.adapter.WriteU8(addr, value);
+        this.bus.WriteU8(addr, value);
     }
 
     private void LXAImpl(AddressMode mode) {
@@ -436,7 +433,7 @@ public class CPU {
 
     private void JSRImpl() {
         this.pushInt(this.pc + 1);
-        this.pc = this.adapter.readInt(this.pc);
+        this.pc = this.bus.readInt(this.pc);
     }
 
     private void SLOImpl(AddressMode mode) {
@@ -469,7 +466,7 @@ public class CPU {
     }
 
     private void JMPImpl(AddressMode mode) {
-        this.pc = this.adapter.getAbsAddr(mode);
+        this.pc = this.bus.getAbsAddr(mode);
     }
 
     private void TXSImpl() {
@@ -482,7 +479,7 @@ public class CPU {
             case STX -> this.rx;
             default -> this.ry;
         };
-        this.adapter.WriteU8(this.adapter.getAbsAddr(mode), value);
+        this.bus.WriteU8(this.bus.getAbsAddr(mode), value);
     }
 
     private void CLC_D_I_VImpl(Instruction instruction) {
@@ -539,7 +536,7 @@ public class CPU {
             this.status.set(ICPUStatus.INTERRUPT_DISABLE);
         }
 
-        this.pc = this.adapter.readInt(interrupt.getVector());
+        this.pc = this.bus.readInt(interrupt.getVector());
 
         return interrupt.getCycle();
     }
@@ -549,7 +546,7 @@ public class CPU {
     }
 
     public int next() {
-        var openCode = this.bus.read(this.pc);
+        var openCode = this.bus.directRead(this.pc);
         var state = (++this.pc);
 
         var wrap = Instruction.getInstance(openCode);
@@ -563,7 +560,7 @@ public class CPU {
         if (logger.isTraceEnabled()) {
             var operand = "";
             if (mode != AddressMode.Implied && mode != AddressMode.Accumulator && mode != AddressMode.Relative) {
-                operand = "0x" + Integer.toHexString(this.adapter.getAbsAddr(mode));
+                operand = "0x" + Integer.toHexString(this.bus.getAbsAddr(mode));
             }
             logger.trace(
                     "[0x{}] A:{} X:{} Y:{} S:{} {}({}) {}",
@@ -578,7 +575,7 @@ public class CPU {
             );
         }
 
-        this.adapter.reset();
+        this.bus.reset();
 
         switch (instruction) {
             case RTI -> this.RTImpl();
@@ -639,8 +636,8 @@ public class CPU {
         }
 
         this.instructions++;
-        this.cycle = wrap.getCycle() + this.adapter.getBulking();
+        this.cycle = wrap.getCycle() + this.bus.getBulking();
 
-        return wrap.getCycle() + this.adapter.calOffset();
+        return wrap.getCycle() + this.bus.calOffset();
     }
 }
