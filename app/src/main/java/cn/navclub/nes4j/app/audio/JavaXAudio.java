@@ -71,10 +71,6 @@ public class JavaXAudio implements Player {
 
     @Override
     public void reset() {
-        synchronized (this) {
-            this.ldx = 0;
-            this.index = 0;
-            Arrays.fill(this.sample, (byte) 0);
-        }
+        this.index = 0;
     }
 }
