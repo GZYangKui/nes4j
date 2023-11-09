@@ -143,82 +143,67 @@ public class GameWorld {
 + JavaXAudio.java
 
 ```java
-
 @SuppressWarnings("all")
 public class JavaXAudio implements Player {
     private final byte[] sample;
+    private final byte[] buffer;
     private final Line.Info info;
     private final AudioFormat format;
     private final SourceDataLine line;
     private int ldx;
-    //Currnet fill index
+    //Current fill index
     private int index;
-    private Thread thread;
+    private final Thread thread;
     private volatile boolean stop;
-    private final static int SAMPLE_SIZE = 735 * 2;
-    //Audio buffer size default 32kb
-    private final static int DEF_BUF_SIZE = 32 * 1024;
+    private final static int SAMPLE_SIZE = 55;
 
     private static final LoggerDelegate log = LoggerFactory.logger(JavaXAudio.class);
 
 
-    public JavaXAudio() throws LineUnavailableException {
-        this.sample = new byte[DEF_BUF_SIZE];
-        this.format = new AudioFormat(44100, 8, 1, false, false);
+    public JavaXAudio(Integer sampleRate) throws LineUnavailableException {
+        this.sample = new byte[SAMPLE_SIZE];
+        this.buffer = new byte[SAMPLE_SIZE];
+        this.thread = new Thread(this::exec);
+        this.format = new AudioFormat(sampleRate, 8, 1, false, false);
         this.info = new DataLine.Info(SourceDataLine.class, format);
         this.line = (SourceDataLine) AudioSystem.getLine(info);
 
         line.open(format);
         line.start();
 
-        CompletableFuture.runAsync((this::exec));
+        this.thread.start();
     }
 
     @Override
-    public synchronized void output(byte sample) {
-        this.sample[this.index++] = sample;
-        if (this.lcalculate() > SAMPLE_SIZE && thread != null) {
+    public void output(byte sample) {
+        this.buffer[this.index] = sample;
+        this.index++;
+        if (this.index == SAMPLE_SIZE) {
+            this.index = 0;
+            System.arraycopy(this.buffer, 0, this.sample, 0, SAMPLE_SIZE);
             LockSupport.unpark(this.thread);
         }
-        index = index % DEF_BUF_SIZE;
+        this.index %= SAMPLE_SIZE;
     }
 
 
     private void exec() {
-        var arr = new byte[DEF_BUF_SIZE];
-        this.thread = Thread.currentThread();
         while (!this.stop) {
             LockSupport.park();
-            final int length;
-            synchronized (this) {
-                length = lcalculate();
-                if ((length + ldx > DEF_BUF_SIZE)) {
-                    var tmp = DEF_BUF_SIZE - this.ldx;
-                    System.arraycopy(this.sample, this.ldx, arr, 0, tmp);
-                    System.arraycopy(this.sample, 0, arr, tmp, this.index);
-                } else {
-                    System.arraycopy(this.sample, this.ldx, arr, 0, length);
-                }
-                this.ldx = this.index;
-            }
-            this.line.write(arr, 0, length);
+            this.line.write(this.sample, 0, SAMPLE_SIZE);
         }
     }
-
-    private int lcalculate() {
-        var len = this.index - this.ldx;
-        if (len > 0) {
-            return len;
-        }
-        return DEF_BUF_SIZE - ldx + index;
-    }
-
 
     @Override
     public void stop() {
         this.stop = true;
         LockSupport.unpark(this.thread);
         this.line.close();
+    }
+
+    @Override
+    public void reset() {
+        this.index = 0;
     }
 }
 
