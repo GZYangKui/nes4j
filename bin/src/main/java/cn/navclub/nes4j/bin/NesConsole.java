@@ -52,7 +52,7 @@ public class NesConsole {
     private volatile boolean stop;
     private volatile boolean reset;
     @SuppressWarnings("all")
-    private Optional<CPUInterrupt> optional;
+    private BlockingQueue<CPUInterrupt> queue;
     @Getter
     private final Class<? extends Player> player;
 
@@ -68,8 +68,8 @@ public class NesConsole {
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
-        this.optional = Optional.empty();
         this.thread = Thread.currentThread();
+        this.queue = new ArrayBlockingQueue<>(3);
         this.gameLoopCallback = builder.gameLoopCallback;
         this.mapper = this.cartridge.getMapper().newProvider(this.cartridge, this);
 
@@ -88,12 +88,9 @@ public class NesConsole {
             if (this.reset) {
                 this.reset();
             }
-            if (this.optional.isPresent()) {
-                var stall = this.cpu.NMI_IRQ_BRKInterrupt(optional.get());
-                if (stall > 0) {
-                    this.setStall(stall);
-                }
-                this.optional = Optional.empty();
+            CPUInterrupt interrupt;
+            while ((interrupt = queue.poll()) != null) {
+                this.stall += this.cpu.NMI_IRQ_BRKInterrupt(interrupt);
             }
             this.execute0();
         }
@@ -162,10 +159,7 @@ public class NesConsole {
      * @param interrupt interrupt type
      */
     public void hardwareInterrupt(CPUInterrupt interrupt) {
-        if ((this.cpu.getStatus() >> 2 & 1) == 1 && interrupt != CPUInterrupt.NMI) {
-            return;
-        }
-        this.optional = Optional.of(interrupt);
+        this.queue.add(interrupt);
     }
 
 
