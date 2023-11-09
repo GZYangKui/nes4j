@@ -2,6 +2,7 @@ package cn.navclub.nes4j.bin;
 
 import cn.navclub.nes4j.bin.apu.APU;
 import cn.navclub.nes4j.bin.apu.Player;
+import cn.navclub.nes4j.bin.config.AudioSampleRate;
 import cn.navclub.nes4j.bin.config.ICPUStatus;
 import cn.navclub.nes4j.bin.core.*;
 import cn.navclub.nes4j.bin.debug.Debugger;
@@ -18,10 +19,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 
 @Getter
@@ -47,7 +45,6 @@ public class NesConsole {
     private boolean mute;
     private long cycles;
     private long dcycle;
-
     private Debugger debugger;
     private volatile boolean stop;
     private volatile boolean reset;
@@ -69,13 +66,12 @@ public class NesConsole {
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
         this.thread = Thread.currentThread();
-        this.queue = new ArrayBlockingQueue<>(3);
+        this.queue = new LinkedBlockingQueue<>(10);
         this.gameLoopCallback = builder.gameLoopCallback;
         this.mapper = this.cartridge.getMapper().newProvider(this.cartridge, this);
 
-        this.apu = new APU(this);
+        this.apu = new APU(builder.sampleRate, this);
         this.ppu = new PPU(this, cartridge.getMirrors());
-
         this.bus = new MemoryBus(this, joyPad, joyPad1);
 
 
@@ -211,6 +207,7 @@ public class NesConsole {
     public static class Builder {
         private File file;
         private byte[] buffer;
+        private AudioSampleRate sampleRate;
         private Class<? extends Player> player;
         private FCallback<Long, Boolean, Frame, JoyPad, JoyPad> gameLoopCallback;
 
@@ -236,6 +233,11 @@ public class NesConsole {
 
         public Builder gameLoopCallback(FCallback<Long, Boolean, Frame, JoyPad, JoyPad> gameLoopCallback) {
             this.gameLoopCallback = gameLoopCallback;
+            return this;
+        }
+
+        public Builder sampleRate(AudioSampleRate sampleRate) {
+            this.sampleRate = sampleRate;
             return this;
         }
 

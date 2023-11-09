@@ -23,9 +23,9 @@ public interface Player {
 
     }
 
-    static Player newInstance(Class<? extends Player> clazz) {
+    static Player newInstance(Class<? extends Player> clazz, Object... args) {
         try {
-            return clazz.getConstructor().newInstance();
+            return clazz.getConstructor(Integer.class).newInstance(args);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

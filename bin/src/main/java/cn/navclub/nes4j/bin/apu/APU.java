@@ -1,10 +1,14 @@
 package cn.navclub.nes4j.bin.apu;
 
 import cn.navclub.nes4j.bin.NesConsole;
+import cn.navclub.nes4j.bin.config.AudioSampleRate;
 import cn.navclub.nes4j.bin.core.Component;
 import cn.navclub.nes4j.bin.apu.impl.*;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
 import lombok.Getter;
+
+import java.util.Objects;
+import java.util.Optional;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.int8;
 
@@ -73,25 +77,29 @@ public class APU implements Component {
         }
     }
 
-    @Getter
-    private final NesConsole console;
     private final DMChannel dmc;
     private final Player player;
+    @Getter
+    private final NesConsole console;
     private final NoiseChannel noise;
     private final PulseChannel pulse1;
     private final PulseChannel pulse2;
     private final TriangleChannel triangle;
     private final FrameCounter frameCounter;
+    @Getter
+    private final AudioSampleRate sampleRate;
 
-    public APU(NesConsole console) {
+    public APU(AudioSampleRate sampleRate, NesConsole console) {
         this.console = console;
         this.dmc = new DMChannel(this);
         this.noise = new NoiseChannel(this);
         this.triangle = new TriangleChannel(this);
-        this.player = Player.newInstance(console.getPlayer());
+
         this.pulse1 = new PulseChannel(this, false);
         this.pulse2 = new PulseChannel(this, true);
         this.frameCounter = new FrameCounter(this, this::frameSequence);
+        this.sampleRate = Objects.requireNonNullElse(sampleRate, AudioSampleRate.HZ96000);
+        this.player = Player.newInstance(console.getPlayer(),this.sampleRate.sample);
     }
 
     @Override
@@ -210,8 +218,7 @@ public class APU implements Component {
         this.dmc.tick();
         this.triangle.tick();
         this.frameCounter.tick();
-        // 1.79 MHz / 44100 = 40
-        if ((this.cycle / 2) % 40 == 0) {
+        if ((this.cycle / 2) % sampleRate.value == 0) {
             var output = this.lookupSample();
             if (this.player != null && !this.console.isMute()) {
                 this.player.output(output);
