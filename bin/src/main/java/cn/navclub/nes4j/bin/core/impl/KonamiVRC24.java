@@ -125,25 +125,25 @@ public class KonamiVRC24 extends Mapper {
         if (address == 0xB000 || address == 0xB001) {
             this.ChrSwap(address, b, 0);
         }
-        if (address == 0xB002 || address == 0xB003) {
+        else if (address == 0xB002 || address == 0xB003) {
             this.ChrSwap(address, b, 1);
         }
-        if (address == 0xC000 || address == 0xC001) {
+        else if (address == 0xC000 || address == 0xC001) {
             this.ChrSwap(address, b, 2);
         }
-        if (address == 0xC002 || address == 0xC003) {
+        else if (address == 0xC002 || address == 0xC003) {
             this.ChrSwap(address, b, 3);
         }
-        if (address == 0xD000 || address == 0xD001) {
+        else if (address == 0xD000 || address == 0xD001) {
             this.ChrSwap(address, b, 4);
         }
-        if (address == 0xD002 || address == 0xD003) {
+        else if (address == 0xD002 || address == 0xD003) {
             this.ChrSwap(address, b, 5);
         }
-        if (address == 0xE000 || address == 0xE001) {
+        else if (address == 0xE000 || address == 0xE001) {
             this.ChrSwap(address, b, 6);
         }
-        if (address == 0xE002 || address == 0xE003) {
+        else if (address == 0xE002 || address == 0xE003) {
             this.ChrSwap(address, b, 7);
         }
     }
