@@ -60,10 +60,9 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 + [MMC1](https://www.nesdev.org/wiki/MMC1)
 + [UxROM](https://www.nesdev.org/wiki/UxROM)
 + [CNROM](https://www.nesdev.org/wiki/INES_Mapper_003)
++ [KonamiVRC24](https://www.nesdev.org/wiki/VRC2_and_VRC4)
 
 > 更多卡带Mapper正在实现中,敬请期待。
->
->
 
 ## 自定义音视频输出
 

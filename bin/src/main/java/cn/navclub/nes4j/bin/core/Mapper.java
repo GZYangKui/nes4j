@@ -48,7 +48,7 @@ public abstract class Mapper {
      * @param address Target memory address
      * @return Target memory address value
      */
-    public final byte CHRead(int address) {
+    public byte CHRead(int address) {
         return this.chr[address];
     }
 
@@ -76,7 +76,12 @@ public abstract class Mapper {
     }
 
     public final int calMaxBankIdx() {
-        return this.prgSize() / RPG_BANK_SIZE - 1;
+        return this.calMaxBankIdx(RPG_BANK_SIZE);
+    }
+
+    protected final int calMaxBankIdx(int unit) {
+        return this.prgSize() / unit - 1;
+
     }
 
     /**
