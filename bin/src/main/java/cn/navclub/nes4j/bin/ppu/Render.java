@@ -334,7 +334,7 @@ public class Render implements CycleDriver {
         }
 
         var mapper = this.ppu.console.getMapper();
-        if (mapper.type() == NMapper.MMC3) {
+        if (mapper.type() == NMapper.MMC3 && this.mask.enableRender()) {
             var ctr = this.ppu.getCtr();
             //
             // When using 8x8 sprites, if the BG uses $0000, and the sprites use $1000, the IRQ counter should
@@ -350,7 +350,8 @@ public class Render implements CycleDriver {
             // so the IRQ will shake one scanline. This is visible in Wario's Woods: with some PPU-CPU reset alignments
             // the bottom line of the green grass of the play area may flicker black on the rightmost ~48 pixels, due to
             // an extra count firing the IRQ one line earlier than expected.
-            if (ctr.spriteSize() == 8 && ctr.backgroundNameTable() == 0x1000 && ctr.spritePattern8() == 0 & this.cycles == 324 && preLine) {
+            if (ctr.spriteSize() == 8 && ctr.backgroundNameTable() == 0x1000 && ctr.spritePattern8() == 0 & this.cycles == 324) {
+                if (preLine) mapper.tick();
                 mapper.tick();
             }
 
