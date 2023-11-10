@@ -114,8 +114,7 @@ public class KonamiVRC24 extends Mapper {
                 case 0 -> NameMirror.VERTICAL;
                 case 1 -> NameMirror.HORIZONTAL;
                 case 2 -> NameMirror.ONE_SCREEN_LOWER;
-                case 3 -> NameMirror.ONE_SCREEN_UPPER;
-                default -> throw new IllegalStateException("Unexpected value: " + caseVal);
+                default -> NameMirror.ONE_SCREEN_UPPER;
             };
             this.console.getPpu().setMirrors(mirror);
         }
