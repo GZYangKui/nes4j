@@ -676,6 +676,6 @@ public class CPU {
     }
 
     public static WS6502 IS6502Get(byte openCode) {
-        return IS6502.get(openCode);
+        return MWS6502.get(openCode);
     }
 }
