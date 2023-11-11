@@ -162,6 +162,10 @@ public class NesConsole {
 
 
     public void videoOutput(long nano, boolean renderEnable, Frame frame) {
+        //Due to gameLoopCallback design immutable if gameLoopCallback was null direct return?
+        if (gameLoopCallback == null) {
+            return;
+        }
         this.tfps++;
         if (this.lastFrameTime == 0) {
             this.lastFrameTime = nano;
@@ -171,9 +175,6 @@ public class NesConsole {
             this.fps = this.tfps;
             this.tfps = 0;
             this.lastFrameTime = nano;
-        }
-        if (gameLoopCallback == null) {
-            return;
         }
         this.gameLoopCallback.accept(this.fps, renderEnable, frame, this.joyPad, this.joyPad1);
     }
