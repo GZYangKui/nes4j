@@ -7,7 +7,6 @@ import cn.navclub.nes4j.app.config.NESConfig;
 import cn.navclub.nes4j.app.control.IconPopup;
 import cn.navclub.nes4j.app.service.TaskService;
 import cn.navclub.nes4j.app.dialog.DHandle;
-import cn.navclub.nes4j.app.event.FPSTracer;
 import cn.navclub.nes4j.app.event.GameEventWrap;
 import cn.navclub.nes4j.app.model.KeyMapper;
 import cn.navclub.nes4j.app.util.StrUtil;
@@ -49,15 +48,12 @@ public class GameWorld extends Stage {
     //Pixel scale level
     @SuppressWarnings("all")
     private final int scale;
-
-    private final FPSTracer tracer;
     private final IntBuffer intBuffer;
     private final GraphicsContext ctx;
     private final WritableImage image;
     private final BlockingQueue<GameEventWrap> eventQueue;
 
     private NesConsole instance;
-    private volatile int fps;
     private Debugger debugger;
     private TaskService<Void> service;
     private final IconPopup speedPopup;
@@ -68,7 +64,6 @@ public class GameWorld extends Stage {
         this.scale = scale;
         this.eventQueue = new LinkedBlockingDeque<>();
 
-        this.tracer = new FPSTracer(it -> this.fps = it);
         this.speedPopup = new IconPopup(FXResource.loadImage("speed.png"));
 
         this.intBuffer = IntBuffer.allocate(this.scale * this.scale);
@@ -137,7 +132,6 @@ public class GameWorld extends Stage {
             UIUtil.showError(t, INes.localeValue("nes4j.game.error"), v -> this.close());
         }
 
-        this.tracer.stop();
 
         this.ctx.clearRect(0, 0, this.canvas.getWidth(), this.canvas.getHeight());
     }
@@ -178,7 +172,7 @@ public class GameWorld extends Stage {
         new PPUViewer(this.instance);
     }
 
-    private void gameLoopCallback(long nano, boolean enableRender, Frame frame, JoyPad joyPad, JoyPad joyPad1) {
+    private void gameLoopCallback(Integer fps, boolean enableRender, Frame frame, JoyPad joyPad, JoyPad joyPad1) {
         //If render enable transport pixel to javafx image otherwise do nothing.
         if (enableRender) {
             var w = Frame.width;
@@ -202,14 +196,12 @@ public class GameWorld extends Stage {
             joyPad.updateBtnStatus(event.btn(), event.event() == KeyEvent.KEY_PRESSED);
         }
 
-        this.tracer.increment();
-
         Platform.runLater(() -> {
             if (enableRender) {
                 this.ctx.drawImage(image, 0, 0);
             }
             //Draw fps
-            this.fbl.setText(String.format("fps:%d", this.fps));
+            this.fbl.setText(String.format("fps:%s", fps.toString()));
         });
     }
 

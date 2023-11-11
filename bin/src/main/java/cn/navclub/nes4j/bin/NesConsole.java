@@ -3,11 +3,10 @@ package cn.navclub.nes4j.bin;
 import cn.navclub.nes4j.bin.apu.APU;
 import cn.navclub.nes4j.bin.apu.Player;
 import cn.navclub.nes4j.bin.config.AudioSampleRate;
-import cn.navclub.nes4j.bin.config.ICPUStatus;
 import cn.navclub.nes4j.bin.core.*;
 import cn.navclub.nes4j.bin.debug.Debugger;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
-import cn.navclub.nes4j.bin.function.FCallback;
+import cn.navclub.nes4j.bin.function.GameLoopCallback;
 import cn.navclub.nes4j.bin.io.Cartridge;
 import cn.navclub.nes4j.bin.io.JoyPad;
 import cn.navclub.nes4j.bin.ppu.Frame;
@@ -16,9 +15,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 
@@ -33,8 +29,10 @@ public class NesConsole {
     private final JoyPad joyPad;
     private final JoyPad joyPad1;
     private final Cartridge cartridge;
-    //Game loop callback function(Timestamp of frame occur,Pixel data,Render enable,Joy1,Joy2)
-    private final FCallback<Long, Boolean, Frame, JoyPad, JoyPad> gameLoopCallback;
+    private final GameLoopCallback gameLoopCallback;
+
+    private int fps;
+    private int tfps;
     //cpu stall cycle
     private int stall;
     @Getter
@@ -46,6 +44,7 @@ public class NesConsole {
     private long cycles;
     private long dcycle;
     private Debugger debugger;
+    private long lastFrameTime;
     private volatile boolean stop;
     private volatile boolean reset;
     @SuppressWarnings("all")
@@ -139,6 +138,8 @@ public class NesConsole {
     }
 
     private void reset() {
+        this.fps = 0;
+        this.tfps = 0;
         this.stall = 0;
         this.dcycle = 0;
         this.cycles = 0;
@@ -147,6 +148,7 @@ public class NesConsole {
         this.cpu.reset();
         this.bus.reset();
         this.reset = false;
+        this.lastFrameTime = 0;
     }
 
     /**
@@ -160,10 +162,20 @@ public class NesConsole {
 
 
     public void videoOutput(long nano, boolean renderEnable, Frame frame) {
+        this.tfps++;
+        if (this.lastFrameTime == 0) {
+            this.lastFrameTime = nano;
+        }
+        var span = nano - this.lastFrameTime;
+        if (span > 1000_000_000) {
+            this.fps = this.tfps;
+            this.tfps = 0;
+            this.lastFrameTime = nano;
+        }
         if (gameLoopCallback == null) {
             return;
         }
-        this.gameLoopCallback.accept(nano, renderEnable, frame, this.joyPad, this.joyPad1);
+        this.gameLoopCallback.accept(this.fps, renderEnable, frame, this.joyPad, this.joyPad1);
     }
 
     public void setStall(int span) {
@@ -209,7 +221,7 @@ public class NesConsole {
         private byte[] buffer;
         private AudioSampleRate sampleRate;
         private Class<? extends Player> player;
-        private FCallback<Long, Boolean, Frame, JoyPad, JoyPad> gameLoopCallback;
+        private GameLoopCallback gameLoopCallback;
 
         public Builder buffer(byte[] buffer) {
             this.buffer = buffer;
@@ -231,7 +243,7 @@ public class NesConsole {
             return this;
         }
 
-        public Builder gameLoopCallback(FCallback<Long, Boolean, Frame, JoyPad, JoyPad> gameLoopCallback) {
+        public Builder gameLoopCallback(GameLoopCallback gameLoopCallback) {
             this.gameLoopCallback = gameLoopCallback;
             return this;
         }
