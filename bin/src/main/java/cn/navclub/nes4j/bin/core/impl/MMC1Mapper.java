@@ -26,16 +26,20 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class MMC1Mapper extends Mapper {
+    private static final int DEFAULT_MMC1SR = 0x10;
     //Shifter
     private int MMC1SR;
-
-    private int prgMode;
-    private int chrMode;
-    private int bankNum;
-
+    private int ChrSwapMode;
+    private int PRGSwapMode;
+    private final int[] PRGBank;
+    private final int[] ChrBank;
 
     public MMC1Mapper(Cartridge cartridge, NesConsole console) {
         super(cartridge, console);
+
+        this.PRGBank = new int[2];
+        this.ChrBank = new int[2];
+
         this.reset();
     }
 
@@ -96,42 +100,54 @@ public class MMC1Mapper extends Mapper {
     @Override
     public void PRGWrite(int address, byte b) {
         if ((b & 0x80) == 0x80) {
-            this.MMC1SR = 0b10000;
+            this.MMC1SR = DEFAULT_MMC1SR;
             return;
         }
 
-        var temp = this.MMC1SR;
+        var tmp = this.MMC1SR;
 
         this.MMC1SR >>= 1;
         this.MMC1SR |= ((uint8(b) & 0x01) << 4);
 
         //MMC1SR is full
-        if ((temp & 0x01) == 0) {
+        if ((tmp & 0x01) == 0) {
             return;
         }
 
-        var internal = RInternal.values()[(address >> 13) & 0x03];
-        if (internal == RInternal.CONTROL) {
+        var register = (address >> 13) & 0x03;
+        switch (register) {
+            case 0 -> {
+                var value = this.MMC1SR & 3;
+                var mirror = switch (value) {
+                    case 0 -> NameMirror.ONE_SCREEN_LOWER;
+                    case 1 -> NameMirror.ONE_SCREEN_UPPER;
+                    case 2 -> NameMirror.VERTICAL;
+                    default -> NameMirror.HORIZONTAL;
+                };
 
-            var value = this.MMC1SR & 3;
-            var mirror = switch (value) {
-                case 0 -> NameMirror.ONE_SCREEN_LOWER;
-                case 1 -> NameMirror.ONE_SCREEN_UPPER;
-                case 2 -> NameMirror.VERTICAL;
-                default -> NameMirror.HORIZONTAL;
-            };
-            this.console.getPpu().setMirrors(mirror);
+                this.console.getPpu().setMirrors(mirror);
 
-            this.prgMode = (this.MMC1SR >> 2) & 3;
-            this.chrMode = (this.MMC1SR >> 4) & 1;
-        } else {
-            if (internal == RInternal.CHR_BANK0 || internal == RInternal.CHR_BANK1) {
-                this.checkUpdateChr(internal, MMC1SR);
-            } else {
-                this.bankNum = this.MMC1SR;
+                this.PRGSwapMode = (this.MMC1SR >> 2) & 3;
+                this.ChrSwapMode = (this.MMC1SR >> 4) & 1;
+            }
+            //Swap chr bank
+            case 1, 2 -> this.SwapChrBank(register);
+            //Swap PRG bank idx
+            default -> {
+                if ((this.PRGSwapMode | 1) == 1) {
+                    var idx = this.MMC1SR & 0x1E;
+                    this.PRGBank[0] = idx;
+                    this.PRGBank[1] = idx + 1;
+                } else if (this.PRGSwapMode == 2) {
+                    this.PRGBank[0] = 0;
+                    this.PRGBank[1] = this.MMC1SR;
+                } else {
+                    this.PRGBank[0] = this.MMC1SR;
+                    this.PRGBank[1] = this.calMaxBankIdx();
+                }
             }
         }
-        this.MMC1SR = 0b10000;
+        this.MMC1SR = DEFAULT_MMC1SR;
     }
 
     /**
@@ -160,60 +176,39 @@ public class MMC1Mapper extends Mapper {
      * +++++- Select 4 KB CHR bank at PPU $1000 (ignored in 8 KB mode)
      * }
      * </pre>
-     *
-     * @param internal
-     * @param idx
      */
-    private void checkUpdateChr(RInternal internal, int idx) {
-        if (this.chrSize() == 0) {
-            return;
-        }
-        var chrSize = CHR_BANK_SIZE / (this.chrMode + 1);
-        if (internal == RInternal.CHR_BANK0) {
-            if (chrSize == CHR_BANK_SIZE) {
-                idx &= 0xfe;
+    private void SwapChrBank(int chrBankIdx) {
+        var swap8k = (this.ChrSwapMode == 0);
+        if (chrBankIdx == 1) {
+            if (swap8k) {
+                this.MMC1SR &= 0x1E;
+                this.ChrBank[1] = this.MMC1SR + 1;
             }
-            System.arraycopy(this.getChrom(), idx * chrSize, this.chr, 0, chrSize);
-        } else if (this.chrMode == 1) {
-            System.arraycopy(this.getChrom(), idx * chrSize, this.chr, 0x1000, chrSize);
+            this.ChrBank[0] = this.MMC1SR;
+        } else if (!swap8k) {
+            this.ChrBank[1] = MMC1SR;
         }
+    }
+
+    @Override
+    public byte CHRead(int address) {
+        var idx = address / 0x1000;
+        var offset = address % 0x1000;
+        return super.CHRead(this.ChrBank[idx] * 0x1000 + offset);
     }
 
     @Override
     public byte PRGRead(int address) {
-        var prg = this.getRgbrom();
-        //0, 1: switch 32 KB at $8000, ignoring low bit of bank number;
-        if (this.prgMode <= 1) {
-            var idx = this.bankNum & 0xfe;
-            return prg[idx * RPG_BANK_SIZE + address];
-        }
-        var second = (address >= 0x4000);
-        var offset = this.bankNum * RPG_BANK_SIZE;
-        //
-        // 2: fix first bank at $8000 and switch 16 KB bank at $C000;
-        // 3: fix last bank at $C000 and switch 16 KB bank at $8000
-        //
-        if (this.prgMode == 3 && second) {
-            offset = getLastBank();
-        }
-        return prg[offset + address % RPG_BANK_SIZE];
+        var idx = address / PRG_BANK_SIZE;
+        var offset = address % PRG_BANK_SIZE;
+        return super.PRGRead(this.PRGBank[idx] * PRG_BANK_SIZE + offset);
     }
 
     @Override
     public void reset() {
-        this.bankNum = 0;
-        this.prgMode = 3;
-        this.MMC1SR = 0b10000;
-    }
-
-    private enum RInternal {
-        //Control (internal, $8000-$9FFF)
-        CONTROL,
-        //CHR bank 0 (internal, $A000-$BFFF)
-        CHR_BANK0,
-        //CHR bank 1 (internal, $C000-$DFFF)
-        CHR_BANK1,
-        //PRG bank (internal, $E000-$FFFF)
-        PRG_BANK
+        this.PRGSwapMode = 3;
+        this.MMC1SR = DEFAULT_MMC1SR;
+        this.PRGBank[0] = 0;
+        this.PRGBank[1] = this.calMaxBankIdx();
     }
 }

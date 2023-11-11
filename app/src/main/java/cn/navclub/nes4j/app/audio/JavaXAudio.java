@@ -5,9 +5,6 @@ import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import cn.navclub.nes4j.bin.logging.LoggerFactory;
 
 import javax.sound.sampled.*;
-
-import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
 
 

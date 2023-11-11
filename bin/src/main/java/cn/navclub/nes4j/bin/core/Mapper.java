@@ -9,17 +9,14 @@ import cn.navclub.nes4j.bin.io.Cartridge;
  */
 public abstract class Mapper {
     protected static final int CHR_BANK_SIZE = 8 * 1024;
-    protected static final int RPG_BANK_SIZE = 16 * 1024;
+    protected static final int PRG_BANK_SIZE = 16 * 1024;
 
-    protected final byte[] chr;
     protected final NesConsole console;
     protected final Cartridge cartridge;
 
     public Mapper(Cartridge cartridge, NesConsole console) {
         this.console = console;
         this.cartridge = cartridge;
-        this.chr = new byte[CHR_BANK_SIZE];
-        System.arraycopy(cartridge.getChrom(), 0, this.chr, 0, Math.min(chrSize(), CHR_BANK_SIZE));
     }
 
     /**
@@ -49,7 +46,7 @@ public abstract class Mapper {
      * @return Target memory address value
      */
     public byte CHRead(int address) {
-        return this.chr[address];
+        return this.getChrom()[address];
     }
 
     /**
@@ -59,7 +56,7 @@ public abstract class Mapper {
      * @param b       Write target address value
      */
     public final void CHWrite(int address, byte b) {
-        this.chr[address] = b;
+        this.getChrom()[address] = b;
     }
 
     /**
@@ -72,11 +69,11 @@ public abstract class Mapper {
     }
 
     protected int getLastBank() {
-        return calMaxBankIdx() * RPG_BANK_SIZE;
+        return calMaxBankIdx() * PRG_BANK_SIZE;
     }
 
     public final int calMaxBankIdx() {
-        return this.calMaxBankIdx(RPG_BANK_SIZE);
+        return this.calMaxBankIdx(PRG_BANK_SIZE);
     }
 
     protected final int calMaxBankIdx(int unit) {

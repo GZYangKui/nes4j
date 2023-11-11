@@ -34,15 +34,20 @@ import cn.navclub.nes4j.bin.io.Cartridge;
 public class CNMapper extends Mapper {
     private final int shifter;
 
+    private int chrBank;
+
     public CNMapper(Cartridge cartridge, NesConsole console) {
         super(cartridge, console);
-        this.shifter = (cartridge.getChSize() - CHR_BANK_SIZE) / CHR_BANK_SIZE;
+        this.shifter = this.chrSize() / CHR_BANK_SIZE - 1;
     }
 
     @Override
     public void PRGWrite(int address, byte b) {
-        var offset = (b & shifter) * CHR_BANK_SIZE;
-        System.arraycopy(this.getChrom(), offset, this.chr, 0, CHR_BANK_SIZE);
+        this.chrBank = (b & shifter);
     }
 
+    @Override
+    public byte CHRead(int address) {
+        return this.getChrom()[this.chrBank * CHR_BANK_SIZE + address];
+    }
 }

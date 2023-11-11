@@ -6,11 +6,12 @@ import cn.navclub.nes4j.bin.io.Cartridge;
 
 public class UXMapper extends Mapper {
     private int offset;
-    private final int mod;
+    private final int[] PRGBank;
 
     public UXMapper(Cartridge cartridge, NesConsole console) {
         super(cartridge, console);
-        this.mod = this.calMaxBankIdx();
+        this.PRGBank = new int[2];
+        this.PRGBank[1] = this.calMaxBankIdx();
     }
 
     /**
@@ -21,21 +22,20 @@ public class UXMapper extends Mapper {
      * 7  bit  0
      * ---- ----
      * xxxx pPPP
-     * ||||
-     * ++++- Select 16 KB PRG ROM bank for CPU $8000-$BFFF
+     *      ||||
+     *      ++++- Select 16 KB PRG ROM bank for CPU $8000-$BFFF
      * (UNROM uses bits 2-0; UOROM uses bits 3-0)
      * </pre>
      */
     @Override
     public void PRGWrite(int address, byte b) {
-        this.offset = (b & this.mod) * RPG_BANK_SIZE;
+        this.PRGBank[0] = b & this.PRGBank[1];
     }
 
     @Override
     public byte PRGRead(int address) {
-        if (address >= 0x4000) {
-            return this.cartridge.getRgbrom()[this.getLastBank() + (address % 0x4000)];
-        }
-        return this.cartridge.getRgbrom()[offset + address];
+        var idx = address / 0x4000;
+        var offset = address % 0x4000;
+        return super.PRGRead((this.PRGBank[idx] * PRG_BANK_SIZE) + offset);
     }
 }

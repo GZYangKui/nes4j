@@ -156,7 +156,6 @@ import static cn.navclub.nes4j.bin.util.BinUtil.uint8;
  * </pre>
  *
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
- *
  */
 @Getter
 public class Cartridge {
@@ -217,8 +216,8 @@ public class Cartridge {
 
         var trainSize = this.trainAreaSize(flag6);
 
-        chrom = new byte[chSize];
         train = new byte[trainSize];
+        chrom = new byte[Math.max(chSize, 8192)];
         rgbrom = new byte[Math.max(rgbSize, 32 * 1024)];
 
         if (trainSize > 0) {

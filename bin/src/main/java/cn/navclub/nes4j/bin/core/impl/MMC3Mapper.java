@@ -63,6 +63,12 @@ public class MMC3Mapper extends Mapper {
         this.PRGBank = new int[4];
         this.CHRBank = new int[8];
 
+        if (this.chrSize() == 0) {
+            for (int i = 0; i < 8; i++) {
+                this.CHRBank[i] = i;
+            }
+        }
+
         //
         // Because the values in R6, R7, and $8000 are unspecified at power on, the reset vector must point
         // into $E000-$FFFF,and code must initialize these before jumping out of $E000-$FFFF.
