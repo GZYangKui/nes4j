@@ -2,6 +2,7 @@ package cn.navclub.nes4j.bin.debug;
 
 import cn.navclub.nes4j.bin.config.AddressMode;
 import cn.navclub.nes4j.bin.config.Instruction;
+import cn.navclub.nes4j.bin.core.CPU;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,9 +23,9 @@ public class OpenCodeFormat {
 
             i += 1;
 
-            var instance = Instruction.getInstance(b);
+            var instance = CPU.IS6502Get(b);
             if (instance != null) {
-                var mode = instance.getAddressMode();
+                var mode = instance.addrMode();
 
                 var operator = switch (mode) {
                     case Immediate -> new Operand(AddressMode.Immediate, buffer[i], int8(0));
@@ -43,8 +44,8 @@ public class OpenCodeFormat {
                     default -> Operand.DEFAULT_OPERAND;
                 };
                 var index = 0x8000 + i - 1;
-                list.add(new OpenCode(index, instance.getInstruction(), operator));
-                i += (instance.getSize() - 1);
+                list.add(new OpenCode(index, instance.instruction(), operator));
+                i += (instance.size() - 1);
             } else {
                 list.add(new OpenCode(0x8000 + i - 1, null, null));
 

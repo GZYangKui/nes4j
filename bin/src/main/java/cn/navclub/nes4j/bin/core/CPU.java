@@ -7,6 +7,12 @@ import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import lombok.Getter;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
+
 import static cn.navclub.nes4j.bin.util.BinUtil.*;
 
 /**
@@ -15,6 +21,34 @@ import static cn.navclub.nes4j.bin.util.BinUtil.*;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class CPU {
+    private final static Map<Byte, WS6502> MWS6502;
+
+    static {
+        MWS6502 = new HashMap<>();
+        try (var is = CPU.class.getResourceAsStream("6502.txt");
+             var buffer = new BufferedReader(new InputStreamReader(is))) {
+            String line;
+            while ((line = buffer.readLine()) != null) {
+                //Skip comment and blank line
+                if (line.startsWith(";") || line.trim().isBlank()) {
+                    continue;
+                }
+
+                var arr = line.split(" ");
+
+                var ins = Instruction.valueOf(arr[0]);
+                var addrMode = AddressMode.valueOf(arr[1]);
+                var opec = Byte.parseByte(arr[2]);
+                var cycle = Integer.parseInt(arr[3]);
+                var size = Integer.parseInt(arr[4]);
+
+                MWS6502.put(opec, new WS6502(opec, size, cycle, addrMode, ins));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("6502 cpu instruction init fail:%s".formatted(e.getMessage()));
+        }
+    }
+
     private final static LoggerDelegate logger = LoggerFactory.logger(CPU.class);
 
     //Stack offset
@@ -549,13 +583,13 @@ public class CPU {
         var openCode = this.bus.directRead(this.pc);
         var state = (++this.pc);
 
-        var wrap = Instruction.getInstance(openCode);
+        var wrap = MWS6502.get(openCode);
         if (wrap == null) {
             logger.warning("Unknown opecode 0x{} in address 0x{}", Integer.toHexString(uint8(openCode)), Integer.toHexString(state - 1));
             return 0;
         }
-        var mode = wrap.getAddressMode();
-        var instruction = wrap.getInstruction();
+        var mode = wrap.addrMode();
+        var instruction = wrap.instruction();
 
         if (logger.isTraceEnabled()) {
             var operand = "";
@@ -570,7 +604,7 @@ public class CPU {
                     Integer.toHexString(this.ry),
                     this.status,
                     instruction,
-                    wrap.getCycle(),
+                    wrap.cycle(),
                     operand
             );
         }
@@ -632,12 +666,16 @@ public class CPU {
         // redirection occurs
         //
         if (this.pc == state) {
-            this.pc += (wrap.getSize() - 1);
+            this.pc += (wrap.size() - 1);
         }
 
         this.instructions++;
-        this.cycle = wrap.getCycle() + this.bus.getBulking();
+        this.cycle = wrap.cycle() + this.bus.getBulking();
 
-        return wrap.getCycle() + this.bus.calOffset();
+        return wrap.cycle() + this.bus.calOffset();
+    }
+
+    public static WS6502 IS6502Get(byte openCode) {
+        return IS6502.get(openCode);
     }
 }
