@@ -5,6 +5,7 @@ import cn.navclub.nes4j.bin.config.*;
 import cn.navclub.nes4j.bin.core.register.CPUStatus;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import cn.navclub.nes4j.bin.logging.LoggerFactory;
+import cn.navclub.nes4j.bin.util.BinUtil;
 import lombok.Getter;
 
 import java.io.BufferedReader;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.*;
 
@@ -22,34 +24,43 @@ import static cn.navclub.nes4j.bin.util.BinUtil.*;
  */
 public class CPU {
     private final static Map<Byte, WS6502> MWS6502;
+    private final static LoggerDelegate logger = LoggerFactory.logger(CPU.class);
 
     static {
         MWS6502 = new HashMap<>();
         try (var is = CPU.class.getResourceAsStream("6502.txt");
              var buffer = new BufferedReader(new InputStreamReader(is))) {
             String line;
+            var lineNum = 0;
+            var pattern = "(\\w)+( )*(\\w)+( )*(-)?(\\d)+( )*(\\d)+( )*(\\d)+";
             while ((line = buffer.readLine()) != null) {
+                lineNum++;
+                line = line.trim();
                 //Skip comment and blank line
-                if (line.startsWith(";") || line.trim().isBlank()) {
+                if (line.startsWith(";") || line.isBlank()) {
+                    continue;
+                }
+                if (!line.matches(pattern)) {
+                    logger.warning("Unknown text line format in line {},please keep follow regex express:\n{}", lineNum, pattern);
                     continue;
                 }
 
-                var arr = line.split(" ");
-
+                var arr = line.split("( )+");
                 var ins = Instruction.valueOf(arr[0]);
                 var addrMode = AddressMode.valueOf(arr[1]);
                 var opec = Byte.parseByte(arr[2]);
                 var cycle = Integer.parseInt(arr[3]);
                 var size = Integer.parseInt(arr[4]);
-
+                if (MWS6502.containsKey(opec)) {
+                    logger.warning("Repeat define opencode 0x{} in line {}?", BinUtil.toBinStr(opec), lineNum);
+                }
                 MWS6502.put(opec, new WS6502(opec, size, cycle, addrMode, ins));
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("6502 cpu instruction init fail:%s".formatted(e.getMessage()));
         }
     }
 
-    private final static LoggerDelegate logger = LoggerFactory.logger(CPU.class);
 
     //Stack offset
     public static final int STACK = 0x0100;
