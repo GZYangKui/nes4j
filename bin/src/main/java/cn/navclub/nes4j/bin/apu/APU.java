@@ -99,7 +99,7 @@ public class APU implements Component {
         this.pulse2 = new PulseChannel(this, true);
         this.frameCounter = new FrameCounter(this, this::frameSequence);
         this.sampleRate = Objects.requireNonNullElse(sampleRate, AudioSampleRate.HZ96000);
-        this.player = Player.newInstance(console.getPlayer(),this.sampleRate.sample);
+        this.player = Player.newInstance(console.getPlayer(), this.sampleRate.sample);
     }
 
     @Override
@@ -165,7 +165,6 @@ public class APU implements Component {
         //Update frame counter
         else if (address == 0x4017) {
             this.frameCounter.write(address, b);
-            this.tick();
         }
     }
 
@@ -286,7 +285,7 @@ public class APU implements Component {
         // Length counters & sweep units
         // (Half frame)
         //
-        if (index % 2 == 0 || index == -1) {
+        if (index == -1 || (index + 1) % 2 == 0) {
             this.pulse1.lengthTick();
             this.pulse2.lengthTick();
             this.noise.lengthTick();

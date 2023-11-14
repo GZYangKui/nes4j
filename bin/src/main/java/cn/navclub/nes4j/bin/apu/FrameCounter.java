@@ -94,6 +94,7 @@ public class FrameCounter implements Component {
     public void write(int address, byte b) {
         //Sequencer mode: 0 selects 4-step sequence, 1 selects 5-step sequence.
         this.mode = ((b & 0x80) >> 7);
+        //If the mode flag is set, then both "quarter frame" and "half frame" signals are also generated.
         if (this.mode == 1) {
             this.consumer.accept(-1);
         }
@@ -115,24 +116,23 @@ public class FrameCounter implements Component {
         if (delay > 0 && (--this.delay) == 0) {
             this.cycle = 0;
         }
-        var value = this.sequencers[this.mode][this.index - 1];
-        var output = this.cycle > value;
-        if (output) {
+        var value = this.sequencers[this.mode][this.index];
+        if (this.cycle == value) {
             //Touch current step
             this.consumer.accept(this.index);
             //Next step
-            this.index = (this.index + 1) % 5;
-
-            if (this.index == 0) {
-                this.index += 1;
+            this.index = (this.index + 1) % 4;
+            //Once the last step has executed, the count resets to 0 on the next APU cycle.
+            if (this.index == 3) {
+                this.cycle = -2;
+            } else {
+                this.cycle = 0;
             }
-
-            this.cycle %= value;
             //
             // At any time if the interrupt flag is set and the IRQ disable is clear, the
             // CPU's IRQ line is asserted.
             //
-            if (this.index == 4 && this.mode == 0 && !this.inhibit) {
+            if (this.index == 3 && this.mode == 0 && !this.inhibit) {
                 this.interrupt = true;
                 this.apu.fireIRQ();
             }
