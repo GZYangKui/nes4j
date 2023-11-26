@@ -3,6 +3,8 @@ package cn.navclub.nes4j.bin;
 import cn.navclub.nes4j.bin.apu.APU;
 import cn.navclub.nes4j.bin.apu.Player;
 import cn.navclub.nes4j.bin.config.AudioSampleRate;
+import cn.navclub.nes4j.bin.config.NMapper;
+import cn.navclub.nes4j.bin.config.TV;
 import cn.navclub.nes4j.bin.core.*;
 import cn.navclub.nes4j.bin.debug.Debugger;
 import cn.navclub.nes4j.bin.config.CPUInterrupt;
@@ -35,8 +37,8 @@ public class NesConsole {
     private int tfps;
     //cpu stall cycle
     private int stall;
-    @Getter
-    private int speed;
+    //    @Getter
+//    private int speed;
     //APU mute
     @Setter
     @Getter
@@ -58,7 +60,6 @@ public class NesConsole {
         } else {
             this.cartridge = new Cartridge(builder.file);
         }
-        this.speed = 60;
         this.mute = false;
         this.reset = true;
         this.joyPad = new JoyPad();
@@ -203,17 +204,13 @@ public class NesConsole {
         LockSupport.unpark(this.thread);
     }
 
-    /**
-     * Manual change emulator speed
-     *
-     * @param span offset value
-     */
-    public void speed(int span) {
-        var tmp = this.speed + span;
-        if (tmp < 0) {
-            tmp = 0;
-        }
-        this.speed = tmp;
+
+    public NMapper cartridgeMapper() {
+        return this.getCartridge().getMapper();
+    }
+
+    public int TVFps() {
+        return this.cartridge.getTv() == TV.NTSC ? 60 : 50;
     }
 
 

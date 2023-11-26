@@ -16,19 +16,21 @@ import cn.navclub.nes4j.bin.io.JoyPad;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import cn.navclub.nes4j.bin.ppu.Frame;
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 
 import java.io.File;
@@ -41,9 +43,13 @@ public class GameWorld extends Stage {
     @FXML
     private Label fbl;
     @FXML
+    private Label timer;
+    @FXML
+    private HBox joyBox;
+    @FXML
     private Canvas canvas;
     @FXML
-    private StackPane stackPane;
+    private AnchorPane stackPane;
 
     //Pixel scale level
     @SuppressWarnings("all")
@@ -53,18 +59,20 @@ public class GameWorld extends Stage {
     private final WritableImage image;
     private final BlockingQueue<GameEventWrap> eventQueue;
 
-    private NesConsole instance;
+    private NesConsole console;
     private Debugger debugger;
+    private final Circle[] joyBtns;
     private TaskService<Void> service;
-    private final IconPopup speedPopup;
+    private final AnimationTimer animationTimer;
 
+    @SuppressWarnings("all")
     public GameWorld(int scale) {
         var scene = new Scene(FXResource.loadFXML(this));
 
+        this.joyBtns = joyBox.getChildren().toArray(Circle[]::new);
+
         this.scale = scale;
         this.eventQueue = new LinkedBlockingDeque<>();
-
-        this.speedPopup = new IconPopup(FXResource.loadImage("speed.png"));
 
         this.intBuffer = IntBuffer.allocate(this.scale * this.scale);
         this.image = new WritableImage(this.scale * Frame.width, this.scale * Frame.height);
@@ -82,6 +90,19 @@ public class GameWorld extends Stage {
         this.setResizable(false);
         this.setOnCloseRequest(event -> this.dispose(null));
         this.getScene().addEventHandler(KeyEvent.ANY, this::keyEventHandler);
+
+        var t = System.nanoTime();
+        this.animationTimer = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                var span = (now - t) / 1000_000_000;
+                var second = span % 60;
+                var minute = span / 60 % 60;
+                var hour = span / 60 / 60;
+                timer.setText("%02d:%02d:%02d".formatted(hour, minute, second));
+            }
+        };
+        this.animationTimer.start();
     }
 
     @SuppressWarnings("all")
@@ -89,8 +110,8 @@ public class GameWorld extends Stage {
     public void debugger() {
         if (this.debugger == null) {
             this.debugger = new Debugger(this);
-            if (this.instance != null) {
-                this.instance.setDebugger(this.debugger);
+            if (this.console != null) {
+                this.console.setDebugger(this.debugger);
             }
         }
         this.debugger.show();
@@ -100,13 +121,13 @@ public class GameWorld extends Stage {
         this.service = TaskService.execute(new Task<>() {
             @Override
             protected Void call() {
-                GameWorld.this.instance = NesConsole.Builder
+                GameWorld.this.console = NesConsole.Builder
                         .newBuilder()
                         .file(file)
                         .player(JavaXAudio.class)
                         .gameLoopCallback(GameWorld.this::gameLoopCallback)
                         .build();
-                GameWorld.this.instance.execute();
+                GameWorld.this.console.execute();
                 return null;
             }
         });
@@ -124,13 +145,15 @@ public class GameWorld extends Stage {
         if (this.service != null)
             this.service.cancel();
 
-        if (this.instance != null)
-            this.instance.stop();
+        if (this.console != null)
+            this.console.stop();
 
         if (t != null) {
             log.fatal(INes.localeValue("nes4j.game.error"), t);
             UIUtil.showError(t, INes.localeValue("nes4j.game.error"), v -> this.close());
         }
+
+        this.animationTimer.stop();
 
 
         this.ctx.clearRect(0, 0, this.canvas.getWidth(), this.canvas.getHeight());
@@ -138,8 +161,8 @@ public class GameWorld extends Stage {
 
     public void debugDispose() {
         this.debugger = null;
-        if (this.instance != null)
-            this.instance.setDebugger(null);
+        if (this.console != null)
+            this.console.setDebugger(null);
 
         System.gc();
     }
@@ -157,19 +180,19 @@ public class GameWorld extends Stage {
 
     @FXML
     public void reset() {
-        if (this.instance == null) {
+        if (this.console == null) {
             return;
         }
         this.fillDefaultBG();
-        this.instance.SWReset();
+        this.console.SWReset();
     }
 
     @FXML
     public void ppuViewer() {
-        if (this.instance == null) {
+        if (this.console == null) {
             return;
         }
-        new PPUViewer(this.instance);
+        new PPUViewer(this.console);
     }
 
     private void gameLoopCallback(Integer fps, boolean enableRender, Frame frame, JoyPad joyPad, JoyPad joyPad1) {
@@ -200,8 +223,13 @@ public class GameWorld extends Stage {
             if (enableRender) {
                 this.ctx.drawImage(image, 0, 0);
             }
-            //Draw fps
-            this.fbl.setText(String.format("fps:%s", fps.toString()));
+            var span = this.console.TVFps() - fps;
+            var color = Color.GREEN;
+            if (Math.abs(span) > 3) {
+                color = Color.RED;
+            }
+            this.fbl.setTextFill(color);
+            this.fbl.setText(String.format("fps:%02d", fps));
         });
     }
 
@@ -214,20 +242,14 @@ public class GameWorld extends Stage {
         for (KeyMapper keyMapper : NESConfig.getInstance().getMapper()) {
             if (keyMapper.getKeyCode() == code) {
                 try {
-                    this.eventQueue.put(new GameEventWrap(eventType, keyMapper.getButton()));
+                    var btn = keyMapper.getButton();
+                    var color = eventType == KeyEvent.KEY_PRESSED ? Color.RED : Color.GRAY;
+                    this.joyBtns[btn.ordinal()].setFill(color);
+                    this.eventQueue.put(new GameEventWrap(eventType, btn));
                 } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                    log.fatal("Keyword event push into queue fail.", e);
                 }
             }
-        }
-
-        //Change emulator speed
-        if (code == KeyCode.ADD || code == KeyCode.SUBTRACT) {
-            if (log.isDebugEnabled()) {
-                log.debug("Change ppu output frame action:{}", code);
-            }
-            this.instance.speed(code == KeyCode.ADD ? -1 : 1);
-            this.speedPopup.show(this);
         }
     }
 

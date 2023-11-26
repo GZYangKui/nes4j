@@ -1,8 +1,14 @@
 @import "Common.css";
 
-.fbl {
-    -fx-text-fill: #fff;
-    -fx-font-size: 1.5em;
-    -fx-padding: .1em .2em;
-    -fx-background-color: red;
+.menu-bar {
+    -fx-font-size: 1.2em;
+}
+
+.gsi {
+    -fx-padding: .2em;
+}
+
+.gsi, .gsi > HBox {
+    -fx-alignment: CENTER;
+    -fx-spacing: .3em;
 }

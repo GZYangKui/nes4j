@@ -3,12 +3,13 @@
 <?import javafx.scene.layout.*?>
 
 <?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.shape.Circle?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             stylesheets="@../css/GameWorldStyle.css">
     <top>
-        <StackPane fx:id="stackPane">
-            <MenuBar StackPane.alignment="CENTER">
+        <AnchorPane fx:id="stackPane" styleClass="menu-bar">
+            <MenuBar fx:id="menuBar">
                 <Menu text="%nes4j.view">
                     <MenuItem text="%nes4j.pplay"/>
                     <MenuItem text="%nes4j.reset" onAction="#reset"/>
@@ -22,8 +23,24 @@
                     <MenuItem text="%nes4j.pattern.table" onAction="#ppuViewer"/>
                 </Menu>
             </MenuBar>
-            <Label fx:id="fbl" styleClass="fbl" StackPane.alignment="CENTER_RIGHT" text="fps:00"/>
-        </StackPane>
+            <HBox AnchorPane.rightAnchor="0" prefHeight="${menuBar.height}" styleClass="gsi">
+                <Label fx:id="timer"/>
+                <Separator orientation="VERTICAL"/>
+                <HBox fx:id="joyBox">
+                    <Circle radius="7" fill="gray" fx:id="BTN_A"/>
+                    <Circle radius="7" fill="gray" fx:id="BTN_B"/>
+                    <Circle radius="7" fill="gray" fx:id="BTN_SE"/>
+                    <Circle radius="7" fill="gray" fx:id="BTN_ST"/>
+                    <Circle radius="7" fill="gray" fx:id="BTN_UP"/>
+                    <Circle radius="7" fill="gray" fx:id="BTN_DN"/>
+                    <Circle radius="7" fill="gray" fx:id="BTN_LF"/>
+                    <Circle radius="7" fill="gray" fx:id="BTN_RT"/>
+                </HBox>
+                <Separator orientation="VERTICAL"/>
+                <Label fx:id="fbl" text="fps:00"/>
+            </HBox>
+
+        </AnchorPane>
     </top>
     <center>
         <StackPane>

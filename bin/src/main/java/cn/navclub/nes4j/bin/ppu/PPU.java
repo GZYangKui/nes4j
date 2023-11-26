@@ -545,7 +545,7 @@ public class PPU implements Component {
      * @param now Video frame output finish timestamp
      */
     protected void calVideoPauseTime(long now) {
-        var unit = 1000000000 / this.console.getSpeed();
+        var unit = 1000000000 / this.console.TVFps();
         var span = unit - (now - this.lastFrameTime);
         if (span > 0) {
             LockSupport.parkNanos(span);
