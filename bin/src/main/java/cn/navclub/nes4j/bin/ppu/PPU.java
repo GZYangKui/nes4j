@@ -1,6 +1,7 @@
 package cn.navclub.nes4j.bin.ppu;
 
 
+import cn.navclub.nes4j.bin.config.NMapper;
 import cn.navclub.nes4j.bin.core.Component;
 import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
@@ -161,7 +162,8 @@ public class PPU implements Component {
     //Suppress val or nmi flag
     private boolean suppress;
     private long lastFrameTime;
-
+    private int CpuM2;
+    private int PPU_A12;
 
     public PPU(final NesConsole console, NameMirror mirrors) {
         this.console = console;
@@ -185,6 +187,8 @@ public class PPU implements Component {
         this.v = 0;
         this.w = 0;
         this.x = 0;
+        this.CpuM2 = 0;
+        this.PPU_A12 = 0;
         this.oamAddr = 0;
         this.byteBuf = 0;
         this.render.reset();
@@ -200,8 +204,22 @@ public class PPU implements Component {
         if (this.lastFrameTime == 0) {
             this.lastFrameTime = System.nanoTime();
         }
+        if (this.PPU_A12 == 0) {
+            this.CpuM2 = this.CpuM2 + 1;
+        }
+        var mapper = this.console.getMapper();
         for (int i = 0; i < 3; i++) {
             this.render.tick();
+            if (mapper.type() == NMapper.MMC3) {
+                var tmp = (this.v >> 12) & 1;
+                if ((this.PPU_A12 ^ 1 ^ tmp) == 0 && this.CpuM2 >= 3) {
+                    mapper.tick();
+                }
+                if ((tmp ^ this.PPU_A12) == 1) {
+                    this.CpuM2 = 0;
+                }
+                this.PPU_A12 = tmp;
+            }
         }
     }
 
