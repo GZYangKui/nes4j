@@ -212,7 +212,7 @@ public class PPU implements Component {
             this.render.tick();
             if (mapper.type() == NMapper.MMC3) {
                 var tmp = (this.v >> 12) & 1;
-                if ((this.PPU_A12 ^ 1 ^ tmp) == 0 && this.CpuM2 >= 3) {
+                if (this.PPU_A12 == 0 && tmp == 1 && this.CpuM2 >= 3) {
                     mapper.tick();
                 }
                 if ((tmp ^ this.PPU_A12) == 1) {
