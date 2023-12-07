@@ -61,8 +61,12 @@ public class BinUtil {
         return sb.toString();
     }
 
-    public static int uint8(int b) {
+    public static int uint8(byte b) {
         return (b & 0xff);
+    }
+
+    public static int uint8(int b) {
+        return b & 0xff;
     }
 
 

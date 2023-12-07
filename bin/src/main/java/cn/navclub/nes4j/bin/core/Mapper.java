@@ -96,18 +96,11 @@ public abstract class Mapper {
         return this.cartridge.getChSize();
     }
 
-    public final byte[] getRgbrom() {
-        return this.cartridge.getRgbrom();
-    }
-
     public final byte[] getChrom() {
         return this.cartridge.getChrom();
     }
 
-    /**
-     * Some mapper implement need use extern {@link  Component} cycle driver
-     */
-    public void tick() {
+    public void PPUVideoAddrState(int addr) {
 
     }
 }

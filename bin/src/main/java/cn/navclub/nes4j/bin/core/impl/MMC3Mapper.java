@@ -53,11 +53,14 @@ public class MMC3Mapper extends Mapper {
 
     private final int PRGMode;
 
+    private long a12LowCycle;
+
     public MMC3Mapper(Cartridge cartridge, NesConsole console) {
         super(cartridge, console);
         this.r = 0;
         this.latch = 0;
         this.counter = 0;
+        this.a12LowCycle = 0;
         this.IRQEnable = false;
         this.reloadFlag = false;
         this.PRGBank = new int[4];
@@ -267,13 +270,15 @@ public class MMC3Mapper extends Mapper {
     }
 
     @Override
-    public void tick() {
+    public void PPUVideoAddrState(int addr) {
+        if (!this.isRisingEdge(addr)) {
+            return;
+        }
         // When the IRQ is clocked (filtered A12 0→1), the counter value is checked - if zero
         // or the reload flag is true, it's reloaded with the IRQ latched value at $C000; otherwise,
         // it decrements.
         if (this.counter == 0 || reloadFlag) {
             this.counter = this.latch;
-            this.reloadFlag = false;
         } else {
             this.counter--;
         }
@@ -284,5 +289,19 @@ public class MMC3Mapper extends Mapper {
         if (this.counter == 0 && this.IRQEnable) {
             this.console.hardwareInterrupt(CPUInterrupt.IRQ);
         }
+
+        this.reloadFlag = false;
+    }
+
+    private boolean isRisingEdge(int addr) {
+        var risingEdge = false;
+        var cycles = this.console.getCpu().getCycles();
+        if ((addr & 0x1000) == 0x1000) {
+            risingEdge = this.a12LowCycle > 0 && (cycles - this.a12LowCycle) >= 3;
+            this.a12LowCycle = 0;
+        } else if (a12LowCycle == 0) {
+            a12LowCycle = cycles;
+        }
+        return risingEdge;
     }
 }

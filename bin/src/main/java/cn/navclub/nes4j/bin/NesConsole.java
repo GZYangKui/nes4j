@@ -37,14 +37,10 @@ public class NesConsole {
     private int tfps;
     //cpu stall cycle
     private int stall;
-    //    @Getter
-//    private int speed;
     //APU mute
     @Setter
     @Getter
     private boolean mute;
-    private long cycles;
-    private long dcycle;
     private Debugger debugger;
     private long lastFrameTime;
     private volatile boolean stop;
@@ -88,27 +84,16 @@ public class NesConsole {
             while ((interrupt = queue.poll()) != null) {
                 this.stall += this.cpu.NMI_IRQ_BRKInterrupt(interrupt);
             }
-            this.execute0();
-        }
-    }
-
-    private void execute0() {
-        var tmp = this.stall;
-        if (tmp == 0) {
+            var tmp = this.stall;
+            this.stall = 0;
+            while (tmp-- > 0) {
+                this.APU_PPuSync();
+            }
             //Test line number has break point and block game loop
             if (this.debugger != null && this.debugger.hack(this)) {
                 LockSupport.park();
-                this.dcycle = 0;
             }
-            tmp = this.cpu.next();
-            this.cycles += this.cpu.getCycle();
-            this.dcycle += this.cpu.getCycle();
-        } else {
-            this.stall = 0;
-        }
-        while (--tmp >= 0) {
-            this.apu.tick();
-            this.ppu.tick();
+            this.cpu.next();
         }
     }
 
@@ -142,8 +127,6 @@ public class NesConsole {
         this.fps = 0;
         this.tfps = 0;
         this.stall = 0;
-        this.dcycle = 0;
-        this.cycles = 0;
         this.apu.reset();
         this.ppu.reset();
         this.cpu.reset();
@@ -182,7 +165,6 @@ public class NesConsole {
 
     public void setStall(int span) {
         this.stall += span;
-        this.dcycle += span;
     }
 
 
@@ -204,13 +186,13 @@ public class NesConsole {
         LockSupport.unpark(this.thread);
     }
 
-
-    public NMapper cartridgeMapper() {
-        return this.getCartridge().getMapper();
-    }
-
     public int TVFps() {
         return this.cartridge.getTv() == TV.NTSC ? 60 : 50;
+    }
+
+    public void APU_PPuSync() {
+        this.apu.tick();
+        this.ppu.tick();
     }
 
 

@@ -127,9 +127,9 @@ public class CPUControlPane extends Tab {
         this.x.setText(Integer.toHexString(cpu.getRx()));
         this.y.setText(Integer.toHexString(cpu.getRy()));
         this.a.setText(Integer.toHexString(cpu.getRa()));
+        this.cycles.setText(String.format("%d", cpu.getCycles()));
         this.instructions.setText(Long.toString(cpu.getInstructions()));
         this.stackFlag.setText("Stack:$%s".formatted(Integer.toHexString(cpu.getSp())));
-        this.cycles.setText(String.format("%d(+%d)", console.getCycles(), console.getDcycle()));
 
         var length = 0xff - cpu.getSp();
         if (length > 0) {

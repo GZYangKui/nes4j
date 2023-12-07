@@ -51,14 +51,15 @@ public class PPUControl extends Register<PControl> {
         return this.contain(PControl.SPRITE_PATTERN_ADDR) ? 0x1000 : 0x000;
     }
 
+    /**
+     * 8x16 sprites use different pattern tables based on their index number. If the index number is
+     * even the sprite data is in the first pattern table at $0000, otherwise it is in the second pattern
+     * table at $1000.
+     *
+     * @param index Sprite index
+     */
     public int spritePattern16(int index) {
-        //
-        //
-        // 8x16 sprites use different pattern tables based on their index number. If the index number is
-        // even the sprite data is in the first pattern table at $0000, otherwise it is in the second pattern
-        // table at $1000.
-        //
-        return (index & 0x01) == 0 ? 0x0000 : 0x1000;
+        return (index & 0x01) * 0x1000;
     }
 
     public int backgroundNameTable() {

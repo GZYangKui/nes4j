@@ -84,9 +84,6 @@ public class CPU {
     @Getter
     //Stack pointer
     private int sp;
-    @Getter
-    //Record single instruction consumer cycle
-    private int cycle;
     //Record game execute instruction number
     @Getter
     private long instructions;
@@ -590,14 +587,14 @@ public class CPU {
         return status.getBits();
     }
 
-    public int next() {
+    public void next() {
         var openCode = this.bus.directRead(this.pc);
         var state = (++this.pc);
 
         var wrap = MWS6502.get(openCode);
         if (wrap == null) {
             logger.warning("Unknown opecode 0x{} in address 0x{}", Integer.toHexString(uint8(openCode)), Integer.toHexString(state - 1));
-            return 0;
+            return;
         }
         var mode = wrap.addrMode();
         var instruction = wrap.instruction();
@@ -619,8 +616,6 @@ public class CPU {
                     operand
             );
         }
-
-        this.bus.reset();
 
         switch (instruction) {
             case RTI -> this.RTImpl();
@@ -672,6 +667,9 @@ public class CPU {
             case CLC, CLD, CLI, CLV -> this.CLC_D_I_VImpl(instruction);
         }
 
+        this.instructions++;
+        this.bus._finally(wrap);
+        
         //
         // Judge whether it is necessary to change the value of the program counter according to whether the
         // redirection occurs
@@ -679,11 +677,10 @@ public class CPU {
         if (this.pc == state) {
             this.pc += (wrap.size() - 1);
         }
+    }
 
-        this.instructions++;
-        this.cycle = wrap.cycle() + this.bus.getBulking();
-
-        return wrap.cycle() + this.bus.calOffset();
+    public long getCycles() {
+        return this.bus.getCycles();
     }
 
     public static WS6502 IS6502Get(byte openCode) {

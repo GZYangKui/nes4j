@@ -159,11 +159,10 @@ public class PPU implements Component {
     protected byte w;
     //Fine X scroll (3 bits)
     protected byte x;
+    private int busAddr;
     //Suppress val or nmi flag
     private boolean suppress;
     private long lastFrameTime;
-    private int CpuM2;
-    private int PPU_A12;
 
     public PPU(final NesConsole console, NameMirror mirrors) {
         this.console = console;
@@ -187,8 +186,7 @@ public class PPU implements Component {
         this.v = 0;
         this.w = 0;
         this.x = 0;
-        this.CpuM2 = 0;
-        this.PPU_A12 = 0;
+        this.busAddr = 0;
         this.oamAddr = 0;
         this.byteBuf = 0;
         this.render.reset();
@@ -204,22 +202,8 @@ public class PPU implements Component {
         if (this.lastFrameTime == 0) {
             this.lastFrameTime = System.nanoTime();
         }
-        if (this.PPU_A12 == 0) {
-            this.CpuM2 = this.CpuM2 + 1;
-        }
-        var mapper = this.console.getMapper();
         for (int i = 0; i < 3; i++) {
             this.render.tick();
-            if (mapper.type() == NMapper.MMC3) {
-                var tmp = (this.v >> 12) & 1;
-                if (this.PPU_A12 == 0 && tmp == 1 && this.CpuM2 >= 3) {
-                    mapper.tick();
-                }
-                if ((tmp ^ this.PPU_A12) == 1) {
-                    this.CpuM2 = 0;
-                }
-                this.PPU_A12 = tmp;
-            }
         }
     }
 
@@ -241,6 +225,7 @@ public class PPU implements Component {
             this.w = 0;
             this.t = uint16(this.t & 0xff00 | uint8(b));
             this.v = this.t;
+            this.setBusAddr(this.v);
         }
     }
 
@@ -266,6 +251,7 @@ public class PPU implements Component {
             }
             //Read name table
             else if (addr < 0x3f00) {
+                this.setBusAddr(addr);
                 this.byteBuf = this.vram[VRAMirror(addr)];
             }
             //Read palette table
@@ -273,7 +259,7 @@ public class PPU implements Component {
                 value = this.palette[this.paletteMirror(addr)];
             }
 
-            this.v += this.ctr.inc();
+            this.incrementVideoAddr();
         }
         return value;
     }
@@ -301,14 +287,23 @@ public class PPU implements Component {
             }
             //Update name table
             else if (addr < 0x3f00) {
+                this.setBusAddr(addr);
                 this.vram[this.VRAMirror(addr)] = b;
             }
             //Update palette value
             else if (addr < 0x3f20) {
                 this.palette[this.paletteMirror(addr)] = b;
             }
-            this.v += this.ctr.inc();
+            this.incrementVideoAddr();
         }
+    }
+
+    private void incrementVideoAddr() {
+        if (this.render.scanline < 240 && this.mask.enableRender()) {
+            return;
+        }
+        this.v = (this.v + this.ctr.inc()) & 0x7FFF;
+        setBusAddr(this.v & 0x3FFF);
     }
 
 
@@ -320,6 +315,7 @@ public class PPU implements Component {
         }
         //Read name table data
         else if (address < 0x3f00) {
+            this.setBusAddr(address);
             b = this.vram[this.VRAMirror(address)];
         }
         //unknown ppu read memory
@@ -575,5 +571,10 @@ public class PPU implements Component {
 
     public long getCycle() {
         return this.render.cycles;
+    }
+
+    private void setBusAddr(int addr) {
+        this.busAddr = addr;
+        this.console.getMapper().PPUVideoAddrState(addr);
     }
 }

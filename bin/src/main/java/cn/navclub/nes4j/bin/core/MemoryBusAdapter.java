@@ -2,6 +2,7 @@ package cn.navclub.nes4j.bin.core;
 
 import cn.navclub.nes4j.bin.NesConsole;
 import cn.navclub.nes4j.bin.config.AddressMode;
+import cn.navclub.nes4j.bin.config.WS6502;
 import lombok.Getter;
 
 
@@ -14,17 +15,16 @@ import static cn.navclub.nes4j.bin.util.BinUtil.u8add;
  * @author <a href="https://github.com/GZYangKui">GZYangKui</a>
  */
 public class MemoryBusAdapter implements Bus {
+    @Getter
+    private long cycles;
     private final CPU cpu;
+    private int variation;
     private final MemoryBus bus;
     private final NesConsole console;
-    //Page cross product extra cycle
-    @Getter
-    private int bulking;
-    //Sync system other component consumer cycle
-    private int decrement;
 
     public MemoryBusAdapter(CPU cpu, NesConsole console) {
         this.cpu = cpu;
+        this.cycles = 0;
         this.console = console;
         this.bus = console.getBus();
     }
@@ -90,56 +90,54 @@ public class MemoryBusAdapter implements Bus {
 
     @Override
     public void WriteU8(int address, int value) {
-        this.APU_PPUSync();
+        this.SyncOtherComponent();
         this.bus.WriteU8(address, value);
     }
 
     @Override
     public int ReadU8(int address) {
-        this.APU_PPUSync();
+        this.SyncOtherComponent();
         return this.bus.ReadU8(address);
     }
 
     @Override
     public byte read(int address) {
-        this.APU_PPUSync();
+        this.SyncOtherComponent();
         return this.bus.read(address);
     }
 
     @Override
     public void write(int address, byte value) {
-        this.APU_PPUSync();
+        this.SyncOtherComponent();
         this.bus.write(address, value);
     }
 
     public void increment() {
-        this.bulking++;
-        this.APU_PPUSync();
+        this.variation++;
+        this.SyncOtherComponent();
     }
 
     @Override
     public int readInt(int address) {
-        this.APU_PPUSync();
+        this.SyncOtherComponent();
         return this.bus.readInt(address);
     }
 
-    private void APU_PPUSync() {
-        this.decrement--;
-        this.console.getPpu().tick();
-        this.console.getApu().tick();
-    }
-
-
-    public void reset() {
-        this.bulking = 0;
-        this.decrement = 0;
+    private void SyncOtherComponent() {
+        this.cycles++;
+        this.variation--;
+        this.console.APU_PPuSync();
     }
 
     public byte directRead(int addr) {
         return this.bus.read(addr);
     }
 
-    public int calOffset() {
-        return this.decrement + this.bulking;
+    protected void _finally(WS6502 ws6502) {
+        var tmp = ws6502.cycle() + this.variation;
+        while (tmp-- > 0) {
+            this.SyncOtherComponent();
+        }
+        this.variation = 0;
     }
 }
