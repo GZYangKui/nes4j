@@ -231,74 +231,71 @@ public class PPU implements Component {
 
     @Override
     public byte read(int address) {
-        byte value = 0;
-        if (address == 0x2002) {
-            value = this.readStatus();
-        } else if (address == 0x2004) {
-            value = this.oam[this.oamAddr];
-        } else if (address == 0x2007) {
-            var addr = this.v % 0x4000;
-            //
-            // After each write to $2007, the address is incremented by either 1 or 32 as dictated by
-            // bit 2 of $2000. The first read from $2007 is invalid and the data will actually be buffered and
-            // returned on the next read. This does not apply to colour palettes.
-            //
-            value = this.byteBuf;
+        return switch (address) {
+            case 0x2002 -> this.readStatus();
+            case 0x2004 -> this.oam[this.oamAddr];
+            case 0x2007 -> {
+                var addr = this.v % 0x4000;
+                //
+                // After each write to $2007, the address is incremented by either 1 or 32 as dictated by
+                // bit 2 of $2000. The first read from $2007 is invalid and the data will actually be buffered and
+                // returned on the next read. This does not apply to colour palettes.
+                //
+                var value = this.byteBuf;
 
-            //Read pattern table
-            if (addr < 0x2000) {
-                this.byteBuf = this.console.getMapper().CHRead(addr);
-            }
-            //Read name table
-            else if (addr < 0x3f00) {
-                this.setBusAddr(addr);
-                this.byteBuf = this.vram[VRAMirror(addr)];
-            }
-            //Read palette table
-            else if (addr < 0x3f20) {
-                value = this.palette[this.paletteMirror(addr)];
-            }
+                //Read pattern table
+                if (addr < 0x2000) {
+                    this.byteBuf = this.console.getMapper().CHRead(addr);
+                }
+                //Read name table
+                else if (addr < 0x3f00) {
+                    this.byteBuf = this.vram[VRAMirror(addr)];
+                }
+                //Read palette table
+                else if (addr < 0x3f20) {
+                    value = this.palette[this.paletteMirror(addr)];
+                }
 
-            this.incrementVideoAddr();
-        }
-        return value;
+                this.openBusUpdateVideoAddr();
+
+                yield value;
+            }
+            default -> 0;
+        };
     }
 
     @Override
     public void write(int address, byte b) {
-        if (address == 0x2000) {
-            this.writeCtr(b);
-        } else if (address == 0x2001) {
-            this.mask.setBits(b);
-        } else if (address == 0x2003) {
-            this.oamAddr = uint8(b);
-        } else if (address == 0x2004) {
-            this.oam[this.oamAddr] = b;
-            this.oamAddr = u8sbc(this.oamAddr, 1);
-        } else if (address == 0x2005) {
-            this.updateScrollPos(b);
-        } else if (address == 0x2006) {
-            this.updateVideoAddr(b);
-        } else if (address == 0x2007) {
-            var addr = this.v % 0x4000;
-            //Update pattern table
-            if (addr < 0x2000) {
-                this.console.getMapper().CHWrite(addr, b);
+        switch (address) {
+            case 0x2000 -> this.writeCtr(b);
+            case 0x2001 -> this.mask.setBits(b);
+            case 0x2003 -> this.oamAddr = uint8(b);
+            case 0x2004 -> {
+                this.oam[this.oamAddr] = b;
+                this.oamAddr = u8sbc(this.oamAddr, 1);
             }
-            //Update name table
-            else if (addr < 0x3f00) {
-                this.setBusAddr(addr);
-                this.vram[this.VRAMirror(addr)] = b;
+            case 0x2005 -> this.updateScrollPos(b);
+            case 0x2006 -> this.updateVideoAddr(b);
+            case 0x2007 -> {
+                var addr = this.v % 0x4000;
+                //Update pattern table
+                if (addr < 0x2000) {
+                    this.console.getMapper().CHWrite(addr, b);
+                }
+                //Update name table
+                else if (addr < 0x3f00) {
+                    this.vram[this.VRAMirror(addr)] = b;
+                }
+                //Update palette value
+                else if (addr < 0x3f20) {
+                    this.palette[this.paletteMirror(addr)] = b;
+                }
+                this.openBusUpdateVideoAddr();
             }
-            //Update palette value
-            else if (addr < 0x3f20) {
-                this.palette[this.paletteMirror(addr)] = b;
-            }
-            this.incrementVideoAddr();
         }
     }
 
-    private void incrementVideoAddr() {
+    private void openBusUpdateVideoAddr() {
         if (this.render.scanline < 240 && this.mask.enableRender()) {
             return;
         }
@@ -573,7 +570,7 @@ public class PPU implements Component {
         return this.render.cycles;
     }
 
-    private void setBusAddr(int addr) {
+    protected void setBusAddr(int addr) {
         this.busAddr = addr;
         this.console.getMapper().PPUVideoAddrState(addr);
     }
