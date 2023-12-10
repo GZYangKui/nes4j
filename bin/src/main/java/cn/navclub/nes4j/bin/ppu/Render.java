@@ -398,7 +398,7 @@ public class Render implements CycleDriver {
      */
     private void readTileIdx(int v) {
         var address = 0x2000 | (v & 0x0fff);
-        this.tileIdx = this.ppu.iRead(address);
+        this.tileIdx = this.ppu.fetchScanlineData(address);
     }
 
     /**
@@ -413,7 +413,7 @@ public class Render implements CycleDriver {
      */
     private void readTileAttr(int v) {
         var address = 0x23c0 | (v & 0x0c00) | (v >> 4) & 0x38 | (v >> 2) & 0x07;
-        this.tileAttr = this.ppu.iRead(address);
+        this.tileAttr = this.ppu.fetchScanlineData(address);
     }
 
     /**
@@ -445,9 +445,9 @@ public class Render implements CycleDriver {
         var table = ppu.ctr.backgroundNameTable();
         var address = table + this.tileIdx * 16 + fineY;
         if (!high) {
-            this.leftByte = this.ppu.iRead(address);
+            this.leftByte = this.ppu.fetchScanlineData(address);
         } else {
-            this.rightByte = this.ppu.iRead(address + 8);
+            this.rightByte = this.ppu.fetchScanlineData(address + 8);
         }
     }
 
@@ -621,8 +621,8 @@ public class Render implements CycleDriver {
 
                 address = bank + idx * 16 + df;
 
-                var l = uint8(this.ppu.iRead(address));
-                var r = uint8(this.ppu.iRead(address + 8));
+                var l = uint8(this.ppu.fetchScanlineData(address));
+                var r = uint8(this.ppu.fetchScanlineData(address + 8));
 
                 //Faster copy palette data
                 System.arraycopy(ppu.palette, 0x11 + (attr & 0x03) * 4, this.spritePalette, 0, 3);

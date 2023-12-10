@@ -303,24 +303,21 @@ public class PPU implements Component {
         setBusAddr(this.v & 0x3FFF);
     }
 
-
-    protected int iRead(int address) {
+    /**
+     * {@link Render} fetch each scanline needed data
+     *
+     * @param addr data address
+     * @return data
+     */
+    protected int fetchScanlineData(int addr) {
         final byte b;
-        //Read chr-rom data
-        if (address < 0x2000) {
-            b = this.console.getMapper().CHRead(address);
-        }
-        //Read name table data
-        else if (address < 0x3f00) {
-            this.setBusAddr(address);
-            b = this.vram[this.VRAMirror(address)];
-        }
-        //unknown ppu read memory
-        else {
+        if (addr < 0x2000) {
+            b = this.console.getMapper().CHRead(addr);
+        } else if (addr < 0x3f00) {
+            b = this.vram[this.VRAMirror(addr)];
+        } else {
             b = 0;
-            log.warning("Read:unknown ppu internal address:[{}]", Integer.toHexString(address));
         }
-
         return uint8(b);
     }
 
