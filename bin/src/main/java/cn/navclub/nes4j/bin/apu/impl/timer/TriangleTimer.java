@@ -32,7 +32,7 @@ public class TriangleTimer extends Timer<TriangleSequencer> {
             if (this.counter == 0) {
                 var linearCounter = this.channel.getLinearCounter();
                 var lengthCounter = this.channel.getLengthCounter();
-                if (lengthCounter.getCounter() != 0 && linearCounter.getCounter() != 0) {
+                if (channel.isEnable() && lengthCounter.getCounter() != 0 && linearCounter.getCounter() != 0) {
                     this.sequencer.tick();
                 }
             }
