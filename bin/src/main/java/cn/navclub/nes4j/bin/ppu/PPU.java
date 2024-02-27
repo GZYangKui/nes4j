@@ -556,7 +556,8 @@ public class PPU implements Component {
         var unit = 1000000000 / this.console.TVFps();
         var span = unit - (now - this.lastFrameTime);
         if (span > 0) {
-            LockSupport.parkNanos(span);
+            LockSupport.parkNanos(span - 2000);
+            while(System.nanoTime() < now + span);
             this.lastFrameTime = System.nanoTime();
         } else {
             this.lastFrameTime = now + span;

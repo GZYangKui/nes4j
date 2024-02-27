@@ -4,7 +4,6 @@ import cn.navclub.nes4j.app.assets.FXResource;
 import cn.navclub.nes4j.app.INes;
 import cn.navclub.nes4j.app.audio.JavaXAudio;
 import cn.navclub.nes4j.app.config.NESConfig;
-import cn.navclub.nes4j.app.control.IconPopup;
 import cn.navclub.nes4j.app.service.TaskService;
 import cn.navclub.nes4j.app.dialog.DHandle;
 import cn.navclub.nes4j.app.event.GameEventWrap;
@@ -12,6 +11,7 @@ import cn.navclub.nes4j.app.model.KeyMapper;
 import cn.navclub.nes4j.app.util.StrUtil;
 import cn.navclub.nes4j.app.util.UIUtil;
 import cn.navclub.nes4j.bin.NesConsole;
+import cn.navclub.nes4j.bin.config.AudioSampleRate;
 import cn.navclub.nes4j.bin.io.JoyPad;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import cn.navclub.nes4j.bin.logging.LoggerFactory;
@@ -125,6 +125,7 @@ public class GameWorld extends Stage {
                         .newBuilder()
                         .file(file)
                         .player(JavaXAudio.class)
+                        .sampleRate(AudioSampleRate.HZ44100)
                         .gameLoopCallback(GameWorld.this::gameLoopCallback)
                         .build();
                 GameWorld.this.console.execute();

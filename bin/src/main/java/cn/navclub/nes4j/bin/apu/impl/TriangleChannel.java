@@ -70,11 +70,7 @@ public class TriangleChannel extends Channel<TriangleSequencer> {
      */
     @Override
     public int output() {
-        if (!this.enable
-                || this.linearCounter.getCounter() == 0
-                || this.lengthCounter.silence()) {
-            return 0;
-        }
+    // Silencing the triangle channel merely halts it. It will continue to output its last value rather than 0.
         return sequencer.value();
     }
 
