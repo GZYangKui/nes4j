@@ -260,7 +260,7 @@ public class CPU {
             this.push(int8(this.ra));
         } else {
             var flags = this.status.copy();
-            flags.set(ICPUStatus.BREAK_COMMAND, ICPUStatus.EMPTY);
+            flags.set(ICPUStatus.BREAK_COMMAND, ICPUStatus.B_FLAG);
             this.push(flags.getBits());
         }
     }
@@ -271,7 +271,7 @@ public class CPU {
             this.raUpdate(value);
         } else {
             this.status.setBits(value);
-            this.status.set(ICPUStatus.EMPTY);
+            this.status.set(ICPUStatus.B_FLAG);
             this.status.clear(ICPUStatus.BREAK_COMMAND);
         }
     }
@@ -376,7 +376,7 @@ public class CPU {
 
     private void RTImpl() {
         this.status.setBits(this.pop());
-        this.status.set(ICPUStatus.EMPTY);
+        this.status.set(ICPUStatus.B_FLAG);
         this.status.clear(ICPUStatus.BREAK_COMMAND);
         this.pc = this.popInt();
     }
@@ -559,24 +559,21 @@ public class CPU {
 
     public int NMI_IRQ_BRKInterrupt(CPUInterrupt interrupt) {
         //When ICPUStatus#INTERRUPT_DISABLE flag was set, all interrupts except the NMI are inhibited.
-        if (this.status.contain(ICPUStatus.INTERRUPT_DISABLE) && interrupt != CPUInterrupt.NMI) {
+        if (this.status.contain(ICPUStatus.INTERRUPT_DISABLE) && interrupt == CPUInterrupt.IRQ) {
             return 0;
         }
 
         this.pushInt(this.pc);
+        this.push(this.status.getBits());
 
-        var flag = this.status.copy();
+//        var flag = this.status.copy();
+//
+//        flag.set(ICPUStatus.B_FLAG);
+//        flag.update(ICPUStatus.BREAK_COMMAND, interrupt == CPUInterrupt.BRK);
 
-        //https://www.nesdev.org/wiki/Status_flags#The_B_flag
-        flag.set(ICPUStatus.EMPTY);
-        flag.update(ICPUStatus.BREAK_COMMAND, interrupt == CPUInterrupt.BRK);
+//        this.push(flag.getBits());
 
-        this.push(flag.getBits());
-
-        //Automatically set by the CPU when an IRQ is triggered, and restored to its previous state by RTI.
-        if (interrupt == CPUInterrupt.IRQ) {
-            this.status.set(ICPUStatus.INTERRUPT_DISABLE);
-        }
+        this.status.set(ICPUStatus.INTERRUPT_DISABLE);
 
         this.pc = this.bus.readInt(interrupt.getVector());
 
@@ -669,7 +666,7 @@ public class CPU {
 
         this.instructions++;
         this.bus._finally(wrap);
-        
+
         //
         // Judge whether it is necessary to change the value of the program counter according to whether the
         // redirection occurs

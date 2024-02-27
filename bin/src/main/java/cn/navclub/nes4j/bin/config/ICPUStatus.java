@@ -11,8 +11,8 @@ public enum ICPUStatus {
     DECIMAL_MODE,
     //Break command
     BREAK_COMMAND,
-    //Empty
-    EMPTY,
+    //B_FLAG
+    B_FLAG,
     //Overflow flag
     OVERFLOW,
     //Negative flag
