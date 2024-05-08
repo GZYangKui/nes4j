@@ -10,6 +10,9 @@ import javafx.scene.control.TextInputDialog;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+/**
+ * 封装<b>Javafx</b>UI相关操作工具类
+ */
 public class UIUtil {
     public static void showError(Throwable t, String headerText, Consumer<Void> consumer) {
         Platform.runLater(() -> {
