@@ -19,6 +19,7 @@ import lombok.Setter;
 import java.io.File;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Consumer;
 
 @Getter
 public class NesConsole {
@@ -31,6 +32,7 @@ public class NesConsole {
     private final JoyPad joyPad;
     private final JoyPad joyPad1;
     private final Cartridge cartridge;
+    private final Consumer<String> gameLogger;
     private final GameLoopCallback gameLoopCallback;
 
     private int fps;
@@ -62,6 +64,7 @@ public class NesConsole {
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
         this.thread = Thread.currentThread();
+        this.gameLogger = builder.gameLogger;
         this.queue = new LinkedBlockingQueue<>(10);
         this.gameLoopCallback = builder.gameLoopCallback;
         this.mapper = this.cartridge.getMapper().newProvider(this.cartridge, this);
@@ -200,6 +203,7 @@ public class NesConsole {
         private File file;
         private byte[] buffer;
         private AudioSampleRate sampleRate;
+        private Consumer<String> gameLogger;
         private Class<? extends Player> player;
         private GameLoopCallback gameLoopCallback;
 
@@ -230,6 +234,11 @@ public class NesConsole {
 
         public Builder sampleRate(AudioSampleRate sampleRate) {
             this.sampleRate = sampleRate;
+            return this;
+        }
+
+        public Builder gameLogger(Consumer<String> gameLogger) {
+            this.gameLogger = gameLogger;
             return this;
         }
 

@@ -9,11 +9,9 @@ import cn.navclub.nes4j.bin.util.BinUtil;
 import lombok.Getter;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static cn.navclub.nes4j.bin.util.BinUtil.*;
 
@@ -80,7 +78,7 @@ public class CPU {
     private int ry;
     //Program counter
     @Getter
-    private int pc;
+    protected int pc;
     @Getter
     //Stack pointer
     private int sp;
@@ -88,9 +86,11 @@ public class CPU {
     @Getter
     private long instructions;
     private final CPUStatus status;
+    private final NesConsole console;
     private final MemoryBusAdapter bus;
 
     public CPU(NesConsole console) {
+        this.console = console;
         this.status = new CPUStatus();
         this.bus = new MemoryBusAdapter(this, console);
     }
@@ -557,6 +557,18 @@ public class CPU {
         }
     }
 
+    private void LOG_Impl() {
+        var utf8Chr = this.bus.readUTF8Chr(this.pc);
+        var gl = this.console.getGameLogger();
+        if (gl == null) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Read utf8 character sequence:{}", utf8Chr);
+            }
+        } else {
+            gl.accept(utf8Chr);
+        }
+    }
+
     public int NMI_IRQ_BRKInterrupt(CPUInterrupt interrupt) {
         //When ICPUStatus#INTERRUPT_DISABLE flag was set, all interrupts except the NMI are inhibited.
         if (this.status.contain(ICPUStatus.INTERRUPT_DISABLE) && interrupt == CPUInterrupt.IRQ) {
@@ -585,7 +597,7 @@ public class CPU {
     }
 
     public void next() {
-        var openCode = this.bus.directRead(this.pc);
+        var openCode = this.bus.read0(this.pc);
         var state = (++this.pc);
 
         var wrap = MWS6502.get(openCode);
@@ -622,6 +634,7 @@ public class CPU {
             case TAY -> this.TAYImpl();
             case TSX -> this.TSXImpl();
             case TXS -> this.TXSImpl();
+            case LOG -> this.LOG_Impl();
             case ASL -> this.ASLImpl(mode);
             case ROL -> this.ROLImpl(mode);
             case ROR -> this.RORImpl(mode);

@@ -78,5 +78,6 @@ public enum Instruction {
     SLO,
     SRE,
     SAX,
-    NOP_S
+    NOP_S,
+    LOG
 }

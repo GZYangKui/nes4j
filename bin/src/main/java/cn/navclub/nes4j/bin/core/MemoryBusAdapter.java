@@ -6,6 +6,10 @@ import cn.navclub.nes4j.bin.config.WS6502;
 import lombok.Getter;
 
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
 import static cn.navclub.nes4j.bin.util.BinUtil.u8add;
 
 
@@ -129,9 +133,6 @@ public class MemoryBusAdapter implements Bus {
         this.console.APU_PPuSync();
     }
 
-    public byte directRead(int addr) {
-        return this.bus.read(addr);
-    }
 
     protected void _finally(WS6502 ws6502) {
         var tmp = ws6502.cycle() + this.variation;
@@ -139,5 +140,38 @@ public class MemoryBusAdapter implements Bus {
             this.SyncOtherComponent();
         }
         this.variation = 0;
+    }
+
+    /**
+     * Read rom utf8 character end of <b>'\0'</b>
+     */
+    public String readUTF8Chr(final int addr) {
+        var index = 0;
+        var size = 1024;
+        var buffer = new byte[size];
+        for (; ; ) {
+            var b = this.bus.read(addr + index);
+            if (b == '\0') {
+                break;
+            }
+            if (index == size - 1) {
+                var tmp = new byte[index + size];
+                System.arraycopy(buffer, 0, tmp, 0, index);
+                buffer = tmp;
+            }
+            buffer[index++] = b;
+        }
+        this.cpu.pc = addr + (index + 1);
+        var tmp = new byte[index];
+        System.arraycopy(buffer, 0, tmp, 0, index);
+        return new String(tmp, StandardCharsets.UTF_8);
+    }
+
+    public byte read0(int addr) {
+        return this.bus.read(addr);
+    }
+
+    public int readInt0(int addr) {
+        return this.bus.readInt(addr);
     }
 }
