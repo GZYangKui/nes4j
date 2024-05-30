@@ -39,39 +39,39 @@ nmi:
 VENDOR_RENDER:                      ; Write vendor name(nes4j)
     lda VENDOR_TEXT,x
     sta PPU_DATA
-    INX
-    CPX #$05
-    BNE VENDOR_RENDER
-    LDA #$20                        ; Set VRAM address to $2041
-    STA PPU_ADDR
-    LDA #$41
-    STA PPU_ADDR
-    LDX #$00
+    inx
+    cpx #$05
+    bne VENDOR_RENDER
+    lda #$20                        ; Set VRAM address to $2041
+    sta PPU_ADDR
+    lda #$41
+    sta PPU_ADDR
+    ldx #$00
 RENDER_AUTHOR:                      ; Write author info
-    LDA PAUTHOR,x
-    STA PPU_DATA
-    INX
-    CPX #$1b
-    BNE RENDER_AUTHOR
-    LDA #$00
-    STA PPU_SCROLL
-    LDA PPU_STATUS                  ; Reset w to 0
-    LDA #$3f                        ; Set VRAM address to $3f01
-    STA PPU_ADDR
-    LDA #$01
-    STA PPU_ADDR
+    lda PAUTHOR,x
+    sta PPU_DATA
+    inx
+    cpx #$1b
+    bne RENDER_AUTHOR
+    lda #$00
+    sta PPU_SCROLL
+    lda PPU_STATUS                  ; Reset w to 0
+    lda #$3f                        ; Set VRAM address to $3f01
+    sta PPU_ADDR
+    lda #$01
+    sta PPU_ADDR
 palette:
-    STA PPU_DATA
-    ADC #$01
-    CMP #$0f
-    BNE palette
-    LDA #$00                              ; Set x scroll was 0
-    STA PPU_SCROLL
+    sta PPU_DATA
+    adc #$01
+    cmp #$0f
+    bne palette
+    lda #$00                              ; Set x scroll was 0
+    sta PPU_SCROLL
     lda #$00
 ;    LDA #%11101000                        ; Scroll y to 31 (31+3)=
-    STA PPU_SCROLL
-    LDA #$80
-    STA PPU_CTRL                    ;Switch to first name table
+    sta PPU_SCROLL
+    lda #$80
+    sta PPU_CTRL                    ;Switch to first name table
     lda #%00001010                  ;Enable background show
     sta PPU_MASK
     jmp forever
