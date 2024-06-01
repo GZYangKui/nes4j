@@ -32,8 +32,6 @@ public class NesConsole {
     private final JoyPad joyPad;
     private final JoyPad joyPad1;
     private final Cartridge cartridge;
-    private final Consumer<String> gameLogger;
-    private final GameLoopCallback gameLoopCallback;
 
     private int fps;
     private int tfps;
@@ -49,6 +47,7 @@ public class NesConsole {
     private volatile boolean reset;
     @SuppressWarnings("all")
     private BlockingQueue<CPUInterrupt> queue;
+    private final NesConsoleHook hook;
     @Getter
     private final Class<? extends Player> player;
 
@@ -60,13 +59,12 @@ public class NesConsole {
         }
         this.mute = false;
         this.reset = true;
+        this.hook = builder.hook;
         this.joyPad = new JoyPad();
         this.joyPad1 = new JoyPad();
         this.player = builder.player;
         this.thread = Thread.currentThread();
-        this.gameLogger = builder.gameLogger;
         this.queue = new LinkedBlockingQueue<>(10);
-        this.gameLoopCallback = builder.gameLoopCallback;
         this.mapper = this.cartridge.getMapper().newProvider(this.cartridge, this);
 
         this.apu = new APU(builder.sampleRate, this);
@@ -149,8 +147,8 @@ public class NesConsole {
 
 
     public void videoOutput(long nano, boolean renderEnable, Frame frame) {
-        //Due to gameLoopCallback design immutable if gameLoopCallback was null direct return?
-        if (gameLoopCallback == null) {
+        //Due to hook design immutable if hook was null direct return?
+        if (hook == null) {
             return;
         }
         this.tfps++;
@@ -163,7 +161,7 @@ public class NesConsole {
             this.tfps = 0;
             this.lastFrameTime = nano;
         }
-        this.gameLoopCallback.accept(this.fps, renderEnable, frame, this.joyPad, this.joyPad1);
+        this.hook.callback(this.fps, renderEnable, frame, this.joyPad, this.joyPad1);
     }
 
     public void setStall(int span) {
@@ -202,10 +200,9 @@ public class NesConsole {
     public static class Builder {
         private File file;
         private byte[] buffer;
+        private NesConsoleHook hook;
         private AudioSampleRate sampleRate;
-        private Consumer<String> gameLogger;
         private Class<? extends Player> player;
-        private GameLoopCallback gameLoopCallback;
 
         public Builder buffer(byte[] buffer) {
             this.buffer = buffer;
@@ -227,20 +224,16 @@ public class NesConsole {
             return this;
         }
 
-        public Builder gameLoopCallback(GameLoopCallback gameLoopCallback) {
-            this.gameLoopCallback = gameLoopCallback;
-            return this;
-        }
-
         public Builder sampleRate(AudioSampleRate sampleRate) {
             this.sampleRate = sampleRate;
             return this;
         }
 
-        public Builder gameLogger(Consumer<String> gameLogger) {
-            this.gameLogger = gameLogger;
+        public Builder hook(NesConsoleHook hook) {
+            this.hook = hook;
             return this;
         }
+
 
         public NesConsole build() {
             return new NesConsole(this);

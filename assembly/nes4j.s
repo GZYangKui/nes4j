@@ -14,10 +14,12 @@
 
 .segment           "CHARS"
 .incbin        "common/ascii.chr"
-
+LOG         =   $FF
+NULL        =   0
 .segment            "STARTUP"
 
 start:
+    .byte LOG,"ra=\{c.a},rx=\{c.x},ry=\{c.y}",NULL
     sei
     clc
     lda #$80

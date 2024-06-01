@@ -143,9 +143,9 @@ public class MemoryBusAdapter implements Bus {
     }
 
     /**
-     * Read rom utf8 character end of <b>'\0'</b>
+     * Read rom UTF8 character end of <b>'\0'</b>
      */
-    public String readUTF8Chr(final int addr) {
+    public String readUTF8Str(final int addr) {
         var index = 0;
         var size = 1024;
         var buffer = new byte[size];
@@ -169,9 +169,5 @@ public class MemoryBusAdapter implements Bus {
 
     public byte read0(int addr) {
         return this.bus.read(addr);
-    }
-
-    public int readInt0(int addr) {
-        return this.bus.readInt(addr);
     }
 }

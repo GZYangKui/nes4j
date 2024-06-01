@@ -126,7 +126,7 @@ public class GameWorld extends Stage {
                         .file(file)
                         .player(JavaXAudio.class)
                         .sampleRate(AudioSampleRate.HZ44100)
-                        .gameLoopCallback(GameWorld.this::gameLoopCallback)
+                        .hook(GameWorld.this::gameLoopCallback)
                         .build();
                 GameWorld.this.console.execute();
                 return null;

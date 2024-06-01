@@ -6,6 +6,7 @@ import cn.navclub.nes4j.bin.core.register.CPUStatus;
 import cn.navclub.nes4j.bin.logging.LoggerDelegate;
 import cn.navclub.nes4j.bin.logging.LoggerFactory;
 import cn.navclub.nes4j.bin.util.BinUtil;
+import cn.navclub.nes4j.bin.util.internal.ScriptUtil;
 import lombok.Getter;
 
 import java.io.BufferedReader;
@@ -558,14 +559,15 @@ public class CPU {
     }
 
     private void LOG_Impl() {
-        var utf8Chr = this.bus.readUTF8Chr(this.pc);
-        var gl = this.console.getGameLogger();
-        if (gl == null) {
+        var utf8Str = this.bus.readUTF8Str(this.pc);
+        var evalStr = ScriptUtil.evalTStr(utf8Str, console);
+        var hook = this.console.getHook();
+        if (hook == null) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Read utf8 character sequence:{}", utf8Chr);
+                logger.debug("Read utf8 character sequence:{}", evalStr);
             }
         } else {
-            gl.accept(utf8Chr);
+            hook.logger(utf8Str, evalStr);
         }
     }
 
