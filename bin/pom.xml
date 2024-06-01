@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>nes4j-bin</artifactId>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
     <url>https://github.com/GZYangKui/nes4j</url>
     <name>${project.groupId}:${project.artifactId}</name>
     <licenses>

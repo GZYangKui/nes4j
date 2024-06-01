@@ -85,19 +85,19 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 + Gradle(groovy)
 
 ```groovy
-implementation group: 'cn.navclub', name: 'nes4j-bin', version: '1.0.5'
+implementation group: 'cn.navclub', name: 'nes4j-bin', version: '1.0.6'
 ```
 
 or
 
 ```groovy
-implementation 'cn.navclub:nes4j-bin:1.0.5'
+implementation 'cn.navclub:nes4j-bin:1.0.6'
 ```
 
 + Gradle(Kotlin)
 
 ```kotlin
-implementation("cn.navclub:nes4j-bin:1.0.5")
+implementation("cn.navclub:nes4j-bin:1.0.6")
 ```
 
 ### 创建NES实例并初始化
