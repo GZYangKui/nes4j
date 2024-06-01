@@ -113,14 +113,14 @@ import cn.navclub.nes4j.bin.ppu.Frame;
 public class GameWorld {
     public NES create() {
         NesConsole console = NesConsole.Builder
-                .newBuilder()
-                //nes游戏rom
-                .file(file)
-                //音频输出程序 
-                .player(JavaXAudio.class)
-                //Game loop 回调
-                .gameLoopCallback(GameWorld.this::gameLoopCallback)
-                .build();
+            .newBuilder()
+            //nes游戏rom
+            .file(file)
+            //音频输出程序
+            .player(JavaXAudio.class)
+            //Game loop 回调
+            .gameLoopCallback(GameWorld.this::gameLoopCallback)
+            .build();
         try {
             //一旦当前方法被调用将会阻塞当前线程直到游戏结束或者异常发生
             console.execute();
@@ -140,6 +140,7 @@ public class GameWorld {
 + JavaXAudio.java
 
 ```java
+
 @SuppressWarnings("all")
 public class JavaXAudio implements Player {
     private final byte[] sample;
@@ -231,6 +232,39 @@ public class JavaXAudio implements Player {
 > 程序内存快照 (内存)
 >
 ![Assembler](SNAPSHOTS/MemoryView.png)
+
+## 自定义指令
+
+> 为了方便程序调试开发，模拟器内部会不断新增自定义指令。
+
++ LOG($FF)日志输出指令
+
+```assembly
+LOG        =        $FF
+NULL       =        0
+
+.segment            "STARTUP"
+
+start:
+.byte LOG,"ra=\{c.a},rx={c.x},ry={c.y}",NULL
+sei
+clc
+lda #$80
+sta PPU_CTRL                    ;Enable val flag
+jmp waitvbl
+...
+```
+
+> 字符串支持类字符串模板功能，仅支持内置变量例如上述代码中的c.a、c.x、c.y等等
+
+| 变量                                      | 描述           |
+|------------------------------------------|----------------|
+|       c.a                                |    CPU累计寄存器 |
+|       c.x                                |    CPU X寄存器  |
+|       c.y                                |    CPU Y寄存器  |
+
+> 后期考虑新增PPU和APU、模拟器相关寄存器变量。
+
 
 ## 技术交流学习
 

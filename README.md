@@ -245,6 +245,38 @@ can provide you with some basic knowledge of the simulator:
 >
 ![Assembler](SNAPSHOTS/MemoryView.png)
 
+## Custom Instructions
+
+> For the convenience of program debugging and development, the simulator will continuously add custom instructions internally.
+
++ LOG($FF) log output instruction
+
+```assembly
+LOG        =        $FF
+NULL       =        0
+
+.segment            "STARTUP"
+
+start:
+.byte LOG,"ra=\{c.a},rx={c.x},ry={c.y}",NULL
+sei
+clc
+lda #$80
+sta PPU_CTRL                    ;Enable val flag
+jmp waitvbl
+...
+```
+
+> String support class string template function, only supports built-in variables such as c.a, c.x, c.y, etc. in the above code.
+
+| 变量                                      | 描述           |
+|------------------------------------------|----------------|
+|       c.a                                |    CPU cumulative register |
+|       c.x                                |    CPU X register  |
+|       c.y                                |    CPU Y register  |
+
+> Consider adding PPU, APU, and simulator related register variables in the later stage.
+
 ## Special thanks
 
 | name                                    | describe                                                     |
