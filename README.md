@@ -82,26 +82,26 @@ git clone https://gitee.com/navigatorCode/nes4j.git
 <dependency>
     <groupId>cn.navclub</groupId>
     <artifactId>nes4j-bin</artifactId>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
 </dependency>
 ```
 
 + Gradle(groovy)
 
 ```groovy
-implementation group: 'cn.navclub', name: 'nes4j-bin', version: '1.0.5'
+implementation group: 'cn.navclub', name: 'nes4j-bin', version: '1.0.6'
 ```
 
 or
 
 ```groovy
-implementation 'cn.navclub:nes4j-bin:1.0.5'
+implementation 'cn.navclub:nes4j-bin:1.0.6'
 ```
 
 + Gradle(Kotlin)
 
 ```kotlin
-implementation("cn.navclub:nes4j-bin:1.0.5")
+implementation("cn.navclub:nes4j-bin:1.0.6")
 ```
 
 ### Then create an NES instance and initialize
