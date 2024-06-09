@@ -274,6 +274,7 @@ jmp waitvbl
 |       c.a                                |    CPU cumulative register |
 |       c.x                                |    CPU X register  |
 |       c.y                                |    CPU Y register  |
+|       c.sp                               |    CPU Stack Pointer |
 
 > Consider adding PPU, APU, and simulator related register variables in the later stage.
 

@@ -32,6 +32,7 @@ public class ScriptUtil {
                 case "c.a" -> cpu.getRa();
                 case "c.x" -> cpu.getRx();
                 case "c.y" -> cpu.getRy();
+                case "c.sp"-> cpu.getSp();
                 default -> null;
             };
             if (Objects.isNull(context)) {
