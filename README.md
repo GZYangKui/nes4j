@@ -270,11 +270,11 @@ jmp waitvbl
 > String support class string template function, only supports built-in variables such as c.a, c.x, c.y, etc. in the above code.
 
 | 变量                                      | 描述           |
-|------------------------------------------|----------------|
-|       c.a                                |    CPU cumulative register |
-|       c.x                                |    CPU X register  |
-|       c.y                                |    CPU Y register  |
-|       c.sp                               |    CPU Stack Pointer |
+|-----------------------------------------|----------------|
+|       c.a                               |    CPU cumulative register |
+|       c.x                               |    CPU X register  |
+|       c.y                               |    CPU Y register  |
+|       c.s                               |    CPU Stack Pointer |
 
 > Consider adding PPU, APU, and simulator related register variables in the later stage.
 

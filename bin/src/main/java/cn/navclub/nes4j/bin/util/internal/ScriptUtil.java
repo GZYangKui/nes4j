@@ -29,10 +29,10 @@ public class ScriptUtil {
             var j = matcher.end();
             var expr = text.substring(i + 2, j - 1);
             var context = switch (expr) {
-                case "c.a" -> cpu.getRa();
-                case "c.x" -> cpu.getRx();
-                case "c.y" -> cpu.getRy();
-                case "c.sp"-> cpu.getSp();
+                case ScriptStrSlotConstant.CPU_A -> cpu.getRa();
+                case ScriptStrSlotConstant.CPU_X -> cpu.getRx();
+                case ScriptStrSlotConstant.CPU_Y -> cpu.getRy();
+                case ScriptStrSlotConstant.CPU_S -> cpu.getSp();
                 default -> null;
             };
             if (Objects.isNull(context)) {
