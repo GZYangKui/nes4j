@@ -307,7 +307,7 @@ public class CPU {
     }
 
 
-    private void ADCImpl(AddressMode mode, boolean sbc) {
+    private void ADC_SBCImpl(AddressMode mode, boolean sbc) {
         var addr = this.bus.getAbsAddr(mode);
         var b = this.bus.read(addr);
         if (sbc) {
@@ -406,7 +406,7 @@ public class CPU {
 
     private void RRAImpl(AddressMode mode) {
         this.RORImpl(mode);
-        this.ADCImpl(mode, false);
+        this.ADC_SBCImpl(mode, false);
     }
 
     private void ARRImpl(AddressMode mode) {
@@ -486,12 +486,12 @@ public class CPU {
 
     private void ISCImpl(AddressMode mode) {
         this.INCImpl(Instruction.INC, mode);
-        this.ADCImpl(mode, true);
+        this.ADC_SBCImpl(mode, true);
     }
 
     private void RLAImpl(AddressMode mode) {
         this.ROLImpl(mode);
-        this.ADCImpl(mode, false);
+        this.ADC_SBCImpl(mode, false);
     }
 
     private void ALRImpl(AddressMode mode) {
@@ -500,7 +500,7 @@ public class CPU {
     }
 
     private void ANCImpl(AddressMode mode) {
-        this.ADCImpl(mode, false);
+        this.ADC_SBCImpl(mode, false);
         this.status.update(ICPUStatus.CARRY, this.status.contain(ICPUStatus.NEGATIVE));
     }
 
@@ -659,8 +659,8 @@ public class CPU {
             case JMP -> this.JMPImpl(mode);
             case TYA -> this.raUpdate(this.ry);
             case TXA -> this.raUpdate(this.rx);
-            case SBC -> this.ADCImpl(mode, true);
-            case ADC -> this.ADCImpl(mode, false);
+            case SBC -> this.ADC_SBCImpl(mode, true);
+            case ADC -> this.ADC_SBCImpl(mode, false);
             case PHA, PHP -> this.PUSHImpl(instruction);
             case PLA, PLP -> this.PULLImpl(instruction);
             case BPL, BMI -> this.BPL_BMImpl(instruction);
